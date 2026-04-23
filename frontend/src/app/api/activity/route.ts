@@ -4,6 +4,7 @@ import { analyzeText } from "@/lib/nlp";
 import { z } from "zod";
 import type { Platform, RiskCategory } from "@prisma/client";
 
+// ─── Platform görünen adları ───────────────────────────────
 const PLATFORM_LABELS: Record<string, string> = {
   INSTAGRAM: "Instagram",
   SNAPCHAT: "Snapchat",
@@ -14,11 +15,13 @@ const PLATFORM_LABELS: Record<string, string> = {
   OTHER: "Diğer",
 };
 
+// ─── Gece saati kontrolü (23:00 - 06:00) ─────────────────
 function isNightTime(date: Date): boolean {
   const hour = date.getHours();
   return hour >= 23 || hour < 6;
 }
 
+// ─── Request schema ────────────────────────────────────────
 const activityItemSchema = z.object({
   platform: z.enum(["INSTAGRAM", "SNAPCHAT", "TIKTOK", "WHATSAPP", "TELEGRAM", "SMS", "OTHER"]),
   type: z.string().max(50).default("MESSAGE"),
@@ -33,6 +36,7 @@ const bodySchema = z.object({
   activities: z.array(activityItemSchema).min(1).max(50),
 });
 
+// ─── Push notification (FCM) ───────────────────────────────
 async function sendPushNotification(
   fcmToken: string | null,
   childName: string,
@@ -89,7 +93,9 @@ async function sendPushNotification(
   }
 }
 
+// ─── Main handler ──────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  // API key auth
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey || apiKey !== process.env.MOBILE_API_KEY) {
     return NextResponse.json({ error: "Yetkisiz istek" }, { status: 401 });
@@ -109,6 +115,7 @@ export async function POST(req: NextRequest) {
 
   const { childId, activities } = parsed.data;
 
+  // Çocuk ve ebeveyn profili
   const child = await db.childProfile.findUnique({
     where: { id: childId },
     include: { parent: true },
@@ -129,6 +136,7 @@ export async function POST(req: NextRequest) {
       const platformKey = act.platform as Platform;
       const platformLabel = PLATFORM_LABELS[act.platform];
 
+      // ── Contact upsert ───────────────────────────────────
       let contact = null;
       let isNewContact = false;
 
@@ -164,11 +172,13 @@ export async function POST(req: NextRequest) {
               displayName: act.contactDisplayName ?? undefined,
             },
           });
+          // 24 saatin altında ilk görüşme → yeni sayılır
           isNewContact =
             now.getTime() - existing.firstSeenAt.getTime() < 24 * 60 * 60 * 1000;
         }
       }
 
+      // ── NLP analizi ──────────────────────────────────────
       let riskScore = 0;
       let alertCategory: RiskCategory | null = null;
       let explanation = "";
@@ -191,6 +201,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // ── Davranışsal örüntü tespiti ───────────────────────
       if (!alertCategory) {
         if (isNewContact && nightTime) {
           alertCategory = "STRANGER_CONTACT";
@@ -209,6 +220,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // ── SocialActivity kaydı ─────────────────────────────
       const savedActivity = await db.socialActivity.create({
         data: {
           childId,
@@ -224,6 +236,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      // ── Alert oluştur ────────────────────────────────────
       if (alertCategory && riskScore >= sensitivityLevel) {
         const alert = await db.alert.create({
           data: {
@@ -239,11 +252,13 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        // SocialActivity'yi alert ile bağla
         await db.socialActivity.update({
           where: { id: savedActivity.id },
           data: { alertId: alert.id },
         });
 
+        // Push notification (non-blocking)
         void sendPushNotification(
           child.parent.fcmToken,
           child.displayName,
@@ -258,6 +273,7 @@ export async function POST(req: NextRequest) {
       processedCount++;
     } catch (err) {
       console.error("[ACTIVITY_ITEM_ERROR]", err);
+      // Tek aktivite hatalandıysa diğerlerine devam et
     }
   }
 

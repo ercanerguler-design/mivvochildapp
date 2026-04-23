@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,9 +21,30 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const localePromise = getLocaleFromServerCookie();
+
   return (
-    <html lang="tr" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <RootLayoutInner localePromise={localePromise}>{children}</RootLayoutInner>
+  );
+}
+
+async function RootLayoutInner({
+  children,
+  localePromise,
+}: {
+  children: React.ReactNode;
+  localePromise: Promise<"tr" | "en">;
+}) {
+  const locale = await localePromise;
+
+  return (
+    <html lang={locale} className={`${inter.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col">
+        <div className="fixed right-4 top-4 z-50">
+          <LanguageSwitcher />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

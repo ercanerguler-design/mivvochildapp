@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   ShieldCheck,
   BellRing,
@@ -294,3 +294,4 @@ export default function HomePage() {
     </div>
   );
 }
+

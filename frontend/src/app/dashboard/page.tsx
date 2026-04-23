@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { t } from "@/lib/i18n";
+import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { redirect } from "next/navigation";
 import {
   ShieldCheck,
@@ -28,6 +30,9 @@ const categoryColors: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
+  const locale = await getLocaleFromServerCookie();
+  const text = t(locale);
+
   const session = await auth();
   if (!session?.user?.id) redirect("/giris");
 
@@ -58,25 +63,25 @@ export default async function DashboardPage() {
 
   const stats = [
     {
-      label: "Toplam Uyarı",
+      label: text.dashboard.stats.total,
       value: totalCount,
       icon: AlertTriangle,
       color: "bg-violet-100 text-violet-600",
     },
     {
-      label: "Bekleyen",
+      label: text.dashboard.stats.pending,
       value: pendingCount,
       icon: Clock,
       color: "bg-orange-100 text-orange-600",
     },
     {
-      label: "Çözüldü",
+      label: text.dashboard.stats.resolved,
       value: resolvedCount,
       icon: CheckCircle2,
       color: "bg-emerald-100 text-emerald-600",
     },
     {
-      label: "Takip Edilen Çocuk",
+      label: text.dashboard.stats.childCount,
       value: parent.children.length,
       icon: ShieldCheck,
       color: "bg-blue-100 text-blue-600",
@@ -87,10 +92,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">
-          Hoş geldiniz, {session.user.name ?? "Ebeveyn"} 👋
+          {text.dashboard.welcome}, {session.user.name ?? text.dashboard.parentDefaultName} 👋
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Çocuklarınızın dijital güvenlik durumu aşağıda özetlenmiştir.
+          {text.dashboard.summaryText}
         </p>
       </div>
 
@@ -115,16 +120,16 @@ export default async function DashboardPage() {
       {/* RECENT ALERTS */}
       <div className="bg-white rounded-2xl border border-gray-100">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Son Uyarılar</h3>
+          <h3 className="font-semibold text-gray-900">{text.dashboard.recentAlerts}</h3>
           <a href="/dashboard/uyarilar" className="text-sm text-violet-600 hover:underline">
-            Tümünü Gör
+            {text.dashboard.viewAll}
           </a>
         </div>
 
         {recentAlerts.length === 0 ? (
           <div className="py-16 text-center">
             <ShieldCheck className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">Henüz uyarı yok. Her şey yolunda!</p>
+            <p className="text-gray-500 text-sm">{text.dashboard.noAlerts}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -146,6 +151,7 @@ export default async function DashboardPage() {
                     <p className="text-xs text-gray-400 mt-0.5">
                       {child?.displayName} •{" "}
                       {new Date(alert.createdAt).toLocaleDateString("tr-TR", {
+                        ...(locale === "en" ? { weekday: undefined } : {}),
                         day: "numeric",
                         month: "long",
                         hour: "2-digit",
@@ -176,9 +182,9 @@ export default async function DashboardPage() {
       {/* CHILDREN */}
       <div className="bg-white rounded-2xl border border-gray-100">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Çocuklarım</h3>
+          <h3 className="font-semibold text-gray-900">{text.dashboard.children}</h3>
           <a href="/dashboard/cocuklar" className="text-sm text-violet-600 hover:underline">
-            Yönet
+            {text.dashboard.manage}
           </a>
         </div>
         <div className="divide-y divide-gray-50">
@@ -192,12 +198,12 @@ export default async function DashboardPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{child.displayName}</p>
                   <p className="text-xs text-gray-400">
-                    {child.isActive ? "Aktif koruma" : "Pasif"}
+                    {child.isActive ? text.dashboard.activeProtection : text.dashboard.passiveProtection}
                   </p>
                 </div>
                 {childPending > 0 && (
                   <span className="bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full">
-                    {childPending} bekleyen
+                    {childPending} {text.dashboard.pendingSuffix}
                   </span>
                 )}
                 <TrendingUp className="w-4 h-4 text-gray-300" />

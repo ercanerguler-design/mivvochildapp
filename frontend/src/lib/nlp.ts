@@ -1,6 +1,18 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY tanımlı değil");
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+
+  return openaiClient;
+}
 
 export type RiskCategory =
   | "BULLYING"
@@ -83,6 +95,8 @@ export async function analyzeText(
     contextLines.length > 0
       ? `Bağlam:\n${contextLines.join("\n")}\n\nMesaj: "${text.slice(0, 1000)}"`
       : `Şu metni analiz et: "${text.slice(0, 1000)}"`;
+
+  const openai = getOpenAIClient();
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
