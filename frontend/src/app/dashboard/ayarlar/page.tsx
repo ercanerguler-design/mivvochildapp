@@ -135,7 +135,7 @@ export default function SettingsPage() {
           Aciklama kismina ebeveyn ID&apos;nizi ve adinizi yazmanizi rica ederiz.
         </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
-          Kart odeme (Iyzico / VISA): Yakinda gelecek.
+          Kart odeme (Iyzico / VISA): Yakinda gelecek. Aylik abonelik bedeli 299 TL.
         </div>
       </div>
     </div>

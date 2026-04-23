@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { MivvoLogo } from "@/components/common/MivvoLogo";
 
 export default function LoginPage() {
   return (
@@ -9,8 +9,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-violet-600">
-            <ShieldCheck className="w-8 h-8" />
-            <span className="text-2xl font-extrabold text-gray-900">Mivvo</span>
+            <MivvoLogo size={34} textClassName="text-2xl" />
           </Link>
           <p className="text-gray-500 text-sm mt-2">Ebeveyn panelinize giriş yapın</p>
         </div>

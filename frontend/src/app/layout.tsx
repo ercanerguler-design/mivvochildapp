@@ -15,6 +15,11 @@ export const metadata: Metadata = {
   description:
     "Mivvo, yapay zeka destekli ebeveyn koruma uygulamasıdır. Çocuğunuzun mesajlarındaki zorbalık, tehdit ve riskli içerikleri anında tespit eder.",
   keywords: ["ebeveyn kontrolü", "dijital güvenlik", "çocuk koruma", "zorbalık önleme"],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

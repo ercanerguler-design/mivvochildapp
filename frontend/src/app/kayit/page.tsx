@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { MivvoLogo } from "@/components/common/MivvoLogo";
 
 export default function RegisterPage() {
   return (
@@ -8,8 +8,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <ShieldCheck className="w-8 h-8 text-violet-600" />
-            <span className="text-2xl font-extrabold text-gray-900">Mivvo</span>
+            <MivvoLogo size={34} textClassName="text-2xl" />
           </Link>
           <p className="text-gray-500 text-sm mt-2">Ücretsiz ebeveyn hesabı oluşturun</p>
         </div>

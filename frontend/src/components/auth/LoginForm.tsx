@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const oauthError = searchParams.get("error");
+  const oauthBlocked = oauthError === "OAuthSignin" || oauthError === "OAuthCallback" || oauthError === "AccessDenied";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +74,14 @@ export function LoginForm() {
       {error && (
         <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100">
           {error}
+        </div>
+      )}
+
+      {oauthBlocked && (
+        <div className="bg-amber-50 text-amber-800 text-sm px-4 py-3 rounded-xl border border-amber-200 space-y-1">
+          <p className="font-medium">Google ile giris su an engellendi.</p>
+          <p>Google Console tarafinda Authorized redirect URI olarak su adresi eklenmeli:</p>
+          <p className="font-mono break-all">https://mivvochildapp.vercel.app/api/auth/callback/google</p>
         </div>
       )}
 

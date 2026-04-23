@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { getLocaleFromClientCookie, t } from "@/lib/i18n";
+import { MivvoLogo } from "@/components/common/MivvoLogo";
 import {
   LayoutDashboard,
   Bell,
   Users,
   Settings,
-  ShieldCheck,
   LogOut,
   BarChart3,
   Smartphone,
@@ -32,8 +32,7 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-60 bg-white border-r border-gray-100 min-h-screen">
       <div className="flex items-center gap-2 px-6 h-16 border-b border-gray-100">
-        <ShieldCheck className="w-6 h-6 text-violet-600" />
-        <span className="font-bold text-gray-900 text-lg">{text.appName}</span>
+        <MivvoLogo size={26} textClassName="text-lg" />
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1">

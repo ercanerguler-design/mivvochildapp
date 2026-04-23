@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Plus, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { MivvoLogo } from "@/components/common/MivvoLogo";
 
 type Step = "profile" | "child" | "done";
 
@@ -65,8 +66,7 @@ export default function KurulumPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
-            <ShieldCheck className="w-8 h-8 text-violet-600" />
-            <span className="text-2xl font-extrabold text-gray-900">Mivvo</span>
+            <MivvoLogo size={34} textClassName="text-2xl" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">Kurulum Sihirbazı</h1>
           <p className="text-sm text-gray-500 mt-1">Birkaç adımda korumaya başlayın</p>

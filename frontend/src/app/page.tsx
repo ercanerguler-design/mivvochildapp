@@ -9,6 +9,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
+import { MivvoLogo } from "@/components/common/MivvoLogo";
 
 const content = {
   tr: {
@@ -24,12 +25,12 @@ const content = {
       "Mivvo, yapay zeka ile cocugunuzun mesajlarini analiz ederek zorbalik, tehdit, kufur ve riskli icerikleri aninda tespit eder.",
     tryFree: "Ucretsiz Deneyin",
     pricingTitle: "Fiyatlandirma",
-    pricingSub: "Ilk 7 analiz ucretsiz. Sonrasinda aylik abonelik gerekir.",
+    pricingSub: "Ilk 7 analiz ucretsiz. Sonrasinda aylik abonelik 299 TL'dir.",
     trialCardTitle: "Deneme Paketi",
     trialCardPrice: "Ilk 7 analiz ucretsiz",
     trialCardDesc: "Kurulum ve temel testler icin ideal.",
     paidCardTitle: "Aylik Abonelik",
-    paidCardPrice: "Abonelik ile sinirsiz izleme",
+    paidCardPrice: "299 TL / ay",
     paidCardDesc: "Surekli koruma, raporlar ve anlik bildirimler.",
     whyTitle: "Neden Mivvo?",
     howTitle: "Nasil Calisir?",
@@ -54,12 +55,12 @@ const content = {
       "Mivvo analyzes messages with AI to detect bullying, threats, profanity, and risky content in real time.",
     tryFree: "Try for Free",
     pricingTitle: "Pricing",
-    pricingSub: "First 7 analyses are free. Monthly subscription is required afterwards.",
+    pricingSub: "First 7 analyses are free. Then monthly subscription is 299 TRY.",
     trialCardTitle: "Trial Plan",
     trialCardPrice: "First 7 analyses free",
     trialCardDesc: "Great for setup and initial testing.",
     paidCardTitle: "Monthly Subscription",
-    paidCardPrice: "Unlimited monitoring with subscription",
+    paidCardPrice: "299 TRY / month",
     paidCardDesc: "Continuous protection, reports, and instant alerts.",
     whyTitle: "Why Mivvo?",
     howTitle: "How It Works",
@@ -146,8 +147,7 @@ export default async function HomePage() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-violet-600" />
-            <span className="text-xl font-bold text-gray-900">Mivvo</span>
+            <MivvoLogo size={30} textClassName="text-xl" />
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
             <a href="#ozellikler" className="hover:text-violet-600 transition-colors">{c.navFeatures}</a>
@@ -330,8 +330,7 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-violet-400" />
-              <span className="text-white font-bold">Mivvo</span>
+              <MivvoLogo size={22} textClassName="text-white" />
             </div>
             <div className="flex gap-6 text-sm">
               <Link href="/gizlilik" className="hover:text-white transition-colors">{c.legalPrivacy}</Link>

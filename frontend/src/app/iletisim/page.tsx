@@ -59,6 +59,11 @@ export default async function ContactPage() {
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
             {isEn ? "Card payment (Iyzico / VISA): Coming soon" : "Kart ödeme (Iyzico / VISA): Yakında"}
           </div>
+          <div className="mt-3 rounded-lg border border-violet-200 bg-violet-50 p-3 text-violet-800">
+            {isEn
+              ? "Monthly subscription fee: 299 TRY. To activate after trial, contact us via WhatsApp or email, then include Parent ID in bank transfer note."
+              : "Aylık abonelik bedeli: 299 TL. Deneme bitince WhatsApp veya e-posta ile başvurun, havale açıklamasına Parent ID yazın."}
+          </div>
         </div>
 
         <div className="mt-10">
