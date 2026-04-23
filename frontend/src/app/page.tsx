@@ -77,8 +77,9 @@ const content = {
 export default async function HomePage() {
   const locale = await getLocaleFromServerCookie();
   const c = content[locale];
-  const childAppUrl = process.env.NEXT_PUBLIC_CHILD_APP_URL ?? "https://example.com/mivvo-child.apk";
-  const parentAppUrl = process.env.NEXT_PUBLIC_PARENT_APP_URL ?? "https://example.com/mivvo-parent.apk";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mivvo.org";
+  const childAppUrl = `${siteUrl}/indir/cocuk`;
+  const parentAppUrl = `${siteUrl}/indir/ebeveyn`;
 
   const childQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(childAppUrl)}`;
   const parentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(parentAppUrl)}`;
