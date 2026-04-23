@@ -28,7 +28,23 @@ export async function GET(req: NextRequest) {
 
   const parentId = req.nextUrl.searchParams.get("parentId");
   if (!parentId) {
-    return NextResponse.json({ error: "parentId zorunludur" }, { status: 400 });
+    const parents = await db.parentProfile.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      include: {
+        user: { select: { name: true, email: true } },
+        children: { select: { id: true } },
+      },
+    });
+
+    return NextResponse.json({
+      parents: parents.map((parent) => ({
+        id: parent.id,
+        name: parent.user?.name ?? null,
+        email: parent.user?.email ?? null,
+        childCount: parent.children.length,
+      })),
+    });
   }
 
   const parsed = parentIdSchema.safeParse(parentId);
