@@ -79,12 +79,8 @@ export default async function HomePage() {
   const c = content[locale];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mivvo.org";
   const singleAppUrl = `${siteUrl}/indir`;
-  const childAppUrl = `${siteUrl}/indir/cocuk`;
-  const parentAppUrl = `${siteUrl}/indir/ebeveyn`;
 
   const singleQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(singleAppUrl)}`;
-  const childQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(childAppUrl)}`;
-  const parentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(parentAppUrl)}`;
 
   const features = [
     {
@@ -314,7 +310,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="mx-auto max-w-md">
             <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
               <h3 className="text-xl font-bold text-gray-900 mb-1">
                 {locale === "en" ? "Single QR (App Picker)" : "Tek QR (Uygulama Seçimi)"}
@@ -332,46 +328,6 @@ export default async function HomePage() {
                 className="mt-5 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
               >
                 {locale === "en" ? "Open App Picker" : "Uygulama Seçimine Git"}
-              </a>
-            </div>
-
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">
-                {locale === "en" ? "Child App" : "Çocuk Uygulaması"}
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                {locale === "en" ? "Install on the child's device" : "Çocuğun telefonuna yükleyin"}
-              </p>
-              <img
-                src={childQrUrl}
-                alt={locale === "en" ? "Child app QR code" : "Çocuk uygulaması QR kodu"}
-                className="mx-auto w-52 h-52 rounded-xl border border-gray-200 bg-white"
-              />
-              <a
-                href={childAppUrl}
-                className="mt-5 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
-              >
-                {locale === "en" ? "Open Download Link" : "İndirme Linkini Aç"}
-              </a>
-            </div>
-
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">
-                {locale === "en" ? "Parent App" : "Ebeveyn Uygulaması"}
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                {locale === "en" ? "Install on the parent's device" : "Ebeveyn telefonuna yükleyin"}
-              </p>
-              <img
-                src={parentQrUrl}
-                alt={locale === "en" ? "Parent app QR code" : "Ebeveyn uygulaması QR kodu"}
-                className="mx-auto w-52 h-52 rounded-xl border border-gray-200 bg-white"
-              />
-              <a
-                href={parentAppUrl}
-                className="mt-5 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
-              >
-                {locale === "en" ? "Open Download Link" : "İndirme Linkini Aç"}
               </a>
             </div>
           </div>
