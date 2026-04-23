@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────────
+// NextAuth.js v5 required tables
+// ──────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ──────────────────────────────────────────
+// Mivvo App Models
+// ──────────────────────────────────────────
+
+enum UserRole {
+  PARENT
+  CHILD
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   @db.Text
+  role          UserRole  @default(PARENT)
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  // Mivvo ilişkileri
+  parentProfile ParentProfile?
+  childProfile  ChildProfile?
+}
+
+model ParentProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  fcmToken         String?  // Firebase push notification token
+  notifyEmail      Boolean  @default(true)
+  notifyPush       Boolean  @default(true)
+  sensitivityLevel Int      @default(70) // 0-100 arası risk skoru eşiği
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  children ChildProfile[]
+}
+
+model ChildProfile {
+  id          String    @id @default(cuid())
+  userId      String?   @unique
+  parentId    String
+  displayName String
+  birthDate   DateTime?
+  fcmToken    String?
+  deviceId    String?
+  isActive    Boolean   @default(true)
+  consentAt   DateTime  @default(now()) // KVKK - rıza tarihi
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parent           ParentProfile    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  alerts           Alert[]
+  contacts         Contact[]
+  socialActivities SocialActivity[]
+}
+
+enum RiskCategory {
+  BULLYING         // Zorbalık
+  VIOLENCE         // Şiddet dili
+  SEXUAL_RISK      // Cinsel riskli içerik
+  THREAT           // Tehdit
+  PROFANITY        // Küfür / hakaret
+  EXTREME_ANGER    // Aşırı öfke
+  STRANGER_CONTACT // Bilinmeyen kişi / yoğun mesajlaşma riski
+}
+
+enum AlertStatus {
+  PENDING   // Henüz ebeveyn görmedi
+  SEEN      // Ebeveyn gördü
+  RESOLVED  // Çözüldü
+  DISMISSED // Görmezden gelindi
+}
+
+model Alert {
+  id             String       @id @default(cuid())
+  childId        String
+  category       RiskCategory
+  riskScore      Int          // 0-100
+  originalText   String       @db.Text  // KVKK: sadece riskli kısım
+  context        String?      @db.Text  // Bağlam (opsiyonel)
+  sourceApp      String?      // WhatsApp, Instagram vb.
+  platform       Platform?    // Hangi sosyal medya platformu
+  isNightTime    Boolean      @default(false) // 23:00-06:00 arası tespit
+  status         AlertStatus  @default(PENDING)
+  aiExplanation  String?      @db.Text  // GPT-4o'nun açıklaması
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  child              ChildProfile        @relation(fields: [childId], references: [id], onDelete: Cascade)
+  parentNotification ParentNotification?
+  socialActivity     SocialActivity?
+}
+
+model ParentNotification {
+  id        String   @id @default(cuid())
+  alertId   String   @unique
+  sentAt    DateTime @default(now())
+  channel   String   // "push" | "email"
+  delivered Boolean  @default(false)
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+}
+
+// KVKK - Veri silme talepleri
+model DataDeletionRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  requestedAt DateTime @default(now())
+  processedAt DateTime?
+  status      String   @default("PENDING") // PENDING | DONE
+}
+
+// ──────────────────────────────────────────
+// Sosyal Medya İzleme
+// ──────────────────────────────────────────
+
+enum Platform {
+  INSTAGRAM
+  SNAPCHAT
+  TIKTOK
+  WHATSAPP
+  TELEGRAM
+  SMS
+  OTHER
+}
+
+model Contact {
+  id           String   @id @default(cuid())
+  childId      String
+  platform     Platform
+  username     String
+  displayName  String?
+  isKnown      Boolean  @default(false) // ebeveyn onayladıysa true
+  firstSeenAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+  messageCount Int      @default(0)
+
+  child            ChildProfile     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  socialActivities SocialActivity[]
+
+  @@unique([childId, platform, username])
+  @@index([childId, isKnown])
+}
+
+model SocialActivity {
+  id              String    @id @default(cuid())
+  childId         String
+  contactId       String?
+  platform        Platform
+  activityType    String    // MESSAGE, STORY_REPLY, COMMENT, NEW_FOLLOWER, CALL
+  contactUsername String?
+  isNewContact    Boolean   @default(false)
+  isNightTime     Boolean   @default(false) // 23:00-06:00 arası
+  messageContent  String?   @db.Text        // KVKK: minimum veri
+  riskScore       Int?
+  analyzedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  alertId         String?   @unique
+
+  child   ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  contact Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  alert   Alert?       @relation(fields: [alertId], references: [id], onDelete: SetNull)
+
+  @@index([childId, createdAt])
+  @@index([childId, platform])
+}
