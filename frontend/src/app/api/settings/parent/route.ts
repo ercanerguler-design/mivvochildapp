@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getParentBillingStatus } from "@/lib/subscription";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -19,6 +20,7 @@ export async function GET() {
   const profile = await db.parentProfile.findUnique({
     where: { userId: session.user.id },
     select: {
+      id: true,
       sensitivityLevel: true,
       notifyPush: true,
       notifyEmail: true,
@@ -30,7 +32,12 @@ export async function GET() {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  return NextResponse.json(profile);
+  const billing = await getParentBillingStatus(profile.id);
+
+  return NextResponse.json({
+    ...profile,
+    billing,
+  });
 }
 
 export async function PATCH(req: NextRequest) {

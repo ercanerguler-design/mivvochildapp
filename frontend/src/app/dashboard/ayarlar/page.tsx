@@ -3,10 +3,21 @@
 import { useEffect, useState } from "react";
 
 type SettingsState = {
+  id: string;
   sensitivityLevel: number;
   notifyPush: boolean;
   notifyEmail: boolean;
   fcmToken: string | null;
+  billing?: {
+    trial: {
+      limit: number;
+      used: number;
+      remaining: number;
+      exceeded: boolean;
+    };
+    credits: number;
+    childAppFree: boolean;
+  };
 };
 
 export default function SettingsPage() {
@@ -33,15 +44,15 @@ export default function SettingsPage() {
 
     setSaving(false);
     if (!res.ok) {
-      setMessage("Could not save settings.");
+      setMessage("Ayarlar kaydedilemedi.");
       return;
     }
 
-    setMessage("Settings saved.");
+    setMessage("Ayarlar kaydedildi.");
   }
 
   if (!data) {
-    return <div className="text-sm text-gray-500">Loading settings...</div>;
+    return <div className="text-sm text-gray-500">Ayarlar yukleniyor...</div>;
   }
 
   return (
@@ -49,8 +60,21 @@ export default function SettingsPage() {
       <h2 className="text-2xl font-bold text-gray-900">Ayarlar</h2>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
+        <div className="rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-gray-700">
+          <p className="font-semibold text-violet-700">Ebeveyn ID: {data.id}</p>
+          <p className="mt-1">Odeme aciklamasina ebeveyn ID ve ad-soyad yazilmalidir.</p>
+        </div>
+
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 space-y-1">
+          <p className="font-semibold text-gray-900">Kullanim Durumu</p>
+          <p>Ucretsiz analiz: {data.billing?.trial.used ?? 0} / {data.billing?.trial.limit ?? 7}</p>
+          <p>Kalan ucretsiz hak: {data.billing?.trial.remaining ?? 0}</p>
+          <p>Mevcut kredi: {data.billing?.credits ?? 0}</p>
+          <p>Cocuk uygulamasi: {data.billing?.childAppFree ? "Ucretsiz" : "Ucretli"}</p>
+        </div>
+
         <div>
-          <label className="text-sm font-medium text-gray-700">Risk threshold: {data.sensitivityLevel}</label>
+          <label className="text-sm font-medium text-gray-700">Risk esigi: {data.sensitivityLevel}</label>
           <input
             type="range"
             min={0}
@@ -67,7 +91,7 @@ export default function SettingsPage() {
             checked={data.notifyPush}
             onChange={(e) => setData({ ...data, notifyPush: e.target.checked })}
           />
-          Push notifications
+          Push bildirimleri
         </label>
 
         <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -76,7 +100,7 @@ export default function SettingsPage() {
             checked={data.notifyEmail}
             onChange={(e) => setData({ ...data, notifyEmail: e.target.checked })}
           />
-          Email notifications
+          E-posta bildirimleri
         </label>
 
         <div>
@@ -94,10 +118,25 @@ export default function SettingsPage() {
           disabled={saving}
           className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? "Kaydediliyor..." : "Kaydet"}
         </button>
 
         {message && <p className="text-sm text-gray-600">{message}</p>}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 text-sm text-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900">Banka / Havale Bilgileri</h3>
+        <p><span className="font-medium">Sirket Adi:</span> SCE Innovation Ltd.Sti</p>
+        <p><span className="font-medium">Banka:</span> Turkiye Garanti Bankasi</p>
+        <p><span className="font-medium">IBAN:</span> TR48 0006 2000 7740 0006 2930 33</p>
+        <p><span className="font-medium">Hesap No:</span> 774-6293033</p>
+        <p><span className="font-medium">Sube:</span> Etlik Subesi</p>
+        <p className="text-violet-700 font-medium">
+          Aciklama kismina ebeveyn ID&apos;nizi ve adinizi yazmanizi rica ederiz.
+        </p>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
+          Kart odeme (Iyzico / VISA): Yakinda gelecek.
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeText } from "@/lib/nlp";
 import { db } from "@/lib/db";
-import { getParentTrialUsage } from "@/lib/subscription";
+import {
+  calculateBillableUnits,
+  consumeParentCredits,
+  getParentBillingStatus,
+} from "@/lib/subscription";
 import { z } from "zod";
 
 const analyzeSchema = z.object({
@@ -41,13 +45,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const usageBefore = await getParentTrialUsage(child.parentId);
-    if (usageBefore.exceeded) {
+    const billingBefore = await getParentBillingStatus(child.parentId);
+    const billableUnits = calculateBillableUnits(billingBefore.trial.used, 1);
+
+    if (billableUnits > billingBefore.credits) {
       return NextResponse.json(
         {
-          error: "Ucretsiz deneme limiti doldu. Devam etmek icin aylik abonelige gecin.",
+          error: "Ucretsiz deneme limiti doldu. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
           code: "TRIAL_LIMIT_EXCEEDED",
-          trial: usageBefore,
+          billing: {
+            ...billingBefore,
+            requiredCredits: billableUnits,
+          },
         },
         { status: 402 }
       );
@@ -66,6 +75,14 @@ export async function POST(req: NextRequest) {
         analyzedAt: new Date(),
       },
     });
+
+    if (billableUnits > 0) {
+      await consumeParentCredits({
+        parentId: child.parentId,
+        amount: billableUnits,
+        reason: "Analyze API usage",
+      });
+    }
 
     // Risk skoru eşiği aşıyorsa alert oluştur
     if (
@@ -88,13 +105,13 @@ export async function POST(req: NextRequest) {
       void sendPushNotification(child.parent, alert.id, result);
     }
 
-    const usageAfter = await getParentTrialUsage(child.parentId);
+    const billingAfter = await getParentBillingStatus(child.parentId);
 
     return NextResponse.json({
       analyzed: true,
       isRisky: result.isRisky,
       riskScore: result.riskScore,
-      trial: usageAfter,
+      billing: billingAfter,
     });
   } catch (error) {
     console.error("[ANALYZE_ERROR]", error);

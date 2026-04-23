@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { analyzeText } from "@/lib/nlp";
-import { getParentTrialUsage } from "@/lib/subscription";
+import {
+  calculateBillableUnits,
+  consumeParentCredits,
+  getParentBillingStatus,
+} from "@/lib/subscription";
 import { z } from "zod";
 
 type Platform = "INSTAGRAM" | "SNAPCHAT" | "TIKTOK" | "WHATSAPP" | "TELEGRAM" | "SMS" | "OTHER";
@@ -130,14 +134,19 @@ export async function POST(req: NextRequest) {
 
   const sensitivityLevel = child.parent.sensitivityLevel;
   const analyzableCount = activities.filter((item) => Boolean(item.content && item.content.trim().length > 3)).length;
+  const billingBefore = await getParentBillingStatus(child.parentId);
+  const potentialBillableUnits = calculateBillableUnits(billingBefore.trial.used, analyzableCount);
+
   if (analyzableCount > 0) {
-    const usage = await getParentTrialUsage(child.parentId);
-    if (usage.used + analyzableCount > usage.limit) {
+    if (potentialBillableUnits > billingBefore.credits) {
       return NextResponse.json(
         {
-          error: "Ucretsiz deneme limiti doldu. Devam etmek icin aylik abonelige gecin.",
+          error: "Ucretsiz deneme limiti doldu. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
           code: "TRIAL_LIMIT_EXCEEDED",
-          trial: usage,
+          billing: {
+            ...billingBefore,
+            requiredCredits: potentialBillableUnits,
+          },
         },
         { status: 402 }
       );
@@ -146,6 +155,7 @@ export async function POST(req: NextRequest) {
 
   let processedCount = 0;
   let alertCount = 0;
+  let analyzedCount = 0;
 
   for (const act of activities) {
     try {
@@ -209,6 +219,8 @@ export async function POST(req: NextRequest) {
           isNightTime: nightTime,
           contactUsername: act.contactUsername,
         });
+
+        analyzedCount++;
 
         riskScore = analysis.riskScore;
         explanation = analysis.explanation;
@@ -295,11 +307,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const usageAfter = await getParentTrialUsage(child.parentId);
+  const billableUnits = calculateBillableUnits(billingBefore.trial.used, analyzedCount);
+  if (billableUnits > 0) {
+    await consumeParentCredits({
+      parentId: child.parentId,
+      amount: billableUnits,
+      reason: "Activity API usage",
+    });
+  }
+
+  const billingAfter = await getParentBillingStatus(child.parentId);
 
   return NextResponse.json({
     processed: processedCount,
     alerts: alertCount,
-    trial: usageAfter,
+    billing: billingAfter,
   });
 }
