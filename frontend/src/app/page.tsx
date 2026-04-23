@@ -78,9 +78,11 @@ export default async function HomePage() {
   const locale = await getLocaleFromServerCookie();
   const c = content[locale];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mivvo.org";
+  const singleAppUrl = `${siteUrl}/indir`;
   const childAppUrl = `${siteUrl}/indir/cocuk`;
   const parentAppUrl = `${siteUrl}/indir/ebeveyn`;
 
+  const singleQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(singleAppUrl)}`;
   const childQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(childAppUrl)}`;
   const parentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(parentAppUrl)}`;
 
@@ -312,7 +314,27 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
+              <h3 className="text-xl font-bold text-gray-900 mb-1">
+                {locale === "en" ? "Single QR (App Picker)" : "Tek QR (Uygulama Seçimi)"}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {locale === "en" ? "Scan once, choose parent or child app" : "Tek kez okut, ebeveyn veya çocuk uygulamasını seç"}
+              </p>
+              <img
+                src={singleQrUrl}
+                alt={locale === "en" ? "Single app picker QR code" : "Tek uygulama seçimi QR kodu"}
+                className="mx-auto w-52 h-52 rounded-xl border border-gray-200 bg-white"
+              />
+              <a
+                href={singleAppUrl}
+                className="mt-5 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
+              >
+                {locale === "en" ? "Open App Picker" : "Uygulama Seçimine Git"}
+              </a>
+            </div>
+
             <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
               <h3 className="text-xl font-bold text-gray-900 mb-1">
                 {locale === "en" ? "Child App" : "Çocuk Uygulaması"}
