@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 
 const content = {
@@ -28,10 +27,6 @@ export default async function DownloadHubPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-violet-50 to-white px-4 py-16">
       <div className="mx-auto max-w-4xl rounded-2xl border border-violet-100 bg-white p-8 shadow-sm">
-        <div className="flex items-center justify-end">
-          <LanguageSwitcher />
-        </div>
-
         <h1 className="text-3xl font-extrabold text-gray-900">{c.title}</h1>
         <p className="mt-3 text-gray-600">{c.desc}</p>
 
