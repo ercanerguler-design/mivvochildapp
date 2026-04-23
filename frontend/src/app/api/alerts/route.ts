@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") ?? undefined;
   const childId = searchParams.get("childId") ?? undefined;
 
-  const childIds = parent.children.map((c) => c.id);
+  const childIds = parent.children.map((c: { id: string }) => c.id);
 
   const where = {
     childId: childId && childIds.includes(childId) ? childId : { in: childIds },
@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
   }
 
-  const childIds = parent.children.map((c) => c.id);
+  const childIds = parent.children.map((c: { id: string }) => c.id);
   const alert = await db.alert.findFirst({
     where: { id: parsed.data.alertId, childId: { in: childIds } },
   });
