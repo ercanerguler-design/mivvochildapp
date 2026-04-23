@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeText } from "@/lib/nlp";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { getParentTrialUsage } from "@/lib/subscription";
 import { z } from "zod";
 
 const analyzeSchema = z.object({
@@ -41,8 +41,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const usageBefore = await getParentTrialUsage(child.parentId);
+    if (usageBefore.exceeded) {
+      return NextResponse.json(
+        {
+          error: "Ucretsiz deneme limiti doldu. Devam etmek icin aylik abonelige gecin.",
+          code: "TRIAL_LIMIT_EXCEEDED",
+          trial: usageBefore,
+        },
+        { status: 402 }
+      );
+    }
+
     // NLP analizi
     const result = await analyzeText(text);
+
+    await db.socialActivity.create({
+      data: {
+        childId: child.id,
+        platform: "OTHER",
+        activityType: "MANUAL_TEST",
+        messageContent: text.slice(0, 300),
+        riskScore: result.riskScore,
+        analyzedAt: new Date(),
+      },
+    });
 
     // Risk skoru eşiği aşıyorsa alert oluştur
     if (
@@ -65,10 +88,13 @@ export async function POST(req: NextRequest) {
       void sendPushNotification(child.parent, alert.id, result);
     }
 
+    const usageAfter = await getParentTrialUsage(child.parentId);
+
     return NextResponse.json({
       analyzed: true,
       isRisky: result.isRisky,
       riskScore: result.riskScore,
+      trial: usageAfter,
     });
   } catch (error) {
     console.error("[ANALYZE_ERROR]", error);

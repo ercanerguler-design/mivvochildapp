@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { WhatsAppBubble } from "@/components/common/WhatsAppBubble";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import "./globals.css";
 
@@ -43,6 +44,7 @@ async function RootLayoutInner({
         <div className="fixed right-4 top-4 z-50">
           <LanguageSwitcher />
         </div>
+        <WhatsAppBubble />
         {children}
       </body>
     </html>
