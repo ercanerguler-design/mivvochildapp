@@ -41,7 +41,7 @@ async function RootLayoutInner({
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <div className="fixed right-4 top-4 z-50">
+        <div className="fixed right-4 top-20 z-[80] sm:top-4">
           <LanguageSwitcher />
         </div>
         <WhatsAppBubble />
