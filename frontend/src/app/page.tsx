@@ -13,34 +13,34 @@ import { MivvoLogo } from "@/components/common/MivvoLogo";
 
 const content = {
   tr: {
-    navFeatures: "Ozellikler",
-    navHow: "Nasil Calisir?",
+    navFeatures: "Özellikler",
+    navHow: "Nasıl Çalışır?",
     navKvkk: "KVKK",
-    signIn: "Giris Yap",
-    freeStart: "Ucretsiz Basla",
-    badge: "18 yas alti icin ebeveyn koruma sistemi",
-    heroTitle1: "Cocugunuzu Dijital",
+    signIn: "Giriş Yap",
+    freeStart: "Ücretsiz Başla",
+    badge: "18 yaş altı için ebeveyn koruma sistemi",
+    heroTitle1: "Çocuğunuzu Dijital",
     heroTitle2: "Tehlikelerden Koruyun",
     heroDesc:
-      "Mivvo, yapay zeka ile cocugunuzun mesajlarini analiz ederek zorbalik, tehdit, kufur ve riskli icerikleri aninda tespit eder.",
-    tryFree: "Ucretsiz Deneyin",
-    pricingTitle: "Fiyatlandirma",
-    pricingSub: "Ilk 7 analiz ucretsiz. Sonrasinda aylik abonelik 299 TL'dir.",
+      "Mivvo, yapay zeka ile çocuğunuzun mesajlarını analiz ederek zorbalık, tehdit, küfür ve riskli içerikleri anında tespit eder.",
+    tryFree: "Ücretsiz Deneyin",
+    pricingTitle: "Fiyatlandırma",
+    pricingSub: "İlk 7 analiz ücretsiz. Sonrasında aylık abonelik 299 TL'dir.",
     trialCardTitle: "Deneme Paketi",
-    trialCardPrice: "Ilk 7 analiz ucretsiz",
-    trialCardDesc: "Kurulum ve temel testler icin ideal.",
-    paidCardTitle: "Aylik Abonelik",
+    trialCardPrice: "İlk 7 analiz ücretsiz",
+    trialCardDesc: "Kurulum ve temel testler için ideal.",
+    paidCardTitle: "Aylık Abonelik",
     paidCardPrice: "299 TL / ay",
-    paidCardDesc: "Surekli koruma, raporlar ve anlik bildirimler.",
+    paidCardDesc: "Sürekli koruma, raporlar ve anlık bildirimler.",
     whyTitle: "Neden Mivvo?",
-    howTitle: "Nasil Calisir?",
+    howTitle: "Nasıl Çalışır?",
     kvkkTitle: "KVKK'ya Tam Uyumlu",
-    ctaTitle: "Cocugunuzu Bugun Korumaya Baslayin",
-    ctaDesc: "Ucretsiz hesap olusturun, kurulumunuzu dakikalar icinde tamamlayin.",
-    legalPrivacy: "Gizlilik Politikasi",
-    legalKvkk: "KVKK Aydinlatma",
-    legalContact: "Iletisim",
-    allRights: "Tum haklari saklidir.",
+    ctaTitle: "Çocuğunuzu Bugün Korumaya Başlayın",
+    ctaDesc: "Ücretsiz hesap oluşturun, kurulumunuzu dakikalar içinde tamamlayın.",
+    legalPrivacy: "Gizlilik Politikası",
+    legalKvkk: "KVKK Aydınlatma",
+    legalContact: "İletişim",
+    allRights: "Tüm hakları saklıdır.",
   },
   en: {
     navFeatures: "Features",
@@ -77,6 +77,11 @@ const content = {
 export default async function HomePage() {
   const locale = await getLocaleFromServerCookie();
   const c = content[locale];
+  const childAppUrl = process.env.NEXT_PUBLIC_CHILD_APP_URL ?? "https://example.com/mivvo-child.apk";
+  const parentAppUrl = process.env.NEXT_PUBLIC_PARENT_APP_URL ?? "https://example.com/mivvo-parent.apk";
+
+  const childQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(childAppUrl)}`;
+  const parentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(parentAppUrl)}`;
 
   const features = [
     {
@@ -85,16 +90,16 @@ export default async function HomePage() {
       desc:
         locale === "en"
           ? "GPT-based Turkish content analysis for bullying, threats, and risky language."
-          : "GPT destekli Turkce icerik analizi. Kufur, zorbalik, tehdit ve riskli ifadeleri tespit eder.",
+          : "GPT destekli Türkçe içerik analizi. Küfür, zorbalık, tehdit ve riskli ifadeleri tespit eder.",
       color: "bg-violet-100 text-violet-600",
     },
     {
       icon: BellRing,
-      title: locale === "en" ? "Instant Alerts" : "Aninda Bildirim",
+      title: locale === "en" ? "Instant Alerts" : "Anında Bildirim",
       desc:
         locale === "en"
           ? "Parents receive push and email notifications when risky content is detected."
-          : "Riskli icerik tespit edildiginde ebeveyni push bildirim ve e-posta ile aninda uyarir.",
+          : "Riskli içerik tespit edildiğinde ebeveyni push bildirim ve e-posta ile anında uyarır.",
       color: "bg-orange-100 text-orange-600",
     },
     {
@@ -103,16 +108,16 @@ export default async function HomePage() {
       desc:
         locale === "en"
           ? "Only risk-related text fragments are stored for data minimization."
-          : "Yalnizca riskli kisimlar islenir, tum konusmalar saklanmaz.",
+          : "Yalnızca riskli kısımlar işlenir, tüm konuşmalar saklanmaz.",
       color: "bg-emerald-100 text-emerald-600",
     },
     {
       icon: Lock,
-      title: locale === "en" ? "Transparent Protection" : "Seffaf Koruma",
+      title: locale === "en" ? "Transparent Protection" : "Şeffaf Koruma",
       desc:
         locale === "en"
           ? "Not hidden surveillance, but safe and transparent parental guidance."
-          : "Gizli gozetim degil, guvenli ebeveynlik.",
+          : "Gizli gözetim değil, güvenli ebeveynlik.",
       color: "bg-blue-100 text-blue-600",
     },
     {
@@ -121,24 +126,24 @@ export default async function HomePage() {
       desc:
         locale === "en"
           ? "Bullying, violence, sexual risk, threat, profanity, and extreme anger."
-          : "Zorbalik, siddet, cinsel risk, tehdit, kufur ve asiri ofke kategorileri takip edilir.",
+          : "Zorbalık, şiddet, cinsel risk, tehdit, küfür ve aşırı öfke kategorileri takip edilir.",
       color: "bg-rose-100 text-rose-600",
     },
     {
       icon: BarChart3,
-      title: locale === "en" ? "Detailed Reports" : "Detayli Raporlar",
+      title: locale === "en" ? "Detailed Reports" : "Detaylı Raporlar",
       desc:
         locale === "en"
           ? "Weekly and monthly trends for complete digital safety visibility."
-          : "Haftalik ve aylik trend raporlari ile dijital ortami butunsel gorebilirsiniz.",
+          : "Haftalık ve aylık trend raporları ile dijital ortamı bütünsel görebilirsiniz.",
       color: "bg-amber-100 text-amber-600",
     },
   ];
 
   const stats = [
-    { value: "18+", label: locale === "en" ? "Family Safety Focus" : "Aile Guvenligi Odagi" },
-    { value: "%94", label: locale === "en" ? "Detection Accuracy" : "Tespit Dogrulugu" },
-    { value: "<2s", label: locale === "en" ? "Avg. Analysis Time" : "Ortalama Analiz Suresi" },
+    { value: "18+", label: locale === "en" ? "Family Safety Focus" : "Aile Güvenliği Odağı" },
+    { value: "%94", label: locale === "en" ? "Detection Accuracy" : "Tespit Doğruluğu" },
+    { value: "<2s", label: locale === "en" ? "Avg. Analysis Time" : "Ortalama Analiz Süresi" },
     { value: "KVKK", label: locale === "en" ? "Compliant" : "Uyumlu" },
   ];
 
@@ -267,18 +272,18 @@ export default async function HomePage() {
             {[
               {
                 step: "1",
-                title: locale === "en" ? "Install the App" : "Uygulamayi Yukleyin",
-                desc: locale === "en" ? "Install Mivvo on parent and child devices with explicit consent." : "Ebeveyn ve cocuk telefonlarina Mivvo'yu yukleyin. Her iki tarafin onayi alinir.",
+                title: locale === "en" ? "Install the App" : "Uygulamayı Yükleyin",
+                desc: locale === "en" ? "Install Mivvo on parent and child devices with explicit consent." : "Ebeveyn ve çocuk telefonlarına Mivvo'yu yükleyin. Her iki tarafın onayı alınır.",
               },
               {
                 step: "2",
                 title: locale === "en" ? "AI Analyzes" : "Yapay Zeka Analiz Eder",
-                desc: locale === "en" ? "Messages are analyzed in the background and only risky fragments are processed." : "Mesajlar arka planda analiz edilir. Sadece riskli icerik islenir.",
+                desc: locale === "en" ? "Messages are analyzed in the background and only risky fragments are processed." : "Mesajlar arka planda analiz edilir. Sadece riskli içerik işlenir.",
               },
               {
                 step: "3",
-                title: locale === "en" ? "Get Instant Alerts" : "Aninda Haberdar Olun",
-                desc: locale === "en" ? "When risk is detected, you receive instant notifications and dashboard details." : "Risk tespit edildiginde anlik bildirim gelir. Dashboard'dan detaylari gorebilirsiniz.",
+                title: locale === "en" ? "Get Instant Alerts" : "Anında Haberdar Olun",
+                desc: locale === "en" ? "When risk is detected, you receive instant notifications and dashboard details." : "Risk tespit edildiğinde anlık bildirim gelir. Dashboard'dan detayları görebilirsiniz.",
               },
             ].map((item) => (
               <div key={item.step} className="bg-white rounded-2xl p-6 shadow-sm text-center">
@@ -289,6 +294,63 @@ export default async function HomePage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="indir" className="py-24 bg-white border-t border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+              {locale === "en" ? "Install Apps by Scanning QR" : "QR Okutarak Uygulamayı İndirin"}
+            </h2>
+            <p className="text-gray-500 max-w-3xl mx-auto">
+              {locale === "en"
+                ? "Scan the QR with your phone camera and install instantly. Separate links are provided for child and parent apps."
+                : "Telefon kamerası ile QR kodu okutun, uygulama indirme sayfasına anında gidin. Çocuk ve ebeveyn uygulamaları için ayrı QR kodlar hazır."}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
+              <h3 className="text-xl font-bold text-gray-900 mb-1">
+                {locale === "en" ? "Child App" : "Çocuk Uygulaması"}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {locale === "en" ? "Install on the child's device" : "Çocuğun telefonuna yükleyin"}
+              </p>
+              <img
+                src={childQrUrl}
+                alt={locale === "en" ? "Child app QR code" : "Çocuk uygulaması QR kodu"}
+                className="mx-auto w-52 h-52 rounded-xl border border-gray-200 bg-white"
+              />
+              <a
+                href={childAppUrl}
+                className="mt-5 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
+              >
+                {locale === "en" ? "Open Download Link" : "İndirme Linkini Aç"}
+              </a>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
+              <h3 className="text-xl font-bold text-gray-900 mb-1">
+                {locale === "en" ? "Parent App" : "Ebeveyn Uygulaması"}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {locale === "en" ? "Install on the parent's device" : "Ebeveyn telefonuna yükleyin"}
+              </p>
+              <img
+                src={parentQrUrl}
+                alt={locale === "en" ? "Parent app QR code" : "Ebeveyn uygulaması QR kodu"}
+                className="mx-auto w-52 h-52 rounded-xl border border-gray-200 bg-white"
+              />
+              <a
+                href={parentAppUrl}
+                className="mt-5 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
+              >
+                {locale === "en" ? "Open Download Link" : "İndirme Linkini Aç"}
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -304,7 +366,7 @@ export default async function HomePage() {
           <p className="text-gray-500 leading-relaxed mb-8">
             {locale === "en"
               ? "Under Turkish Data Protection Law No. 6698, explicit consent is obtained and only minimum required data is processed."
-              : "6698 sayili Kisisel Verilerin Korunmasi Kanunu kapsaminda acik riza alinir, veri minimizasyonu saglanir."}
+              : "6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında açık rıza alınır, veri minimizasyonu sağlanır."}
           </p>
         </div>
       </section>
@@ -344,4 +406,5 @@ export default async function HomePage() {
     </div>
   );
 }
+
 

@@ -6,6 +6,8 @@ import {
   consumeParentCredits,
   getParentBillingStatus,
 } from "@/lib/subscription";
+import { sendRiskNotificationWithRetry } from "@/lib/notifications";
+import { sendWhatsAppFallbackIfEnabled } from "@/lib/whatsapp";
 import { z } from "zod";
 
 const analyzeSchema = z.object({
@@ -13,6 +15,15 @@ const analyzeSchema = z.object({
   childId: z.string().cuid(),
   sourceApp: z.string().max(50).optional(),
 });
+
+function isUnder18(birthDate: Date) {
+  const today = new Date();
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const beforeBirthday =
+    today.getMonth() < birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
+  return beforeBirthday ? age - 1 < 18 : age < 18;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,12 +47,42 @@ export async function POST(req: NextRequest) {
     // Çocuk profilini doğrula
     const child = await db.childProfile.findUnique({
       where: { id: childId },
-      include: { parent: true },
+      include: {
+        parent: {
+          include: {
+            user: {
+              select: {
+                phone: true,
+              },
+            },
+          },
+        },
+      },
     });
     if (!child || !child.isActive) {
       return NextResponse.json(
         { error: "Çocuk profili bulunamadı" },
         { status: 404 }
+      );
+    }
+
+    if (!child.birthDate) {
+      return NextResponse.json(
+        {
+          error: "Cocuk dogum tarihi eksik. Admin panelinden zorunlu tamamlama yapilmalidir.",
+          code: "BIRTH_DATE_REQUIRED",
+        },
+        { status: 409 }
+      );
+    }
+
+    if (!isUnder18(child.birthDate)) {
+      return NextResponse.json(
+        {
+          error: "Bu profil 18 yas ve uzeri oldugu icin analiz kapatildi.",
+          code: "AGE_GATE_BLOCKED",
+        },
+        { status: 403 }
       );
     }
 
@@ -102,7 +143,28 @@ export async function POST(req: NextRequest) {
       });
 
       // Push notification job (Firebase FCM) - async, beklemiyoruz
-      void sendPushNotification(child.parent, alert.id, result);
+      void sendRiskNotificationWithRetry({
+        parent: { fcmToken: child.parent.fcmToken },
+        alertId: alert.id,
+        title: "⚠️ Mivvo - Riskli İçerik Tespit Edildi",
+        body: `Çocuğunuzun mesajında ${result.categories[0]} içeriği tespit edildi`,
+        data: {
+          alertId: alert.id,
+          riskScore: String(result.riskScore),
+          category: result.categories[0],
+          deepLink: `mivvoparent://alerts/${alert.id}`,
+        },
+      });
+
+      if (result.riskScore >= 85 && child.parent.user?.phone) {
+        void sendWhatsAppFallbackIfEnabled({
+          toPhone: child.parent.user.phone,
+          childName: child.displayName,
+          category: result.categories[0],
+          riskScore: result.riskScore,
+          alertId: alert.id,
+        });
+      }
     }
 
     const billingAfter = await getParentBillingStatus(child.parentId);
@@ -120,62 +182,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-async function sendPushNotification(
-  parent: { fcmToken: string | null },
-  alertId: string,
-  result: { categories: string[]; riskScore: number }
-) {
-  if (!parent.fcmToken) return;
-
-  try {
-    const fcmUrl = "https://fcm.googleapis.com/v1/projects/" +
-      process.env.FIREBASE_PROJECT_ID +
-      "/messages:send";
-
-    const accessToken = await getFirebaseAccessToken();
-
-    await fetch(fcmUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: {
-          token: parent.fcmToken,
-          notification: {
-            title: "⚠️ Mivvo - Riskli İçerik Tespit Edildi",
-            body: `Çocuğunuzun mesajında ${result.categories[0]} içeriği tespit edildi`,
-          },
-          data: {
-            alertId,
-            riskScore: String(result.riskScore),
-            category: result.categories[0],
-          },
-        },
-      }),
-    });
-
-    await db.parentNotification.create({
-      data: { alertId, channel: "push", delivered: true },
-    });
-  } catch (err) {
-    console.error("[FCM_ERROR]", err);
-  }
-}
-
-async function getFirebaseAccessToken(): Promise<string> {
-  const { GoogleAuth } = await import("google-auth-library");
-  const auth = new GoogleAuth({
-    credentials: {
-      private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    },
-    scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-  });
-  const client = await auth.getClient();
-  const tokenResponse = await client.getAccessToken();
-  return tokenResponse.token ?? "";
 }

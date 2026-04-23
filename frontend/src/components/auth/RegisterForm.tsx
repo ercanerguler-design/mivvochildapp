@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
 
-export function RegisterForm() {
+export function RegisterForm({ locale }: { locale: Locale }) {
   const router = useRouter();
+  const text = t(locale);
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,11 +22,11 @@ export function RegisterForm() {
     setError("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Şifreler eşleşmiyor.");
+      setError(text.auth.passwordMismatch);
       return;
     }
     if (form.password.length < 8) {
-      setError("Şifre en az 8 karakter olmalıdır.");
+      setError(text.auth.passwordMin);
       return;
     }
 
@@ -38,7 +40,7 @@ export function RegisterForm() {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error ?? "Kayıt sırasında hata oluştu.");
+      setError(data.error ?? text.auth.registerError);
       setLoading(false);
       return;
     }
@@ -57,7 +59,7 @@ export function RegisterForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Ad Soyad
+          {text.auth.name}
         </label>
         <input
           id="name"
@@ -73,7 +75,7 @@ export function RegisterForm() {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-          E-posta
+          {text.auth.email}
         </label>
         <input
           id="email"
@@ -90,7 +92,7 @@ export function RegisterForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Şifre
+          {text.auth.password}
         </label>
         <input
           id="password"
@@ -107,7 +109,7 @@ export function RegisterForm() {
 
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Şifre Tekrar
+          {text.auth.passwordRepeat}
         </label>
         <input
           id="confirmPassword"
@@ -129,8 +131,7 @@ export function RegisterForm() {
       )}
 
       <div className="bg-violet-50 text-violet-700 text-xs px-4 py-3 rounded-xl">
-        Kaydolarak <strong>KVKK Aydınlatma Metnini</strong> okuduğunuzu ve kabul ettiğinizi onaylamış olursunuz.
-        Bu uygulama yalnızca <strong>18 yaş altı</strong> çocuklar için tasarlanmıştır.
+        {text.auth.kvkkConfirm}
       </div>
 
       <button
@@ -139,7 +140,7 @@ export function RegisterForm() {
         className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
       >
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-        Ücretsiz Hesap Oluştur
+        {text.auth.createAccountButton}
       </button>
     </form>
   );

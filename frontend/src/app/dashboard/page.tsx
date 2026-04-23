@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
+import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { redirect } from "next/navigation";
 import {
   ShieldCheck,
@@ -9,15 +10,26 @@ import {
   CheckCircle2,
   Clock,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 
-const categoryLabels: Record<string, string> = {
-  BULLYING: "Zorbalık",
-  VIOLENCE: "Şiddet",
-  SEXUAL_RISK: "Cinsel Risk",
-  THREAT: "Tehdit",
-  PROFANITY: "Küfür",
-  EXTREME_ANGER: "Aşırı Öfke",
+const categoryLabels: Record<"tr" | "en", Record<string, string>> = {
+  tr: {
+    BULLYING: "Zorbalık",
+    VIOLENCE: "Şiddet",
+    SEXUAL_RISK: "Cinsel Risk",
+    THREAT: "Tehdit",
+    PROFANITY: "Küfür",
+    EXTREME_ANGER: "Aşırı Öfke",
+  },
+  en: {
+    BULLYING: "Bullying",
+    VIOLENCE: "Violence",
+    SEXUAL_RISK: "Sexual Risk",
+    THREAT: "Threat",
+    PROFANITY: "Profanity",
+    EXTREME_ANGER: "Extreme Anger",
+  },
 };
 
 const categoryColors: Record<string, string> = {
@@ -53,9 +65,13 @@ export default async function DashboardPage() {
   if (!parent) redirect("/kurulum");
 
   const allAlerts = parent.children.flatMap((c) => c.alerts);
+  const highRiskCount = allAlerts.filter((a) => a.riskScore >= 80 && a.status !== "RESOLVED").length;
   const pendingCount = allAlerts.filter((a) => a.status === "PENDING").length;
   const resolvedCount = allAlerts.filter((a) => a.status === "RESOLVED").length;
   const totalCount = allAlerts.length;
+  const safetyScore = Math.max(0, Math.min(100, 100 - pendingCount * 8 - highRiskCount * 12));
+  const pairingCode = createPairingCode(parent.id);
+  const pairingTtl = getPairingTtlMinutes();
 
   const recentAlerts = allAlerts
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
@@ -117,6 +133,53 @@ export default async function DashboardPage() {
         ))}
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 lg:col-span-2">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm text-gray-500">{text.dashboard.securityScore}</p>
+              <p className="text-4xl font-bold text-gray-900 mt-1">{safetyScore}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center text-violet-700">
+              <Sparkles className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className={`h-full ${safetyScore >= 80 ? "bg-emerald-500" : safetyScore >= 50 ? "bg-orange-500" : "bg-red-500"}`} style={{ width: `${safetyScore}%` }} />
+          </div>
+          <p className="text-sm text-gray-600 mt-3">
+            {safetyScore >= 80
+              ? text.dashboard.securityHealthy
+              : safetyScore >= 50
+              ? text.dashboard.securityMedium
+              : text.dashboard.securityCritical}
+          </p>
+        </div>
+
+        <div className="bg-linear-to-br from-violet-600 to-blue-600 text-white rounded-2xl p-5">
+          <p className="text-violet-100 text-sm">{text.dashboard.pairingTitle}</p>
+          <p className="font-bold text-lg break-all mt-2">{pairingCode}</p>
+          <p className="text-xs text-violet-100 mt-2">
+            {text.dashboard.pairingExpires}: {pairingTtl} dk
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <h3 className="font-semibold text-gray-900 mb-3">{text.dashboard.quickActions}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <a href="/dashboard/uyarilar" className="rounded-xl border border-gray-200 px-4 py-3 hover:border-violet-300 hover:bg-violet-50 transition-colors text-sm font-medium text-gray-700">
+            {text.dashboard.quickActionAlerts}
+          </a>
+          <a href="/dashboard/cocuklar" className="rounded-xl border border-gray-200 px-4 py-3 hover:border-violet-300 hover:bg-violet-50 transition-colors text-sm font-medium text-gray-700">
+            {text.dashboard.quickActionChildren}
+          </a>
+          <a href="/dashboard/ayarlar" className="rounded-xl border border-gray-200 px-4 py-3 hover:border-violet-300 hover:bg-violet-50 transition-colors text-sm font-medium text-gray-700">
+            {text.dashboard.quickActionSettings}
+          </a>
+        </div>
+      </div>
+
       {/* RECENT ALERTS */}
       <div className="bg-white rounded-2xl border border-gray-100">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -144,7 +207,7 @@ export default async function DashboardPage() {
                       categoryColors[alert.category] ?? "bg-gray-100 text-gray-600"
                     }`}
                   >
-                    {categoryLabels[alert.category] ?? alert.category}
+                    {categoryLabels[locale][alert.category] ?? alert.category}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-700 truncate">{alert.originalText}</p>

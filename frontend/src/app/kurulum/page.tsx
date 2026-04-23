@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { MivvoLogo } from "@/components/common/MivvoLogo";
+import { getLocaleFromClientCookie, t } from "@/lib/i18n";
 
 type Step = "profile" | "child" | "done";
 
 export default function KurulumPage() {
   const router = useRouter();
+  const locale = useMemo(() => getLocaleFromClientCookie(), []);
+  const text = t(locale);
   const [step, setStep] = useState<Step>("profile");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,6 +21,7 @@ export default function KurulumPage() {
 
   // Child step
   const [childName, setChildName] = useState("");
+  const [childBirthDate, setChildBirthDate] = useState("");
   const [childDeviceId, setChildDeviceId] = useState("");
 
   async function handleProfileSave(e: React.FormEvent) {
@@ -34,7 +38,7 @@ export default function KurulumPage() {
     setLoading(false);
     if (!res.ok) {
       const d = await res.json();
-      setError(d.error ?? "Hata oluştu.");
+      setError(d.error ?? text.setup.genericError);
       return;
     }
     setStep("child");
@@ -48,28 +52,32 @@ export default function KurulumPage() {
     const res = await fetch("/api/setup/child", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName: childName, deviceId: childDeviceId }),
+      body: JSON.stringify({
+        displayName: childName,
+        birthDate: childBirthDate,
+        deviceId: childDeviceId,
+      }),
     });
 
     setLoading(false);
     if (!res.ok) {
       const d = await res.json();
-      setError(d.error ?? "Hata oluştu.");
+      setError(d.error ?? text.setup.genericError);
       return;
     }
     setStep("done");
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-linear-to-br from-violet-50 via-white to-blue-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
             <MivvoLogo size={34} textClassName="text-2xl" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Kurulum Sihirbazı</h1>
-          <p className="text-sm text-gray-500 mt-1">Birkaç adımda korumaya başlayın</p>
+          <h1 className="text-xl font-bold text-gray-900">{text.setup.wizardTitle}</h1>
+          <p className="text-sm text-gray-500 mt-1">{text.setup.wizardSubtitle}</p>
         </div>
 
         {/* Steps indicator */}
@@ -103,17 +111,16 @@ export default function KurulumPage() {
           {step === "profile" && (
             <form onSubmit={handleProfileSave} className="space-y-5">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-1">Ebeveyn Profili</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">{text.setup.profileTitle}</h2>
                 <p className="text-sm text-gray-500">
-                  Bildirim almak için telefon FCM token&apos;ınızı girebilirsiniz (opsiyonel). 
-                  Daha sonra ayarlardan da ekleyebilirsiniz.
+                  {text.setup.profileDesc}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  FCM Token{" "}
-                  <span className="text-gray-400 font-normal">(opsiyonel)</span>
+                  {text.setup.fcmToken}{" "}
+                  <span className="text-gray-400 font-normal">({text.setup.optional})</span>
                 </label>
                 <input
                   type="text"
@@ -136,7 +143,7 @@ export default function KurulumPage() {
                 className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                Devam Et
+                {text.setup.continue}
               </button>
             </form>
           )}
@@ -145,15 +152,15 @@ export default function KurulumPage() {
           {step === "child" && (
             <form onSubmit={handleAddChild} className="space-y-5">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-1">İlk Çocuğu Ekle</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">{text.setup.addFirstChild}</h2>
                 <p className="text-sm text-gray-500">
-                  Takip etmek istediğiniz çocuğun bilgilerini girin.
+                  {text.setup.addFirstChildDesc}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Çocuğun Adı
+                  {text.setup.childName}
                 </label>
                 <input
                   type="text"
@@ -161,14 +168,27 @@ export default function KurulumPage() {
                   value={childName}
                   onChange={(e) => setChildName(e.target.value)}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
-                  placeholder="Örn: Ahmet"
+                  placeholder={text.setup.childNamePlaceholder}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Cihaz ID{" "}
-                  <span className="text-gray-400 font-normal">(opsiyonel)</span>
+                  {text.setup.childBirthDate}
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={childBirthDate}
+                  onChange={(e) => setChildBirthDate(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {text.setup.deviceId}{" "}
+                  <span className="text-gray-400 font-normal">({text.setup.optional})</span>
                 </label>
                 <input
                   type="text"
@@ -191,7 +211,7 @@ export default function KurulumPage() {
                 className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Çocuk Ekle &amp; Devam Et
+                {text.setup.addChildAndContinue}
               </button>
             </form>
           )}
@@ -203,9 +223,9 @@ export default function KurulumPage() {
                 <CheckCircle2 className="w-10 h-10 text-emerald-500" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Kurulum Tamamlandı!</h2>
+                <h2 className="text-xl font-bold text-gray-900">{text.setup.completedTitle}</h2>
                 <p className="text-sm text-gray-500 mt-2">
-                  Mivvo artık çocuğunuzu korumaya hazır. Dashboard&apos;dan tüm uyarıları takip edebilirsiniz.
+                  {text.setup.completedDesc}
                 </p>
               </div>
               <button
@@ -213,7 +233,7 @@ export default function KurulumPage() {
                 className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowRight className="w-4 h-4" />
-                Dashboard&apos;a Git
+                {text.setup.goDashboard}
               </button>
             </div>
           )}

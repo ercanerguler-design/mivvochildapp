@@ -59,17 +59,17 @@ export default async function AlertsPage({
             href={`/dashboard/uyarilar?status=${status}`}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusColors[status]}`}
           >
-            {status}
+            {text.alertsPage.statuses[status]}
           </a>
         ))}
         <a href="/dashboard/uyarilar" className="px-3 py-1.5 rounded-full text-xs font-semibold border border-gray-200 text-gray-600">
-          ALL
+          {text.alertsPage.all}
         </a>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {alerts.length === 0 ? (
-          <div className="px-6 py-10 text-sm text-gray-500">No alerts found.</div>
+          <div className="px-6 py-10 text-sm text-gray-500">{text.alertsPage.noAlerts}</div>
         ) : (
           <div className="divide-y divide-gray-50">
             {alerts.map((alert) => (
@@ -88,9 +88,9 @@ export default async function AlertsPage({
                 </div>
                 <div className="text-right">
                   <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusColors[alert.status]}`}>
-                    {alert.status}
+                    {text.alertsPage.statuses[alert.status]}
                   </span>
-                  <p className="text-xs mt-2 text-gray-500">Risk: %{alert.riskScore}</p>
+                  <p className="text-xs mt-2 text-gray-500">{text.alertsPage.risk}: %{alert.riskScore}</p>
                 </div>
               </div>
             ))}

@@ -6,6 +6,8 @@ import {
   consumeParentCredits,
   getParentBillingStatus,
 } from "@/lib/subscription";
+import { sendRiskNotificationWithRetry } from "@/lib/notifications";
+import { sendWhatsAppFallbackIfEnabled } from "@/lib/whatsapp";
 import { z } from "zod";
 
 type Platform = "INSTAGRAM" | "SNAPCHAT" | "TIKTOK" | "WHATSAPP" | "TELEGRAM" | "SMS" | "OTHER";
@@ -43,61 +45,13 @@ const bodySchema = z.object({
   activities: z.array(activityItemSchema).min(1).max(50),
 });
 
-// ─── Push notification (FCM) ───────────────────────────────
-async function sendPushNotification(
-  fcmToken: string | null,
-  childName: string,
-  platform: string,
-  category: string,
-  riskScore: number
-) {
-  if (!fcmToken || !process.env.FIREBASE_PROJECT_ID) return;
-  try {
-    const { GoogleAuth } = await import("google-auth-library");
-    const auth = new GoogleAuth({
-      credentials: {
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      },
-      scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-    });
-    const client = await auth.getClient();
-    const tokenRes = await client.getAccessToken();
-    const accessToken = tokenRes.token;
-    if (!accessToken) return;
-
-    const categoryLabel: Record<string, string> = {
-      BULLYING: "Zorbalık",
-      VIOLENCE: "Şiddet",
-      SEXUAL_RISK: "Cinsel Risk",
-      THREAT: "Tehdit",
-      PROFANITY: "Küfür",
-      EXTREME_ANGER: "Aşırı Öfke",
-      STRANGER_CONTACT: "Yabancı Kişi",
-    };
-
-    await fetch(
-      `https://fcm.googleapis.com/v1/projects/${process.env.FIREBASE_PROJECT_ID}/messages:send`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: {
-            token: fcmToken,
-            notification: {
-              title: `⚠️ Mivvo — ${PLATFORM_LABELS[platform] ?? platform}`,
-              body: `${childName}: ${categoryLabel[category] ?? category} tespit edildi (Risk: %${riskScore})`,
-            },
-          },
-        }),
-      }
-    );
-  } catch (err) {
-    console.error("[FCM_ERROR]", err);
-  }
+function isUnder18(birthDate: Date) {
+  const today = new Date();
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const beforeBirthday =
+    today.getMonth() < birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
+  return beforeBirthday ? age - 1 < 18 : age < 18;
 }
 
 // ─── Main handler ──────────────────────────────────────────
@@ -125,11 +79,41 @@ export async function POST(req: NextRequest) {
   // Çocuk ve ebeveyn profili
   const child = await db.childProfile.findUnique({
     where: { id: childId },
-    include: { parent: true },
+    include: {
+      parent: {
+        include: {
+          user: {
+            select: {
+              phone: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!child || !child.isActive) {
     return NextResponse.json({ error: "Çocuk profili bulunamadı veya pasif" }, { status: 404 });
+  }
+
+  if (!child.birthDate) {
+    return NextResponse.json(
+      {
+        error: "Cocuk dogum tarihi eksik. Admin panelinden zorunlu tamamlama yapilmalidir.",
+        code: "BIRTH_DATE_REQUIRED",
+      },
+      { status: 409 }
+    );
+  }
+
+  if (!isUnder18(child.birthDate)) {
+    return NextResponse.json(
+      {
+        error: "Bu profil 18 yas ve uzeri oldugu icin aktivite ingest kapatildi.",
+        code: "AGE_GATE_BLOCKED",
+      },
+      { status: 403 }
+    );
   }
 
   const sensitivityLevel = child.parent.sensitivityLevel;
@@ -289,13 +273,29 @@ export async function POST(req: NextRequest) {
         });
 
         // Push notification (non-blocking)
-        void sendPushNotification(
-          child.parent.fcmToken,
-          child.displayName,
-          act.platform,
-          alertCategory,
-          riskScore
-        );
+        void sendRiskNotificationWithRetry({
+          parent: { fcmToken: child.parent.fcmToken },
+          alertId: alert.id,
+          title: `⚠️ Mivvo — ${PLATFORM_LABELS[act.platform] ?? act.platform}`,
+          body: `${child.displayName}: ${alertCategory} tespit edildi (Risk: %${riskScore})`,
+          data: {
+            alertId: alert.id,
+            riskScore: String(riskScore),
+            category: alertCategory,
+            childId,
+            deepLink: `mivvoparent://alerts/${alert.id}`,
+          },
+        });
+
+        if (riskScore >= 85 && child.parent.user?.phone) {
+          void sendWhatsAppFallbackIfEnabled({
+            toPhone: child.parent.user.phone,
+            childName: child.displayName,
+            category: alertCategory,
+            riskScore,
+            alertId: alert.id,
+          });
+        }
 
         alertCount++;
       }

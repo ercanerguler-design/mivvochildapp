@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { getLocaleFromClientCookie, t } from "@/lib/i18n";
+import { t, type Locale } from "@/lib/i18n";
 import { MivvoLogo } from "@/components/common/MivvoLogo";
 import {
   LayoutDashboard,
@@ -24,9 +24,8 @@ const navItems = [
   { href: "/dashboard/ayarlar", key: "settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ locale }: { locale: Locale }) {
   const pathname = usePathname();
-  const locale = getLocaleFromClientCookie();
   const text = t(locale);
 
   return (
@@ -51,7 +50,7 @@ export function Sidebar() {
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <item.icon className="w-4 h-4 shrink-0" />
               {text.sidebar[item.key as keyof typeof text.sidebar]}
             </Link>
           );

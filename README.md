@@ -18,6 +18,8 @@ Mivvo, yapay zeka destekli Türkçe içerik moderasyon sistemiyle çocukların d
 - Gece saati ve yeni tanışma davranışsal analizi
 - KVKK uyumlu (veri minimizasyonu, silme hakkı)
 - Anında ebeveyn push bildirimi
+- Zorunlu dogum tarihi ve 18 yas alti yas kapisi (server-side)
+- Admin panelinde eksik dogum tarihi kayitlari icin zorunlu tamamlama akisi
 
 ## Kurulum
 
@@ -42,6 +44,43 @@ npm run dev
    - `OPENAI_API_KEY`
    - `FIREBASE_PROJECT_ID` / `FIREBASE_PRIVATE_KEY` / `FIREBASE_CLIENT_EMAIL`
    - `MOBILE_API_KEY`
+
+## Yas Kapisi ve Ingest Kurallari
+
+- Cocuk olusturma ve pair etme akislarinda `birthDate` (YYYY-MM-DD) zorunludur.
+- `activity` ve `analyze` endpointleri su durumlarda ingest'i engeller:
+- `birthDate` eksikse: `BIRTH_DATE_REQUIRED`
+- Profil 18+ ise: `AGE_GATE_BLOCKED`
+- Eski kayitlar icin admin panelinde `Eksik Dogum Tarihlerini Listele` ve `Dogum Tarihini Zorunlu Tamamla` adimlari kullanilir.
+
+## Canliya Cikis Icin Senden Gerekenler
+
+1. Altyapi ve domain
+- Vercel proje erisimi (veya kullanacagimiz baska hosting bilgisi)
+- Uretim domaini (ornek: app.mivvo.com)
+
+2. Uretim gizli anahtarlar (gercek degerler)
+- `DATABASE_URL` (Neon production)
+- `AUTH_SECRET` (en az 32 karakter)
+- `AUTH_URL` (https://...)
+- `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+- `OPENAI_API_KEY`
+- `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`
+- `MOBILE_API_KEY`
+- `ADMIN_PANEL_KEY`
+
+3. Google OAuth ayari
+- Authorized JavaScript origin: uretim domaini
+- Authorized redirect URI: `https://<domain>/api/auth/callback/google`
+
+4. Firebase ayari
+- Android/iOS uygulama package/bundle id bilgileri
+- FCM icin service account JSON'dan gerekli alanlar
+
+5. Ilk uretim operasyon onayi
+- Prisma schema push (production DB)
+- Admin paneli ile dogum tarihi eksik kayitlarin tamamlanmasi
+- Test cocugu ile pair + heartbeat + riskli mesaj push smoke test
 
 ## Neon DB Migration
 

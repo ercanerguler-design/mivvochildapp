@@ -4,10 +4,12 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
 
-export function LoginForm() {
+export function LoginForm({ locale }: { locale: Locale }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const text = t(locale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,6 +17,10 @@ export function LoginForm() {
 
   const oauthError = searchParams.get("error");
   const oauthBlocked = oauthError === "OAuthSignin" || oauthError === "OAuthCallback" || oauthError === "AccessDenied";
+  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+  const oauthCallbackUri = isLocalhost
+    ? "http://localhost:3000/api/auth/callback/google"
+    : "https://mivvochildapp.vercel.app/api/auth/callback/google";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +36,7 @@ export function LoginForm() {
     setLoading(false);
 
     if (res?.error) {
-      setError("E-posta veya şifre hatalı.");
+      setError(text.auth.invalidCredentials);
       return;
     }
 
@@ -41,7 +47,7 @@ export function LoginForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-          E-posta
+          {text.auth.email}
         </label>
         <input
           id="email"
@@ -57,7 +63,7 @@ export function LoginForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Şifre
+          {text.auth.password}
         </label>
         <input
           id="password"
@@ -79,9 +85,9 @@ export function LoginForm() {
 
       {oauthBlocked && (
         <div className="bg-amber-50 text-amber-800 text-sm px-4 py-3 rounded-xl border border-amber-200 space-y-1">
-          <p className="font-medium">Google ile giris su an engellendi.</p>
-          <p>Google Console tarafinda Authorized redirect URI olarak su adresi eklenmeli:</p>
-          <p className="font-mono break-all">https://mivvochildapp.vercel.app/api/auth/callback/google</p>
+          <p className="font-medium">{text.auth.oauthBlockedTitle}</p>
+          <p>{text.auth.oauthBlockedDesc}</p>
+          <p className="font-mono break-all">{oauthCallbackUri}</p>
         </div>
       )}
 
@@ -91,7 +97,7 @@ export function LoginForm() {
         className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
       >
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-        Giriş Yap
+        {text.auth.loginButton}
       </button>
 
       <div className="relative">
@@ -99,7 +105,7 @@ export function LoginForm() {
           <div className="w-full border-t border-gray-100" />
         </div>
         <div className="relative flex justify-center text-xs text-gray-400 bg-white px-2">
-          veya
+          {text.auth.or}
         </div>
       </div>
 
@@ -114,7 +120,7 @@ export function LoginForm() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Google ile Giriş Yap
+        {text.auth.loginGoogle}
       </button>
     </form>
   );

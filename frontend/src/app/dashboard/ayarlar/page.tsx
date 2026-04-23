@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -52,7 +52,7 @@ export default function SettingsPage() {
   }
 
   if (!data) {
-    return <div className="text-sm text-gray-500">Ayarlar yukleniyor...</div>;
+    return <div className="text-sm text-gray-500">Ayarlar yükleniyor...</div>;
   }
 
   return (
@@ -62,19 +62,19 @@ export default function SettingsPage() {
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
         <div className="rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-gray-700">
           <p className="font-semibold text-violet-700">Ebeveyn ID: {data.id}</p>
-          <p className="mt-1">Odeme aciklamasina ebeveyn ID ve ad-soyad yazilmalidir.</p>
+          <p className="mt-1">Ödeme açıklamasına ebeveyn ID ve ad-soyad yazılmalıdır.</p>
         </div>
 
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 space-y-1">
-          <p className="font-semibold text-gray-900">Kullanim Durumu</p>
-          <p>Ucretsiz analiz: {data.billing?.trial.used ?? 0} / {data.billing?.trial.limit ?? 7}</p>
-          <p>Kalan ucretsiz hak: {data.billing?.trial.remaining ?? 0}</p>
+          <p className="font-semibold text-gray-900">Kullanım Durumu</p>
+          <p>Ücretsiz analiz: {data.billing?.trial.used ?? 0} / {data.billing?.trial.limit ?? 7}</p>
+          <p>Kalan ücretsiz hak: {data.billing?.trial.remaining ?? 0}</p>
           <p>Mevcut kredi: {data.billing?.credits ?? 0}</p>
-          <p>Cocuk uygulamasi: {data.billing?.childAppFree ? "Ucretsiz" : "Ucretli"}</p>
+          <p>Çocuk uygulaması: {data.billing?.childAppFree ? "Ücretsiz" : "Ücretli"}</p>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700">Risk esigi: {data.sensitivityLevel}</label>
+          <label className="text-sm font-medium text-gray-700">Risk eşiği: {data.sensitivityLevel}</label>
           <input
             type="range"
             min={0}
@@ -126,18 +126,19 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 text-sm text-gray-700">
         <h3 className="text-lg font-semibold text-gray-900">Banka / Havale Bilgileri</h3>
-        <p><span className="font-medium">Sirket Adi:</span> SCE Innovation Ltd.Sti</p>
-        <p><span className="font-medium">Banka:</span> Turkiye Garanti Bankasi</p>
+        <p><span className="font-medium">Şirket Adı:</span> SCE Innovation Ltd.Şti</p>
+        <p><span className="font-medium">Banka:</span> Türkiye Garanti Bankası</p>
         <p><span className="font-medium">IBAN:</span> TR48 0006 2000 7740 0006 2930 33</p>
         <p><span className="font-medium">Hesap No:</span> 774-6293033</p>
-        <p><span className="font-medium">Sube:</span> Etlik Subesi</p>
+        <p><span className="font-medium">Şube:</span> Etlik Şubesi</p>
         <p className="text-violet-700 font-medium">
-          Aciklama kismina ebeveyn ID&apos;nizi ve adinizi yazmanizi rica ederiz.
+          Açıklama kısmına ebeveyn ID&apos;nizi ve adınızı yazmanızı rica ederiz.
         </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
-          Kart odeme (Iyzico / VISA): Yakinda gelecek. Aylik abonelik bedeli 299 TL.
+          Kart ödeme (Iyzico / VISA): Yakında gelecek. Aylık abonelik bedeli 299 TL.
         </div>
       </div>
     </div>
   );
 }
+
