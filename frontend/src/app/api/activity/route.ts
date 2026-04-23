@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { analyzeText } from "@/lib/nlp";
 import { z } from "zod";
-import type { Platform, RiskCategory } from "@prisma/client";
+
+type Platform = "INSTAGRAM" | "SNAPCHAT" | "TIKTOK" | "WHATSAPP" | "TELEGRAM" | "SMS" | "OTHER";
+type RiskCategory = "BULLYING" | "VIOLENCE" | "SEXUAL_RISK" | "THREAT" | "PROFANITY" | "EXTREME_ANGER" | "STRANGER_CONTACT";
 
 // ─── Platform görünen adları ───────────────────────────────
 const PLATFORM_LABELS: Record<string, string> = {
