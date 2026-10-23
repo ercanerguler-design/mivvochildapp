@@ -51,6 +51,7 @@ type MissingBirthDateChild = {
 
 type AdminOverview = {
   generatedAt: string;
+  systemEvents?: { kind: string; last_message: string; count: number; last_at: string }[];
   summary: {
     totalUsers: number;
     totalParents: number;
@@ -444,6 +445,13 @@ export default function AdminPage() {
             </button>
           </div>
         </section>
+
+        {overview?.systemEvents?.some((e) => e.kind === "ai_analysis_failed") && (
+          <section className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+            <p className="font-bold">Yapay zeka analizi son 24 saatte hata verdi</p>
+            <p>Mesajlar yedek kural motoruyla taranıyor (yalnızca kritik riskler). Hata: {overview.systemEvents.find((e) => e.kind === "ai_analysis_failed")?.last_message} · {overview.systemEvents.find((e) => e.kind === "ai_analysis_failed")?.count} kez</p>
+          </section>
+        )}
 
         {overview && (
           <>

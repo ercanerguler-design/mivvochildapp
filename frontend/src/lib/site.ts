@@ -6,6 +6,13 @@ export const SITE = {
   company: "SCE Grup",
   email: "sce@scegrup.com",
   whatsapp: "905433929230",
+  phoneDisplay: "+90 543 392 92 30",
+  // Legal identity shown in contracts. MERSİS / tax info appear only when set.
+  legal: {
+    name: process.env.NEXT_PUBLIC_LEGAL_NAME ?? "SCE Innovation Ltd. Şti.",
+    mersis: process.env.NEXT_PUBLIC_LEGAL_MERSIS ?? "",
+    taxOffice: process.env.NEXT_PUBLIC_LEGAL_TAX ?? "",
+  },
   address: { street: "Çetin Emeç Bulvarı No:25/3", city: "Ankara", country: "TR" },
   parentPlayUrl:
     process.env.NEXT_PUBLIC_PARENT_PLAY_URL ??

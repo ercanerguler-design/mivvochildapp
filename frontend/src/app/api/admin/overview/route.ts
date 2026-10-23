@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { listRecentSystemEvents } from "@/lib/system-events";
 
 let adminAnalyticsTablesReady = false;
 
@@ -285,8 +286,11 @@ export async function GET(req: NextRequest) {
     distinct_paid_parent_count: 0,
   };
 
+  const systemEvents = await listRecentSystemEvents(24).catch(() => []);
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
+    systemEvents,
     summary: {
       totalUsers,
       totalParents,

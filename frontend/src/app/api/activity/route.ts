@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isChildDeviceAuthorized } from "@/lib/device-token";
-import { analyzeText } from "@/lib/nlp";
+import { analyzeMessage } from "@/lib/analysis";
 import {
   calculateBillableUnits,
   consumeParentCredits,
@@ -23,6 +23,16 @@ const PLATFORM_LABELS: Record<string, string> = {
   TELEGRAM: "Telegram",
   SMS: "SMS",
   OTHER: "Diğer",
+};
+
+const CATEGORY_LABELS_TR: Record<RiskCategory, string> = {
+  BULLYING: "Zorbalık",
+  VIOLENCE: "Şiddet",
+  SEXUAL_RISK: "Cinsel risk",
+  THREAT: "Tehdit",
+  PROFANITY: "Ağır hakaret",
+  EXTREME_ANGER: "Kendine zarar / aşırı öfke",
+  STRANGER_CONTACT: "Yabancı kişi",
 };
 
 // ─── Gece saati kontrolü (23:00 - 06:00) ─────────────────
@@ -209,7 +219,7 @@ export async function POST(req: NextRequest) {
       let detectedText = "";
 
       if (act.content && act.content.trim().length > 3) {
-        const analysis = await analyzeText(act.content, {
+        const analysis = await analyzeMessage(act.content, {
           platform: act.platform,
           isNewContact,
           isNightTime: nightTime,
@@ -222,28 +232,22 @@ export async function POST(req: NextRequest) {
         explanation = analysis.explanation;
         detectedText = analysis.detectedText;
 
+        // categories are sorted by severity, so [0] is the most serious one.
         if (analysis.isRisky && analysis.riskScore >= sensitivityLevel && analysis.categories.length > 0) {
           alertCategory = analysis.categories[0] as RiskCategory;
         }
       }
+      // Note: metadata alone (night time, new contact) never creates an alert; only message content does.
+      // This avoids false alarms for ordinary late-night chats with new friends.
 
-      // ── Davranışsal örüntü tespiti ───────────────────────
-      if (!alertCategory) {
-        if (isNewContact && nightTime) {
-          alertCategory = "STRANGER_CONTACT";
-          riskScore = Math.max(riskScore, 65);
-          explanation =
-            explanation ||
-            `${platformLabel} üzerinden gece saatinde bilinmeyen kişiyle mesajlaşma tespit edildi.`;
-          detectedText = detectedText || `@${act.contactUsername ?? "bilinmeyen"} — gece mesajı`;
-        } else if (isNewContact && contact && contact.messageCount > 20) {
-          alertCategory = "STRANGER_CONTACT";
-          riskScore = Math.max(riskScore, 60);
-          explanation =
-            explanation ||
-            `Yeni tanışılan kişiyle yoğun mesajlaşma: ${contact.messageCount} mesaj.`;
-          detectedText = detectedText || `@${act.contactUsername}`;
-        }
+      // De-duplicate: one alert per child and category within 15 minutes (e.g. a threat split over several messages).
+      let duplicateOfRecentAlert = false;
+      if (alertCategory) {
+        const recent = await db.alert.findFirst({
+          where: { childId, category: alertCategory, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } },
+          select: { id: true },
+        });
+        duplicateOfRecentAlert = Boolean(recent);
       }
 
       // ── SocialActivity kaydı ─────────────────────────────
@@ -264,7 +268,7 @@ export async function POST(req: NextRequest) {
       });
 
       // ── Alert oluştur ────────────────────────────────────
-      if (alertCategory && riskScore >= sensitivityLevel) {
+      if (alertCategory && riskScore >= sensitivityLevel && !duplicateOfRecentAlert) {
         const alert = await db.alert.create({
           data: {
             childId,
@@ -289,8 +293,9 @@ export async function POST(req: NextRequest) {
         void sendRiskNotificationWithRetry({
           parent: { fcmToken: child.parent.fcmToken },
           alertId: alert.id,
-          title: `⚠️ Mivvo — ${PLATFORM_LABELS[act.platform] ?? act.platform}`,
-          body: `${child.displayName}: ${alertCategory} tespit edildi (Risk: %${riskScore})`,
+          title: `${riskScore >= 90 ? "🚨" : "⚠️"} ${child.displayName} · ${CATEGORY_LABELS_TR[alertCategory]}`,
+          // Message text is never put in the push body: lock screens are visible to others.
+          body: `${PLATFORM_LABELS[act.platform] ?? act.platform} üzerinden ${riskScore >= 90 ? "kritik" : riskScore >= 80 ? "yüksek" : "dikkat gerektiren"} bir risk tespit edildi. Detaylar için dokunun.`,
           data: {
             alertId: alert.id,
             riskScore: String(riskScore),

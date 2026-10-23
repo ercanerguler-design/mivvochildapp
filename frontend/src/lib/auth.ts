@@ -1,3 +1,4 @@
+import { rateLimit } from "@/lib/rate-limit";
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
@@ -36,8 +37,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const user = await db.user.findUnique({
-          where: { email: parsed.data.email },
+        // Brute-force protection: 10 attempts per e-mail per 15 minutes.
+        const email = parsed.data.email.trim().toLowerCase();
+        if (!(await rateLimit(`login:${email}`, 10, 900)).ok) return null;
+
+        const user = await db.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
           include: { parentProfile: true, childProfile: true },
         });
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AlertStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   const where = {
     childId: childId && childIds.includes(childId) ? childId : { in: childIds },
-    ...(status ? { status: status as any } : {}),
+    ...(status && (Object.values(AlertStatus) as string[]).includes(status) ? { status: status as AlertStatus } : {}),
   };
 
   const [alerts, total] = await Promise.all([

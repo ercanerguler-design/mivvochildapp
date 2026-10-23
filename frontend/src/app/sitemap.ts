@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { guides } from "@/lib/guides";
+import { legalDocs } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -18,7 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     { url: absoluteUrl("/indir"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/iletisim"), changeFrequency: "yearly", priority: 0.3 },
-    { url: absoluteUrl("/gizlilik"), changeFrequency: "yearly", priority: 0.2 },
-    { url: absoluteUrl("/kvkk"), changeFrequency: "yearly", priority: 0.2 },
+    ...legalDocs.map((d) => ({ url: absoluteUrl(`/${d.slug}`), lastModified: new Date(d.updated), changeFrequency: "yearly" as const, priority: 0.3 })),
   ];
 }

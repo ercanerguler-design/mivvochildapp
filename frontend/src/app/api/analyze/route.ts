@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/nlp";
+import { analyzeMessage } from "@/lib/analysis";
 import { db } from "@/lib/db";
 import {
   calculateBillableUnits,
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     }
 
     // NLP analizi
-    const result = await analyzeText(text);
+    const result = await analyzeMessage(text);
 
     await db.socialActivity.create({
       data: {

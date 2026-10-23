@@ -48,11 +48,24 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               <li><Link className={link} href="/iletisim">{f.contact}</Link></li>
               <li><Link className={link} href="/gizlilik">{f.privacy}</Link></li>
               <li><Link className={link} href="/kvkk">{f.kvkk}</Link></li>
+              <li><Link className={link} href="/kullanim-kosullari">{locale === "en" ? "Terms of Use" : "Kullanım Koşulları"}</Link></li>
+              <li><Link className={link} href="/guvenlik">{locale === "en" ? "Security" : "Güvenlik"}</Link></li>
             </ul>
           </div>
         </div>
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Mivvo · {SITE.company}. {f.rights}</p>
+        <nav aria-label="Yasal" className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-xs">
+          {[
+            ["/acik-riza", "Açık Rıza Metni"],
+            ["/on-bilgilendirme", "Ön Bilgilendirme Formu"],
+            ["/mesafeli-satis", "Mesafeli Satış Sözleşmesi"],
+            ["/iptal-iade", "İptal ve İade"],
+            ["/cerez-politikasi", "Çerez Politikası"],
+          ].map(([href, label]) => (
+            <Link key={href} href={href} className={link}>{label}</Link>
+          ))}
+        </nav>
+        <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Mivvo · {SITE.legal.name}. {f.rights}</p>
           <p className="text-gray-500">{f.help}</p>
         </div>
       </div>

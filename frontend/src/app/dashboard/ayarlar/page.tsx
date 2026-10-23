@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckoutCard } from "@/components/dashboard/CheckoutCard";
+import { DeleteAccountCard } from "@/components/dashboard/DeleteAccountCard";
 
 const MONTHLY_PRICE_TL = Number(process.env.NEXT_PUBLIC_MONTHLY_PLAN_TL ?? "299");
 
@@ -156,6 +157,7 @@ export default function SettingsPage() {
           Açıklama kısmına ebeveyn ID&apos;nizi ve adınızı yazmanızı rica ederiz.
         </p>
       </div>
+      <DeleteAccountCard />
     </div>
   );
 }

@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getLocaleFromClientCookie, type Locale } from "@/lib/i18n";
 
+// Turkish-only legal documents render their own header.
+const LEGAL_PATHS = new Set(["/gizlilik", "/kvkk", "/acik-riza", "/kullanim-kosullari", "/on-bilgilendirme", "/mesafeli-satis", "/iptal-iade", "/cerez-politikasi", "/guvenlik"]);
+
 export function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
@@ -36,7 +39,7 @@ export function LanguageSwitcher() {
   }
 
   // Marketing pages have their own URL-based language switch in the header.
-  if (pathname === "/" || pathname === "/en" || pathname.startsWith("/en/") || pathname.startsWith("/rehber")) {
+  if (pathname === "/" || pathname === "/en" || pathname.startsWith("/en/") || pathname.startsWith("/rehber") || LEGAL_PATHS.has(pathname)) {
     return null;
   }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { TOO_MANY, clientIp, rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -10,6 +11,9 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!(await rateLimit(`mobile-login:${clientIp(req.headers)}`, 10, 900)).ok) {
+    return NextResponse.json(TOO_MANY, { status: 429 });
+  }
   let body: unknown;
   try {
     body = await req.json();

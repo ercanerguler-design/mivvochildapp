@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { TOO_MANY, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -6,12 +7,14 @@ import { initializeCheckout, isIyzicoConfigured } from "@/lib/iyzico";
 import { attachToken, createPendingPayment, settlePayment } from "@/lib/payments";
 import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS } from "@/lib/subscription";
 import { SITE_URL } from "@/lib/site";
+import { CHECKOUT_CONSENTS, recordConsents } from "@/lib/consents";
 
 const schema = z.object({
   fullName: z.string().trim().min(3).max(100),
   phone: z.string().trim().regex(/^\+?[0-9 ()-]{10,20}$/),
   city: z.string().trim().min(2).max(50),
   address: z.string().trim().min(5).max(250),
+  acceptSale: z.literal(true),
 });
 
 function normalizePhone(raw: string) {
@@ -24,10 +27,14 @@ function normalizePhone(raw: string) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Oturum açmanız gerekiyor." }, { status: 401 });
+  if (!(await rateLimit(`checkout:${session.user.id}`, 10, 3600)).ok) return NextResponse.json(TOO_MANY, { status: 429 });
   if (!isIyzicoConfigured()) return NextResponse.json({ error: "Kartla ödeme şu an kullanılamıyor." }, { status: 503 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Lütfen fatura bilgilerini eksiksiz girin." }, { status: 400 });
+  if (!parsed.success) {
+    const sale = parsed.error.issues.some((i) => i.path[0] === "acceptSale");
+    return NextResponse.json({ error: sale ? "Ön bilgilendirme formunu ve mesafeli satış sözleşmesini onaylamanız gerekir." : "Lütfen fatura bilgilerini eksiksiz girin." }, { status: 400 });
+  }
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
@@ -39,6 +46,8 @@ export async function POST(req: NextRequest) {
   const surname = rest.join(" ") || name;
   const amountTl = MONTHLY_PLAN_TL;
   const days = PAID_UNLIMITED_DAYS;
+
+  await recordConsents(user.id, CHECKOUT_CONSENTS, { ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim(), userAgent: req.headers.get("user-agent") ?? undefined });
 
   const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days });
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "85.34.78.112";

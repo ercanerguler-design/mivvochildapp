@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { auth } from "@/lib/auth";
+import { hasCurrentConsents } from "@/lib/consents";
 import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { redirect } from "next/navigation";
@@ -17,6 +18,10 @@ export default async function DashboardLayout({
 
   const session = await auth();
   if (!session?.user) redirect("/giris");
+
+  // Users who signed up with Google, or before the current legal texts, accept them once.
+  const consented = session.user.id ? await hasCurrentConsents(session.user.id).catch(() => true) : true;
+  if (!consented) redirect("/onay");
 
   return (
     <div className="flex min-h-screen bg-gray-50">

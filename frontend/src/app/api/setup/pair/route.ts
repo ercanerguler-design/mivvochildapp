@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { TOO_MANY, clientIp, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { verifyPairingCode } from "@/lib/pairing";
@@ -22,6 +23,9 @@ function isUnder18(birthDate: Date) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await rateLimit(`pair:${clientIp(req.headers)}`, 20, 900)).ok) {
+    return NextResponse.json(TOO_MANY, { status: 429 });
+  }
   // The signed, short-lived pairing code is the credential here; no shared app key is needed.
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);

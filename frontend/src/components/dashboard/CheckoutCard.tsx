@@ -18,18 +18,19 @@ const RESULT = {
 
 export function CheckoutCard({ priceTl, days, unlimited }: Props) {
   const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
+  const [acceptSale, setAcceptSale] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const r = useSearchParams().get("odeme");
   const result = r === "basarili" || r === "basarisiz" || r === "inceleme" ? r : null;
 
-  const valid = form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5;
+  const valid = form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5 && acceptSale;
 
   async function pay() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const res = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, acceptSale }) });
       const json = await res.json();
       if (!res.ok || !json.paymentPageUrl) throw new Error(json.error ?? "Ödeme başlatılamadı.");
       window.location.href = json.paymentPageUrl;
@@ -86,6 +87,15 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
           <input className={input} autoComplete="street-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </label>
       </div>
+
+      <label className="flex items-start gap-3 text-xs leading-5 text-gray-600">
+        <input type="checkbox" checked={acceptSale} onChange={(e) => setAcceptSale(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-violet-600" />
+        <span>
+          <a href="/on-bilgilendirme" target="_blank" className="font-semibold text-violet-700 underline">Ön Bilgilendirme Formu</a> ve{" "}
+          <a href="/mesafeli-satis" target="_blank" className="font-semibold text-violet-700 underline">Mesafeli Satış Sözleşmesi</a>
+          &apos;ni okudum, onaylıyorum. <a href="/iptal-iade" target="_blank" className="underline">14 gün içinde koşulsuz iade</a> hakkım olduğunu biliyorum.
+        </span>
+      </label>
 
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
