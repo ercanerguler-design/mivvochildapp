@@ -25,9 +25,9 @@ const content = {
       "Mivvo, yapay zeka ile çocuğunuzun mesajlarını analiz ederek zorbalık, tehdit, küfür ve riskli içerikleri anında tespit eder.",
     tryFree: "Ücretsiz Deneyin",
     pricingTitle: "Fiyatlandırma",
-    pricingSub: "İlk 7 analiz ücretsiz. Sonrasında aylık abonelik 299 TL'dir.",
+    pricingSub: "İlk 14 gün ücretsiz deneme. Sonrasında aylık abonelik 299 TL'dir.",
     trialCardTitle: "Deneme Paketi",
-    trialCardPrice: "İlk 7 analiz ücretsiz",
+    trialCardPrice: "İlk 14 gün ücretsiz",
     trialCardDesc: "Kurulum ve temel testler için ideal.",
     paidCardTitle: "Aylık Abonelik",
     paidCardPrice: "299 TL / ay",
@@ -55,9 +55,9 @@ const content = {
       "Mivvo analyzes messages with AI to detect bullying, threats, profanity, and risky content in real time.",
     tryFree: "Try for Free",
     pricingTitle: "Pricing",
-    pricingSub: "First 7 analyses are free. Then monthly subscription is 299 TRY.",
+    pricingSub: "First 14 days are free. Then monthly subscription is 299 TRY.",
     trialCardTitle: "Trial Plan",
-    trialCardPrice: "First 7 analyses free",
+    trialCardPrice: "First 14 days free",
     trialCardDesc: "Great for setup and initial testing.",
     paidCardTitle: "Monthly Subscription",
     paidCardPrice: "299 TRY / month",
@@ -147,7 +147,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-[family-name:var(--font-inter)]">
+    <div className="flex flex-col min-h-screen bg-white font-(family-name:--font-inter)">
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export default async function HomePage() {
         </div>
       </nav>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-violet-50 via-white to-blue-50 pt-20 pb-28">
+      <section className="relative overflow-hidden bg-linear-to-br from-violet-50 via-white to-blue-50 pt-20 pb-28">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative">
           <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
             <ShieldCheck className="w-3.5 h-3.5" />

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   const parent = await db.parentProfile.findUnique({
     where: { userId: session.user.id },
-    include: { children: { select: { id: true } } },
+    include: { children: { where: { isActive: true }, select: { id: true } } },
   });
   if (!parent) {
     return NextResponse.json(
@@ -64,6 +64,7 @@ export async function PATCH(req: NextRequest) {
   const schema = z.object({
     alertId: z.string().cuid(),
     status: z.enum(["SEEN", "RESOLVED", "DISMISSED"]),
+    resolutionNote: z.string().trim().min(2).max(200).optional(),
   });
 
   const body = await req.json();
@@ -89,9 +90,24 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Alert bulunamadı" }, { status: 404 });
   }
 
+  const now = new Date();
+  const shouldAttachResolutionNote =
+    parsed.data.status === "RESOLVED" && Boolean(parsed.data.resolutionNote);
+
+  const noteLine = shouldAttachResolutionNote
+    ? `[RESOLUTION_NOTE|${now.toISOString()}] ${parsed.data.resolutionNote}`
+    : null;
+
+  const nextContext = noteLine
+    ? [alert.context, noteLine].filter(Boolean).join("\n")
+    : undefined;
+
   const updated = await db.alert.update({
     where: { id: alert.id },
-    data: { status: parsed.data.status },
+    data: {
+      status: parsed.data.status,
+      ...(nextContext ? { context: nextContext } : {}),
+    },
   });
 
   return NextResponse.json(updated);

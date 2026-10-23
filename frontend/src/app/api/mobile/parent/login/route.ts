@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { signMobileParentToken } from "@/lib/mobile-parent-auth";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8).max(128),
 });
 
@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const user = await db.user.findUnique({
-    where: { email: parsed.data.email },
+  const user = await db.user.findFirst({
+    where: { email: { equals: parsed.data.email, mode: "insensitive" } },
     include: {
       parentProfile: true,
     },

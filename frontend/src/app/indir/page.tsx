@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 
+const childApkUrl =
+  process.env.NEXT_PUBLIC_CHILD_APK_URL ??
+  "/api/download/child";
+
+const parentApkUrl =
+  process.env.NEXT_PUBLIC_PARENT_APK_URL ??
+  "/api/download/parent";
+
 const content = {
   tr: {
     title: "Mivvo Uygulama İndirme Merkezi",
@@ -31,21 +39,34 @@ export default async function DownloadHubPage() {
         <p className="mt-3 text-gray-600">{c.desc}</p>
 
         <div className="mt-8 grid gap-5 md:grid-cols-2">
-          <Link
-            href="/indir/cocuk"
+          <a
+            href={childApkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-xl border border-violet-200 bg-violet-50 p-5 transition hover:border-violet-300 hover:bg-violet-100"
           >
             <h2 className="text-xl font-bold text-violet-800">{c.childTitle}</h2>
             <p className="mt-2 text-sm text-violet-700">{c.childDesc}</p>
-          </Link>
+          </a>
 
-          <Link
-            href="/indir/ebeveyn"
+          <a
+            href={parentApkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-xl border border-blue-200 bg-blue-50 p-5 transition hover:border-blue-300 hover:bg-blue-100"
           >
             <h2 className="text-xl font-bold text-blue-800">{c.parentTitle}</h2>
             <p className="mt-2 text-sm text-blue-700">{c.parentDesc}</p>
-          </Link>
+          </a>
+        </div>
+
+        <div className="mt-6 text-xs text-gray-500">
+          <p>
+            Child: <Link href="/indir/cocuk" className="underline">/indir/cocuk</Link>
+          </p>
+          <p>
+            Parent: <Link href="/indir/ebeveyn" className="underline">/indir/ebeveyn</Link>
+          </p>
         </div>
       </div>
     </main>

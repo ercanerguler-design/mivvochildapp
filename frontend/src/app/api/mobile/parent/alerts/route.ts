@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AlertStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getBearerToken, verifyMobileParentToken } from "@/lib/mobile-parent-auth";
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const parent = await db.parentProfile.findUnique({
     where: { id: payload.parentId },
-    include: { children: { select: { id: true } } },
+    include: { children: { where: { isActive: true }, select: { id: true } } },
   });
 
   if (!parent) {
@@ -36,7 +37,9 @@ export async function GET(req: NextRequest) {
     ...(status ? { status: status as never } : {}),
   };
 
-  const [alerts, total] = await Promise.all([
+  const baseWhere = { childId: { in: childIds } };
+
+  const [alerts, total, newCount, highRiskCount] = await Promise.all([
     db.alert.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -47,6 +50,8 @@ export async function GET(req: NextRequest) {
       },
     }),
     db.alert.count({ where }),
+    db.alert.count({ where: { ...baseWhere, status: AlertStatus.PENDING } }),
+    db.alert.count({ where: { ...baseWhere, riskScore: { gte: 85 } } }),
   ]);
 
   return NextResponse.json({
@@ -54,5 +59,7 @@ export async function GET(req: NextRequest) {
     total,
     page,
     totalPages: Math.ceil(total / PAGE_SIZE),
+    newCount,
+    highRiskCount,
   });
 }

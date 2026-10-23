@@ -10,8 +10,14 @@ function signPayload(payload: string) {
   return crypto.createHmac("sha256", getSigningSecret()).update(payload).digest("hex").slice(0, 16);
 }
 
+function getCurrentWindowExpiry(nowSeconds: number) {
+  const windowStart = Math.floor(nowSeconds / PAIRING_TTL_SECONDS) * PAIRING_TTL_SECONDS;
+  return windowStart + PAIRING_TTL_SECONDS;
+}
+
 export function createPairingCode(parentId: string) {
-  const expiresAt = Math.floor(Date.now() / 1000) + PAIRING_TTL_SECONDS;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const expiresAt = getCurrentWindowExpiry(nowSeconds);
   const payload = `${parentId}.${expiresAt}`;
   const signature = signPayload(payload);
 

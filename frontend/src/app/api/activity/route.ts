@@ -26,7 +26,14 @@ const PLATFORM_LABELS: Record<string, string> = {
 
 // ─── Gece saati kontrolü (23:00 - 06:00) ─────────────────
 function isNightTime(date: Date): boolean {
-  const hour = date.getHours();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Istanbul",
+  }).formatToParts(date);
+
+  const hourPart = parts.find((part) => part.type === "hour")?.value ?? "0";
+  const hour = Number(hourPart);
   return hour >= 23 || hour < 6;
 }
 
@@ -45,6 +52,14 @@ const bodySchema = z.object({
   activities: z.array(activityItemSchema).min(1).max(50),
 });
 
+function isMobileAuthorized(req: NextRequest) {
+  const expectedKey = process.env.MOBILE_API_KEY;
+  if (!expectedKey) return true;
+
+  const provided = req.headers.get("x-api-key") ?? req.headers.get("x-mobile-api-key") ?? "";
+  return provided === expectedKey;
+}
+
 function isUnder18(birthDate: Date) {
   const today = new Date();
   const age = today.getFullYear() - birthDate.getFullYear();
@@ -56,9 +71,7 @@ function isUnder18(birthDate: Date) {
 
 // ─── Main handler ──────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // API key auth
-  const apiKey = req.headers.get("x-api-key");
-  if (!apiKey || apiKey !== process.env.MOBILE_API_KEY) {
+  if (!isMobileAuthorized(req)) {
     return NextResponse.json({ error: "Yetkisiz istek" }, { status: 401 });
   }
 
@@ -119,13 +132,19 @@ export async function POST(req: NextRequest) {
   const sensitivityLevel = child.parent.sensitivityLevel;
   const analyzableCount = activities.filter((item) => Boolean(item.content && item.content.trim().length > 3)).length;
   const billingBefore = await getParentBillingStatus(child.parentId);
-  const potentialBillableUnits = calculateBillableUnits(billingBefore.trial.used, analyzableCount);
+  const potentialBillableUnits = calculateBillableUnits(
+    {
+      trialActive: billingBefore.trial.active,
+      unlimitedActive: billingBefore.unlimited?.active ?? false,
+    },
+    analyzableCount
+  );
 
   if (analyzableCount > 0) {
     if (potentialBillableUnits > billingBefore.credits) {
       return NextResponse.json(
         {
-          error: "Ucretsiz deneme limiti doldu. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
+          error: "14 gunluk ucretsiz deneme suresi bitti. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
           code: "TRIAL_LIMIT_EXCEEDED",
           billing: {
             ...billingBefore,
@@ -307,7 +326,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const billableUnits = calculateBillableUnits(billingBefore.trial.used, analyzedCount);
+  const billableUnits = calculateBillableUnits(
+    {
+      trialActive: billingBefore.trial.active,
+      unlimitedActive: billingBefore.unlimited?.active ?? false,
+    },
+    analyzedCount
+  );
   if (billableUnits > 0) {
     await consumeParentCredits({
       parentId: child.parentId,

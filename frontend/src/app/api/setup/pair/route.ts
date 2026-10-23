@@ -72,8 +72,46 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingForDevice) {
-      return NextResponse.json({ childId: existingForDevice.id, parentId: parent.id, alreadyLinked: true });
+      const reactivated = await db.childProfile.update({
+        where: { id: existingForDevice.id },
+        data: {
+          displayName: parsed.data.displayName,
+          birthDate,
+          deviceId: parsed.data.deviceId,
+          fcmToken: parsed.data.fcmToken ?? undefined,
+          isActive: true,
+          consentAt: new Date(),
+        },
+        select: { id: true },
+      });
+
+      return NextResponse.json({ childId: reactivated.id, parentId: parent.id, alreadyLinked: true });
     }
+  }
+
+  const existingByIdentity = await db.childProfile.findFirst({
+    where: {
+      parentId: parent.id,
+      displayName: { equals: parsed.data.displayName.trim(), mode: "insensitive" },
+      birthDate,
+    },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true },
+  });
+
+  if (existingByIdentity) {
+    const reactivated = await db.childProfile.update({
+      where: { id: existingByIdentity.id },
+      data: {
+        deviceId: parsed.data.deviceId ?? undefined,
+        fcmToken: parsed.data.fcmToken ?? undefined,
+        isActive: true,
+        consentAt: new Date(),
+      },
+      select: { id: true },
+    });
+
+    return NextResponse.json({ childId: reactivated.id, parentId: parent.id, alreadyLinked: true });
   }
 
   const child = await db.childProfile.create({

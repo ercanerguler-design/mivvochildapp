@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
+import AlertStatusActions from "@/components/alert-status-actions";
 import { redirect } from "next/navigation";
 
 type AlertStatus = "PENDING" | "SEEN" | "RESOLVED" | "DISMISSED";
@@ -12,6 +13,24 @@ const statusColors: Record<AlertStatus, string> = {
   RESOLVED: "bg-emerald-100 text-emerald-700",
   DISMISSED: "bg-gray-100 text-gray-700",
 };
+
+function extractLatestResolutionNote(context: string | null) {
+  if (!context) return null;
+
+  const lines = context.split("\n").map((line) => line.trim());
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (line.startsWith("[RESOLUTION_NOTE|")) {
+      const endOfTag = line.indexOf("]");
+      if (endOfTag === -1) return null;
+
+      const note = line.slice(endOfTag + 1).trim();
+      return note || null;
+    }
+  }
+
+  return null;
+}
 
 export default async function AlertsPage({
   searchParams,
@@ -26,7 +45,7 @@ export default async function AlertsPage({
 
   const parent = await db.parentProfile.findUnique({
     where: { userId: session.user.id },
-    include: { children: { select: { id: true } } },
+    include: { children: { where: { isActive: true }, select: { id: true } } },
   });
   if (!parent) redirect("/kurulum");
 
@@ -77,12 +96,19 @@ export default async function AlertsPage({
                 <div>
                   <p className="text-sm font-medium text-gray-900">{alert.child.displayName}</p>
                   <p className="text-sm text-gray-600 mt-1">{alert.originalText}</p>
+                  {(() => {
+                    const resolutionNote = extractLatestResolutionNote(alert.context);
+                    if (!resolutionNote) return null;
+
+                    return <p className="text-xs text-emerald-700 mt-1">Cozum notu: {resolutionNote}</p>;
+                  })()}
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(alert.createdAt).toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", {
                       day: "numeric",
                       month: "short",
                       hour: "2-digit",
                       minute: "2-digit",
+                      timeZone: "Europe/Istanbul",
                     })}
                   </p>
                 </div>
@@ -91,6 +117,7 @@ export default async function AlertsPage({
                     {text.alertsPage.statuses[alert.status]}
                   </span>
                   <p className="text-xs mt-2 text-gray-500">{text.alertsPage.risk}: %{alert.riskScore}</p>
+                  <AlertStatusActions alertId={alert.id} currentStatus={alert.status} />
                 </div>
               </div>
             ))}

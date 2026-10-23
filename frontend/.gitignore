@@ -1,2 +1,9 @@
 .vercel
 .env*.local
+
+# APK files (large binaries - add manually before deploy)
+public/apk/*.apk
+
+# Build output and local scripts
+.next/
+tmp-*.js

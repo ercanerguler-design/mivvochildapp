@@ -16,6 +16,14 @@ const analyzeSchema = z.object({
   sourceApp: z.string().max(50).optional(),
 });
 
+function isMobileAuthorized(req: NextRequest) {
+  const expectedKey = process.env.MOBILE_API_KEY;
+  if (!expectedKey) return true;
+
+  const provided = req.headers.get("x-api-key") ?? req.headers.get("x-mobile-api-key") ?? "";
+  return provided === expectedKey;
+}
+
 function isUnder18(birthDate: Date) {
   const today = new Date();
   const age = today.getFullYear() - birthDate.getFullYear();
@@ -27,9 +35,7 @@ function isUnder18(birthDate: Date) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Yalnızca kimliği doğrulanmış istekler (çocuk uygulamasından API key ile gelecek)
-    const apiKey = req.headers.get("x-api-key");
-    if (!apiKey || apiKey !== process.env.MOBILE_API_KEY) {
+    if (!isMobileAuthorized(req)) {
       return NextResponse.json({ error: "Yetkisiz istek" }, { status: 401 });
     }
 
@@ -87,12 +93,18 @@ export async function POST(req: NextRequest) {
     }
 
     const billingBefore = await getParentBillingStatus(child.parentId);
-    const billableUnits = calculateBillableUnits(billingBefore.trial.used, 1);
+    const billableUnits = calculateBillableUnits(
+      {
+        trialActive: billingBefore.trial.active,
+        unlimitedActive: billingBefore.unlimited?.active ?? false,
+      },
+      1
+    );
 
     if (billableUnits > billingBefore.credits) {
       return NextResponse.json(
         {
-          error: "Ucretsiz deneme limiti doldu. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
+          error: "14 gunluk ucretsiz deneme suresi bitti. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
           code: "TRIAL_LIMIT_EXCEEDED",
           billing: {
             ...billingBefore,

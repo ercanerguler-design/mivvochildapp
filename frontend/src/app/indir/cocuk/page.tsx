@@ -3,7 +3,7 @@ import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 
 const childApkUrl =
   process.env.NEXT_PUBLIC_CHILD_APK_URL ??
-  "https://expo.dev/accounts/scegrup/projects/mivvo-child-app/builds";
+  "/api/download/child";
 
 const content = {
   tr: {

@@ -14,14 +14,14 @@ export default async function ReportsPage() {
 
   const parent = await db.parentProfile.findUnique({
     where: { userId: session.user.id },
-    include: { children: { select: { id: true } } },
+    include: { children: { where: { isActive: true }, select: { id: true } } },
   });
   if (!parent) redirect("/kurulum");
 
   const childIds = parent.children.map((c) => c.id);
   const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [categoryCounts, platformCounts] = await Promise.all([
+  const [categoryCounts, platformCounts, reactiveToneCount, analyzedToneCount, pendingHighRiskCount] = await Promise.all([
     db.alert.groupBy({
       by: ["category"],
       where: { childId: { in: childIds }, createdAt: { gte: since7d } },
@@ -34,12 +34,37 @@ export default async function ReportsPage() {
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
     }),
+    db.socialActivity.count({
+      where: {
+        childId: { in: childIds },
+        createdAt: { gte: since7d },
+        riskScore: { gte: 55 },
+      },
+    }),
+    db.socialActivity.count({
+      where: {
+        childId: { in: childIds },
+        createdAt: { gte: since7d },
+        riskScore: { not: null },
+      },
+    }),
+    db.alert.count({
+      where: {
+        childId: { in: childIds },
+        createdAt: { gte: since7d },
+        status: "PENDING",
+        riskScore: { gte: 70 },
+      },
+    }),
   ]);
 
   const categoryMap = Object.fromEntries(categoryCounts.map((row) => [row.category, row._count.id]));
   const totalAlerts = categoryCounts.reduce((acc, row) => acc + row._count.id, 0);
-  const bullyingCount = categoryMap.BULLYING ?? 0;
-  const aggressiveCount = (categoryMap.EXTREME_ANGER ?? 0) + (categoryMap.PROFANITY ?? 0);
+  const bullyingCount = (categoryMap.BULLYING ?? 0) + (categoryMap.THREAT ?? 0) + (categoryMap.VIOLENCE ?? 0);
+  const aggressiveCount = Math.max(
+    (categoryMap.EXTREME_ANGER ?? 0) + (categoryMap.PROFANITY ?? 0),
+    reactiveToneCount
+  );
 
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const nightRiskCount = await db.socialActivity.count({
@@ -50,10 +75,13 @@ export default async function ReportsPage() {
     },
   });
 
-  const behaviorScore = Math.max(0, 100 - bullyingCount * 10 - aggressiveCount * 6 - nightRiskCount * 4);
-  const toneReactive = aggressiveCount >= 3;
-  const bullyingHigh = bullyingCount >= 2;
-  const nightRiskActive = nightRiskCount >= 3;
+  const behaviorScore = Math.max(
+    0,
+    100 - bullyingCount * 9 - aggressiveCount * 5 - nightRiskCount * 4 - pendingHighRiskCount * 3
+  );
+  const toneReactive = aggressiveCount >= 2 || (analyzedToneCount >= 3 && reactiveToneCount >= 1);
+  const bullyingHigh = bullyingCount >= 1;
+  const nightRiskActive = nightRiskCount >= 2;
 
   const behaviorHint =
     behaviorScore >= 80

@@ -5,6 +5,7 @@ import { getBearerToken, verifyMobileParentToken } from "@/lib/mobile-parent-aut
 
 const statusSchema = z.object({
   status: z.enum(["SEEN", "RESOLVED", "DISMISSED"]),
+  resolutionNote: z.string().trim().min(2).max(200).optional(),
 });
 
 export async function GET(
@@ -30,6 +31,7 @@ export async function GET(
       id: alertId,
       child: {
         parentId: payload.parentId,
+        isActive: true,
       },
     },
     include: {
@@ -67,6 +69,7 @@ export async function PATCH(
       id: alertId,
       child: {
         parentId: payload.parentId,
+        isActive: true,
       },
     },
     select: { id: true },
@@ -88,9 +91,29 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid payload", details: parsed.error.flatten() }, { status: 400 });
   }
 
+  const now = new Date();
+  const shouldAttachResolutionNote =
+    parsed.data.status === "RESOLVED" && Boolean(parsed.data.resolutionNote);
+
+  const noteLine = shouldAttachResolutionNote
+    ? `[RESOLUTION_NOTE|${now.toISOString()}] ${parsed.data.resolutionNote}`
+    : null;
+
+  const existingWithContext = await db.alert.findUnique({
+    where: { id: alertId },
+    select: { context: true },
+  });
+
+  const nextContext = noteLine
+    ? [existingWithContext?.context, noteLine].filter(Boolean).join("\n")
+    : undefined;
+
   const updated = await db.alert.update({
     where: { id: alertId },
-    data: { status: parsed.data.status },
+    data: {
+      status: parsed.data.status,
+      ...(nextContext ? { context: nextContext } : {}),
+    },
   });
 
   return NextResponse.json(updated);

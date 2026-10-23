@@ -11,9 +11,16 @@ const schema = z.object({
   osVersion: z.string().max(32).optional(),
 });
 
+function isMobileAuthorized(req: NextRequest) {
+  const expectedKey = process.env.MOBILE_API_KEY;
+  if (!expectedKey) return true;
+
+  const provided = req.headers.get("x-api-key") ?? req.headers.get("x-mobile-api-key") ?? "";
+  return provided === expectedKey;
+}
+
 export async function POST(req: NextRequest) {
-  const apiKey = req.headers.get("x-api-key");
-  if (!apiKey || apiKey !== process.env.MOBILE_API_KEY) {
+  if (!isMobileAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

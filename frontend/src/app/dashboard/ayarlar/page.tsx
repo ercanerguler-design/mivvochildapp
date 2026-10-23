@@ -14,8 +14,21 @@ type SettingsState = {
       used: number;
       remaining: number;
       exceeded: boolean;
+      mode?: "DAYS";
+      daysTotal?: number;
+      daysRemaining?: number;
+      active?: boolean;
+      startAt?: string;
+      expiresAt?: string;
     };
     credits: number;
+    unlimited?: {
+      active: boolean;
+      startAt?: string | null;
+      expiresAt?: string | null;
+      daysRemaining: number;
+    };
+    isUnlimitedActive?: boolean;
     childAppFree: boolean;
   };
 };
@@ -67,8 +80,11 @@ export default function SettingsPage() {
 
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 space-y-1">
           <p className="font-semibold text-gray-900">Kullanım Durumu</p>
-          <p>Ücretsiz analiz: {data.billing?.trial.used ?? 0} / {data.billing?.trial.limit ?? 7}</p>
-          <p>Kalan ücretsiz hak: {data.billing?.trial.remaining ?? 0}</p>
+          <p>14 gün deneme: {data.billing?.trial.active ? "Aktif" : "Sona erdi"}</p>
+          <p>Kalan deneme günü: {data.billing?.trial.daysRemaining ?? data.billing?.trial.remaining ?? 0}</p>
+          <p>Toplam analiz (deneme dahil): {data.billing?.trial.used ?? 0}</p>
+          <p>Aylık sınırsız plan: {data.billing?.unlimited?.active ? "Aktif" : "Pasif"}</p>
+          <p>Kalan sınırsız gün: {data.billing?.unlimited?.daysRemaining ?? 0}</p>
           <p>Mevcut kredi: {data.billing?.credits ?? 0}</p>
           <p>Çocuk uygulaması: {data.billing?.childAppFree ? "Ücretsiz" : "Ücretli"}</p>
         </div>

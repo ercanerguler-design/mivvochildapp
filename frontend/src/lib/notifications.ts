@@ -1,4 +1,3 @@
-import { GoogleAuth } from "google-auth-library";
 import { db } from "@/lib/db";
 
 type ParentNotificationTarget = {
@@ -13,59 +12,36 @@ type RiskNotificationInput = {
   data?: Record<string, string>;
 };
 
-async function getFirebaseAccessToken(): Promise<string | null> {
-  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-    return null;
-  }
-
-  const auth = new GoogleAuth({
-    credentials: {
-      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    },
-    scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-  });
-
-  const client = await auth.getClient();
-  const tokenResponse = await client.getAccessToken();
-  return tokenResponse.token ?? null;
-}
-
-async function pushFcmMessage(params: {
+async function pushExpoMessage(params: {
   token: string;
   title: string;
   body: string;
   data?: Record<string, string>;
 }) {
-  const accessToken = await getFirebaseAccessToken();
-  if (!accessToken || !process.env.FIREBASE_PROJECT_ID) {
-    throw new Error("Firebase credentials are missing");
-  }
-
-  const response = await fetch(
-    `https://fcm.googleapis.com/v1/projects/${process.env.FIREBASE_PROJECT_ID}/messages:send`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: {
-          token: params.token,
-          notification: {
-            title: params.title,
-            body: params.body,
-          },
-          data: params.data,
-        },
-      }),
-    }
-  );
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      to: params.token,
+      title: params.title,
+      body: params.body,
+      data: params.data ?? {},
+      sound: "default",
+      priority: "high",
+    }),
+  });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`FCM send failed: ${response.status} ${text}`);
+    throw new Error(`Expo push failed: ${response.status} ${text}`);
+  }
+
+  const result = (await response.json()) as { data?: { status?: string; message?: string } };
+  if (result?.data?.status === "error") {
+    throw new Error(`Expo push error: ${result.data.message}`);
   }
 }
 
@@ -85,7 +61,7 @@ export async function sendRiskNotificationWithRetry(input: RiskNotificationInput
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      await pushFcmMessage({
+      await pushExpoMessage({
         token: input.parent.fcmToken,
         title: input.title,
         body: input.body,

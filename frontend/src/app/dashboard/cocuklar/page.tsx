@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
+import { DeleteChildButton } from "@/components/delete-child-button";
 import { redirect } from "next/navigation";
 
 function getConnectivity(childUpdatedAt: Date, hasToken: boolean) {
@@ -34,6 +35,9 @@ export default async function ChildrenPage() {
     where: { userId: session.user.id },
     include: {
       children: {
+        where: {
+          isActive: true,
+        },
         include: {
           _count: {
             select: {
@@ -49,6 +53,15 @@ export default async function ChildrenPage() {
   });
 
   if (!parent) redirect("/kurulum");
+
+  const uniqueChildren = Array.from(
+    new Map(
+      parent.children.map((child) => {
+        const identity = child.displayName.trim().toLocaleLowerCase("tr-TR");
+        return [identity, child] as const;
+      })
+    ).values()
+  );
 
   const pairingCode = createPairingCode(parent.id);
   const pairingTtl = getPairingTtlMinutes();
@@ -77,12 +90,12 @@ export default async function ChildrenPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {parent.children.length === 0 ? (
+        {uniqueChildren.length === 0 ? (
           <div className="col-span-full bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 text-sm">
             {text.childrenPage.noChildren}
           </div>
         ) : (
-          parent.children.map((child) => (
+          uniqueChildren.map((child) => (
             <div key={child.id} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900">{child.displayName}</h3>
@@ -130,6 +143,9 @@ export default async function ChildrenPage() {
                   <p className="text-gray-500">{text.childrenPage.activities}</p>
                   <p className="font-bold text-emerald-700">{child._count.socialActivities}</p>
                 </div>
+              </div>
+              <div className="pt-1">
+                <DeleteChildButton childId={child.id} childName={child.displayName} locale={locale} />
               </div>
             </div>
           ))

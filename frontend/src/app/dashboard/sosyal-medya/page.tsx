@@ -325,6 +325,7 @@ export default async function SosyalMedyaPage() {
                           month: "short",
                           hour: "2-digit",
                           minute: "2-digit",
+                          timeZone: "Europe/Istanbul",
                         })}
                       </p>
                     </div>

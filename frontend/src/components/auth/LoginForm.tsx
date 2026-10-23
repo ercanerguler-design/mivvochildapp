@@ -20,7 +20,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
   const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
   const oauthCallbackUri = isLocalhost
     ? "http://localhost:3000/api/auth/callback/google"
-    : "https://mivvochildapp.vercel.app/api/auth/callback/google";
+    : "https://mivvo.org/api/auth/callback/google";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
 
-export const FREE_TRIAL_ANALYSIS_LIMIT = Number(
-  process.env.FREE_TRIAL_ANALYSIS_LIMIT ?? "7"
-);
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const FREE_TRIAL_DAYS = Number(process.env.FREE_TRIAL_DAYS ?? "14");
+export const PAID_UNLIMITED_DAYS = Number(process.env.PAID_UNLIMITED_DAYS ?? "30");
+export const MONTHLY_PLAN_TL = Number(process.env.MONTHLY_PLAN_TL ?? "299");
 
 let billingTableReady = false;
 
@@ -28,7 +30,138 @@ async function ensureBillingTables() {
     )
   `);
 
+  await db.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS parent_unlimited_plans (
+      parent_id TEXT PRIMARY KEY,
+      starts_at TIMESTAMPTZ NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      reason TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.$executeRawUnsafe(
+    "CREATE INDEX IF NOT EXISTS idx_parent_unlimited_plans_expires_at ON parent_unlimited_plans (expires_at DESC)"
+  );
+
+  await db.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS parent_subscription_ledger (
+      id TEXT PRIMARY KEY,
+      parent_id TEXT NOT NULL,
+      days INTEGER NOT NULL,
+      amount_tl INTEGER NOT NULL,
+      reason TEXT,
+      actor TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.$executeRawUnsafe(
+    "CREATE INDEX IF NOT EXISTS idx_parent_subscription_ledger_created_at ON parent_subscription_ledger (created_at DESC)"
+  );
+
   billingTableReady = true;
+}
+
+type UnlimitedPlanRow = {
+  starts_at: Date;
+  expires_at: Date;
+};
+
+async function getParentUnlimitedStatus(parentId: string) {
+  await ensureBillingTables();
+
+  const rows = await db.$queryRawUnsafe<UnlimitedPlanRow[]>(
+    `
+    SELECT starts_at, expires_at
+    FROM parent_unlimited_plans
+    WHERE parent_id = $1
+    LIMIT 1
+    `,
+    parentId
+  );
+
+  const plan = rows[0];
+  if (!plan) {
+    return {
+      active: false,
+      startAt: null,
+      expiresAt: null,
+      daysRemaining: 0,
+    };
+  }
+
+  const now = new Date();
+  const remainingMs = plan.expires_at.getTime() - now.getTime();
+  const active = remainingMs > 0;
+
+  return {
+    active,
+    startAt: plan.starts_at,
+    expiresAt: plan.expires_at,
+    daysRemaining: active ? Math.ceil(remainingMs / DAY_MS) : 0,
+  };
+}
+
+export async function activateParentUnlimitedPlan(params: {
+  parentId: string;
+  days?: number;
+  reason?: string;
+  actor?: string;
+  amountTl?: number;
+}) {
+  const { parentId, reason, actor } = params;
+  const days = Math.max(1, Math.floor(params.days ?? PAID_UNLIMITED_DAYS));
+  const amountTl = Math.max(0, Math.floor(params.amountTl ?? MONTHLY_PLAN_TL));
+
+  await ensureBillingTables();
+
+  const current = await db.$queryRawUnsafe<UnlimitedPlanRow[]>(
+    `
+    SELECT starts_at, expires_at
+    FROM parent_unlimited_plans
+    WHERE parent_id = $1
+    LIMIT 1
+    `,
+    parentId
+  );
+
+  const now = new Date();
+  const currentExpiresAt = current[0]?.expires_at;
+  const startAt = currentExpiresAt && currentExpiresAt > now ? currentExpiresAt : now;
+  const expiresAt = new Date(startAt.getTime() + days * DAY_MS);
+
+  await db.$executeRawUnsafe(
+    `
+    INSERT INTO parent_unlimited_plans (parent_id, starts_at, expires_at, reason, updated_at)
+    VALUES ($1, $2, $3, $4, NOW())
+    ON CONFLICT (parent_id)
+    DO UPDATE SET
+      starts_at = EXCLUDED.starts_at,
+      expires_at = EXCLUDED.expires_at,
+      reason = EXCLUDED.reason,
+      updated_at = NOW()
+    `,
+    parentId,
+    startAt,
+    expiresAt,
+    reason ?? `${days} gunluk sinirsiz plan`
+  );
+
+  await db.$executeRawUnsafe(
+    `
+    INSERT INTO parent_subscription_ledger (id, parent_id, days, amount_tl, reason, actor)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    `,
+    crypto.randomUUID(),
+    parentId,
+    days,
+    amountTl,
+    reason ?? `${days} gunluk sinirsiz plan`,
+    actor ?? "admin-panel"
+  );
+
+  return getParentUnlimitedStatus(parentId);
 }
 
 async function ensureParentCreditRow(parentId: string) {
@@ -133,35 +266,66 @@ export async function consumeParentCredits(params: {
 }
 
 export async function getParentTrialUsage(parentId: string) {
-  const used = await db.socialActivity.count({
-    where: {
-      child: { parentId },
-      analyzedAt: { not: null },
-    },
-  });
+  const [parent, used] = await Promise.all([
+    db.parentProfile.findUnique({
+      where: { id: parentId },
+      select: { createdAt: true },
+    }),
+    db.socialActivity.count({
+      where: {
+        child: { parentId },
+        analyzedAt: { not: null },
+      },
+    }),
+  ]);
 
-  const remaining = Math.max(0, FREE_TRIAL_ANALYSIS_LIMIT - used);
+  const trialStartAt = parent?.createdAt ?? new Date();
+  const trialExpiresAt = new Date(trialStartAt.getTime() + FREE_TRIAL_DAYS * DAY_MS);
+  const now = new Date();
+  const remainingMs = trialExpiresAt.getTime() - now.getTime();
+  const active = remainingMs > 0;
+  const daysRemaining = active ? Math.ceil(remainingMs / DAY_MS) : 0;
 
   return {
-    limit: FREE_TRIAL_ANALYSIS_LIMIT,
+    // Backward-compatible keys used by existing UI.
+    limit: FREE_TRIAL_DAYS,
     used,
-    remaining,
-    exceeded: used >= FREE_TRIAL_ANALYSIS_LIMIT,
+    remaining: daysRemaining,
+    exceeded: !active,
+
+    // New trial metadata for day-based UX.
+    mode: "DAYS" as const,
+    daysTotal: FREE_TRIAL_DAYS,
+    daysRemaining,
+    active,
+    startAt: trialStartAt,
+    expiresAt: trialExpiresAt,
   };
 }
 
 export async function getParentBillingStatus(parentId: string) {
-  const trial = await getParentTrialUsage(parentId);
-  const credits = await getParentCreditBalance(parentId);
+  const [trial, credits, unlimited] = await Promise.all([
+    getParentTrialUsage(parentId),
+    getParentCreditBalance(parentId),
+    getParentUnlimitedStatus(parentId),
+  ]);
 
   return {
     trial,
     credits,
+    unlimited,
+    isUnlimitedActive: unlimited.active,
     childAppFree: true,
   };
 }
 
-export function calculateBillableUnits(usedBefore: number, analyzeCount: number) {
-  const freeRemaining = Math.max(0, FREE_TRIAL_ANALYSIS_LIMIT - usedBefore);
-  return Math.max(0, analyzeCount - freeRemaining);
+export function calculateBillableUnits(
+  access: {
+    trialActive: boolean;
+    unlimitedActive: boolean;
+  },
+  analyzeCount: number
+) {
+  if (access.trialActive || access.unlimitedActive) return 0;
+  return Math.max(0, analyzeCount);
 }

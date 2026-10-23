@@ -52,6 +52,7 @@ export default async function DashboardPage() {
     where: { userId: session.user.id },
     include: {
       children: {
+        where: { isActive: true },
         include: {
           alerts: {
             orderBy: { createdAt: "desc" },
@@ -69,7 +70,11 @@ export default async function DashboardPage() {
   const pendingCount = allAlerts.filter((a) => a.status === "PENDING").length;
   const resolvedCount = allAlerts.filter((a) => a.status === "RESOLVED").length;
   const totalCount = allAlerts.length;
-  const safetyScore = Math.max(0, Math.min(100, 100 - pendingCount * 8 - highRiskCount * 12));
+  const safetyScore = totalCount === 0
+    ? 100
+    : Math.max(0, Math.min(100, Math.round(
+        100 - (pendingCount / totalCount) * 50 - (highRiskCount / totalCount) * 50
+      )));
   const pairingCode = createPairingCode(parent.id);
   const pairingTtl = getPairingTtlMinutes();
 
@@ -145,7 +150,13 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className={`h-full ${safetyScore >= 80 ? "bg-emerald-500" : safetyScore >= 50 ? "bg-orange-500" : "bg-red-500"}`} style={{ width: `${safetyScore}%` }} />
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${Math.max(safetyScore, 3)}%`,
+                backgroundColor: safetyScore >= 80 ? "#10b981" : safetyScore >= 50 ? "#f97316" : "#ef4444",
+              }}
+            />
           </div>
           <p className="text-sm text-gray-600 mt-3">
             {safetyScore >= 80
@@ -213,12 +224,13 @@ export default async function DashboardPage() {
                     <p className="text-sm text-gray-700 truncate">{alert.originalText}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {child?.displayName} •{" "}
-                      {new Date(alert.createdAt).toLocaleDateString("tr-TR", {
+                      {new Date(alert.createdAt).toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", {
                         ...(locale === "en" ? { weekday: undefined } : {}),
                         day: "numeric",
                         month: "long",
                         hour: "2-digit",
                         minute: "2-digit",
+                        timeZone: "Europe/Istanbul",
                       })}
                     </p>
                   </div>
@@ -261,7 +273,9 @@ export default async function DashboardPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{child.displayName}</p>
                   <p className="text-xs text-gray-400">
-                    {child.isActive ? text.dashboard.activeProtection : text.dashboard.passiveProtection}
+                    {(Date.now() - child.updatedAt.getTime()) / 60000 <= 10
+                      ? text.dashboard.activeProtection
+                      : text.dashboard.passiveProtection}
                   </p>
                 </div>
                 {childPending > 0 && (
