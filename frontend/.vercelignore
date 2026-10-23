@@ -1,0 +1,8 @@
+# Explicit list for CLI deploys (public/apk must still be uploaded)
+.env*
+!.env.local.example
+.next
+node_modules
+.vercel
+tmp-*.js
+*.tsbuildinfo
