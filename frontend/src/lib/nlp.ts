@@ -106,6 +106,7 @@ YANLIŞ ALARMDAN KAÇIN
 - Arkadaşlar arası şakalaşma (gülme emojileri, "kanka", "aga", "xd", "sjsjs", oyun dili) ve abartılı ama zararsız ifadeler ("seni öldürcem 😂 ödevi göndermedin") düşük puanlıdır (en fazla 40).
 - Oyun, film, dizi, şarkı sözü, haber veya alıntı içindeki şiddet çocuğa yönelik değilse risk değildir.
 - Tek başına küfür veya kızgınlık, bir kişiyi hedef almıyorsa en fazla 50'dir.
+- Yeni birinin tek seferlik selamı, takip ettiğini söylemesi veya paylaşımlara/fotoğraflara iltifat etmesi; gizlilik talebi, hediye/para teklifi, kişisel bilgi, fotoğraf veya buluşma isteği YOKSA en fazla 55'tir.
 - Bağlam bilgileri (gece saati, yeni kişi, platform) TEK BAŞINA risk sebebi DEĞİLDİR. Sadece içerik zaten şüpheliyse puanı en fazla 10 artırabilir.
 - Emin değilsen düşük "confidence" ver; uydurma.
 
