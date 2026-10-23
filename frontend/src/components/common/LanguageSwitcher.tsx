@@ -35,7 +35,13 @@ export function LanguageSwitcher() {
     router.refresh();
   }
 
+  // Marketing pages have their own URL-based language switch in the header.
+  if (pathname === "/" || pathname === "/en" || pathname.startsWith("/en/") || pathname.startsWith("/rehber")) {
+    return null;
+  }
+
   return (
+    <div className="fixed right-4 top-20 z-[80] sm:top-4">
     <div className="inline-flex items-center rounded-lg border border-gray-200 bg-white p-1 text-xs font-semibold text-gray-600">
       <button
         type="button"
@@ -51,6 +57,7 @@ export function LanguageSwitcher() {
       >
         EN
       </button>
+    </div>
     </div>
   );
 }

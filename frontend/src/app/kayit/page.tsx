@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { MivvoLogo } from "@/components/common/MivvoLogo";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { t } from "@/lib/i18n";
+
+export const metadata: Metadata = { title: "Ücretsiz Kayıt Ol", robots: { index: false, follow: true } };
 
 export default async function RegisterPage() {
   const locale = await getLocaleFromServerCookie();

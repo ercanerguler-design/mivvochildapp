@@ -1,0 +1,321 @@
+import type { Locale } from "@/lib/i18n";
+import { SITE } from "@/lib/site";
+
+export type DemoSample = {
+  app: string;
+  sender: string;
+  text: string;
+  result:
+    | { safe: true; note: string }
+    | { safe: false; category: string; score: number; level: string; why: string; tip: string };
+};
+
+const price = SITE.monthlyPriceTl;
+const trial = SITE.trialDays;
+
+export const landingContent = {
+  tr: {
+    nav: { features: "Özellikler", how: "Nasıl Çalışır?", pricing: "Fiyat", faq: "SSS", guide: "Rehber", signIn: "Giriş Yap", start: "Ücretsiz Başla", menu: "Menü" },
+    hero: {
+      eyebrow: "Türkçe yapay zeka ile çocuk güvenliği",
+      title1: "Çocuğunuz dijital dünyada",
+      title2: "yalnız değil.",
+      desc: "Mivvo; WhatsApp, Instagram, TikTok ve diğer uygulamalara gelen mesaj bildirimlerini Türkçe yapay zeka ile tarar. Zorbalık, tehdit, cinsel risk ya da yabancı birinin ısrarlı teması fark edildiğinde size saniyeler içinde haber verir.",
+      primary: `${trial} Gün Ücretsiz Başla`,
+      secondary: "Canlı örneği dene",
+      trust: ["Kredi kartı gerekmez", "5 dakikada kurulum", "KVKK'ya uygun tasarım"],
+      phone: {
+        time: "21:47",
+        app: "Mivvo Ebeveyn",
+        now: "şimdi",
+        title: "Zorbalık riski · Yüksek",
+        body: "Deniz'in Instagram mesajlarında aşağılayıcı ifadeler tespit edildi.",
+        tipTitle: "Konuşma önerisi",
+        tip: "Bu akşam suçlamadan sorun: \"Bugün okulda canını sıkan bir şey oldu mu?\"",
+        weekly: "Bu hafta",
+        safe: "Güvenli mesaj",
+        alerts: "Uyarı",
+      },
+    },
+    platformsTitle: "Çocuğunuzun kullandığı uygulamalarda çalışır",
+    why: {
+      title: "Ebeveynlerin göremediği yerde ne oluyor?",
+      sub: "Çocuklar zorbalığı ve rahatsız edici mesajları çoğu zaman anlatmaz. Mivvo, kimsenin konuşmasını okumadan yalnızca riski görünür kılar.",
+      items: [
+        { title: "Zorbalık sessiz yaşanır", desc: "Grup sohbetlerinde dışlanma ve aşağılama, çoğu zaman ebeveyn fark edene kadar haftalarca sürer." },
+        { title: "Yabancılar sabırlıdır", desc: "Kötü niyetli kişiler güven kazanmak için iltifat, hediye ve \"aramızda kalsın\" taktiklerini kullanır." },
+        { title: "Gece saatleri daha risklidir", desc: "Riskli konuşmalar çoğunlukla geç saatlerde yaşanır. Mivvo gece aktivitesini ayrıca işaretler." },
+      ],
+    },
+    features: {
+      title: "7 risk kategorisi, tek bir sakin bildirim",
+      sub: "Mivvo argo, kısaltma ve yazım hatalarıyla dolu gerçek Türkçe mesajları anlamak için tasarlandı.",
+      categories: [
+        { key: "bullying", title: "Zorbalık", desc: "Aşağılama, dışlama, alay ve lakap takma." },
+        { key: "threat", title: "Tehdit", desc: "Zarar verme, şantaj ve korkutma ifadeleri." },
+        { key: "sexual", title: "Cinsel Risk", desc: "Uygunsuz talep, fotoğraf isteme, istismar dili." },
+        { key: "stranger", title: "Yabancı Kişi", desc: "Tanınmayan birinin yoğun ve ısrarlı teması." },
+        { key: "violence", title: "Şiddet", desc: "Kavga, silah ve şiddet planlama dili." },
+        { key: "profanity", title: "Küfür & Hakaret", desc: "Ağır küfür ve hakaret içeren yazışmalar." },
+        { key: "anger", title: "Aşırı Öfke", desc: "Çocuğunuzun zor bir dönemden geçtiğine dair işaretler." },
+      ],
+      extras: [
+        { title: "Anında bildirim", desc: "Risk tespit edildiğinde telefonunuza saniyeler içinde bildirim düşer." },
+        { title: "Yapay zeka koçu", desc: "Her uyarıyla birlikte çocuğunuzla nasıl konuşacağınıza dair öneri alırsınız." },
+        { title: "Haftalık raporlar", desc: "Davranış puanı, trendler ve hangi uygulamada risk yoğunlaştığı tek ekranda." },
+        { title: "Gece aktivitesi", desc: "23:00–06:00 arasındaki riskli konuşmalar ayrıca öne çıkarılır." },
+      ],
+    },
+    demo: {
+      eyebrow: "Canlı örnek",
+      title: "Mivvo bir mesajı nasıl değerlendirir?",
+      sub: "Aşağıdaki örnek mesajlardan birini seçin. Gerçek sistemde bu analiz arka planda, saniyeler içinde yapılır.",
+      pick: "Örnek mesaj seçin",
+      incoming: "Gelen mesaj",
+      analyzing: "Analiz ediliyor…",
+      riskScore: "Risk puanı",
+      category: "Kategori",
+      why: "Neden?",
+      tip: "Ebeveyne öneri",
+      safeTitle: "Güvenli · Bildirim gönderilmez",
+      disclaimer: "Bu bölüm önceden hazırlanmış örneklerle çalışır; mesajlarınız hiçbir yere gönderilmez.",
+      samples: [
+        {
+          app: "WhatsApp", sender: "Sınıf grubu",
+          text: "yarın herkesin önünde seni rezil edicez, kimse seninle konuşmicak bi daha",
+          result: { safe: false, category: "Zorbalık", score: 86, level: "Yüksek", why: "Toplu dışlama ve aşağılama niyeti; grup sohbetinde hedef gösterme.", tip: "Suçlamadan sorun ve okulla iletişime geçmeyi birlikte değerlendirin." },
+        },
+        {
+          app: "Instagram", sender: "yeni_arkadas_2009",
+          text: "kimseye söyleme bunu tamam mı, sadece bana özel bi fotoğrafını atar mısın",
+          result: { safe: false, category: "Cinsel Risk · Yabancı Kişi", score: 97, level: "Kritik", why: "Gizlilik talebi + özel fotoğraf isteği: tipik istismar yaklaşımı.", tip: "Sakin kalın, hesabı engelleyip ekran görüntüsü alın. Gerekirse 155'i arayın." },
+        },
+        {
+          app: "Telegram", sender: "Bilinmeyen numara",
+          text: "adresini biliyorum, yarın okul çıkışı bekliyor olcam",
+          result: { safe: false, category: "Tehdit", score: 92, level: "Kritik", why: "Konum bilgisine dayalı doğrudan fiziksel tehdit.", tip: "Çocuğunuzu yalnız bırakmayın; mesajı saklayıp emniyete bildirin." },
+        },
+        {
+          app: "WhatsApp", sender: "Ali",
+          text: "maç kaçta başlıyo? annem 8de evde ol dedi kanka",
+          result: { safe: true, note: "Gündelik bir konuşma. Mivvo bu mesajı saklamaz ve size bildirim göndermez." },
+        },
+      ] satisfies DemoSample[],
+    },
+    how: {
+      title: "3 adımda koruma başlar",
+      steps: [
+        { title: "Hesabınızı oluşturun", desc: "Web'den veya Google Play'deki Mivvo Ebeveyn uygulamasından ücretsiz kaydolun." },
+        { title: "Çocuğunuzun telefonunu eşleştirin", desc: "Mivvo Çocuk uygulamasını kurun, ekrandaki kodla saniyeler içinde eşleştirin." },
+        { title: "Bildirim alın, konuşun", desc: "Risk olduğunda haber alırsınız. Öneriler, zor konuşmayı kolaylaştırır." },
+      ],
+    },
+    transparency: {
+      title: "Gizli takip değil, şeffaf koruma",
+      sub: "Mivvo, çocuğunuzun mahremiyetine saygı duyacak şekilde tasarlandı. Çocuk uygulaması gizlenmez; çocuğunuz korunduğunu bilir.",
+      seesTitle: "Mivvo'nun gördüğü",
+      sees: ["Risk içeren mesaj parçası", "Mesajın geldiği uygulama ve saat", "Risk kategorisi ve puanı"],
+      notTitle: "Mivvo'nun görmediği",
+      not: ["Sohbet geçmişinin tamamı", "Fotoğraf, video ve sesli mesajlar", "Şifreler ve banka bilgileri", "Kamera ve mikrofon"],
+    },
+    pricing: {
+      title: "Basit ve şeffaf fiyat",
+      sub: "Taahhüt yok, istediğiniz zaman iptal edin.",
+      trial: { name: "Ücretsiz Deneme", price: "0 TL", period: `${trial} gün`, cta: "Hemen Başla", features: ["Tüm özellikler açık", "Anında bildirimler", "Yapay zeka koçu", "Kredi kartı gerekmez"] },
+      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay", cta: "Ücretsiz Dene, Sonra Karar Ver", features: ["7 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
+    },
+    download: {
+      title: "Uygulamaları indirin",
+      parentTitle: "Mivvo Ebeveyn",
+      parentDesc: "Uyarıları anında alın, raporları cebinizden takip edin.",
+      parentCta: "Google Play'den İndir",
+      childTitle: "Mivvo Çocuk",
+      childDesc: "Çocuğunuzun Android telefonuna kurulur ve ebeveyn hesabınızla eşleşir.",
+      childCta: "Çocuk Uygulamasını İndir",
+      childNote: "Android 8.0 ve üzeri. Kurulum adımları indirme sayfasında.",
+      qr: "Telefonunuzun kamerasıyla okutun",
+      getItOn: "ŞİMDİ EDİNİN",
+    },
+    faq: {
+      title: "Sıkça sorulan sorular",
+      items: [
+        { q: "Mivvo çocuğumun tüm mesajlarını okur mu?", a: "Hayır. Mivvo gelen mesaj bildirimlerini yapay zeka ile tarar ve yalnızca risk içeren mesaj parçalarını size gösterir. Gündelik konuşmalar saklanmaz ve size iletilmez." },
+        { q: "Çocuğum Mivvo'nun yüklü olduğunu bilir mi?", a: "Evet. Mivvo gizli bir takip uygulaması değildir; çocuk uygulaması telefonda görünür ve çalıştığını bir bildirimle belirtir. Kurulumu çocuğunuzla konuşarak yapmanızı öneririz." },
+        { q: "Hangi uygulamalarda çalışır?", a: "WhatsApp, Instagram, TikTok, Snapchat, Telegram ve SMS mesajlarında çalışır. Bildirim gösteren diğer mesajlaşma uygulamaları da büyük oranda desteklenir." },
+        { q: "iPhone'da çalışır mı?", a: "Şu an çocuk uygulaması Android telefonlar içindir. Ebeveyn olarak uyarıları web panelinden her cihazdan, Android'de ise Mivvo Ebeveyn uygulamasından takip edebilirsiniz." },
+        { q: "Verilerim nerede ve nasıl korunuyor?", a: "Veriler şifreli bağlantı ile iletilir ve yalnızca risk içeren kısımlar saklanır. Analiz için mesaj parçaları, açık rızanız alınarak yapay zeka hizmet sağlayıcımıza iletilir. Dilediğiniz zaman tüm verilerinizin silinmesini talep edebilirsiniz." },
+        { q: `${trial} günlük deneme bitince ne olur?`, a: `Deneme süresi sonunda otomatik ücret alınmaz. Korumaya devam etmek isterseniz aylık ${price} TL'lik aboneliği başlatırsınız.` },
+        { q: "Yanlış alarm olursa ne yapabilirim?", a: "Her uyarıyı panelden \"Görmezden gel\" veya \"Çözüldü\" olarak işaretleyebilirsiniz. Yapay zeka argo ve şaka dilini ayırt edecek şekilde ayarlanmıştır." },
+        { q: "Hangi yaş grubu için uygundur?", a: "Mivvo 18 yaş altı çocuklar için tasarlanmıştır. Özellikle ilk kez akıllı telefon kullanmaya başlayan 8–15 yaş arası çocuklar için önerilir." },
+      ],
+    },
+    cta: { title: "Çocuğunuzu bu akşam korumaya başlayın", desc: `${trial} gün ücretsiz, kredi kartı gerekmez. Kurulum 5 dakika.`, button: "Ücretsiz Hesap Oluştur" },
+    footer: {
+      tagline: "Yapay zeka destekli, şeffaf ve Türkçe ebeveyn koruma sistemi.",
+      product: "Ürün",
+      resources: "Kaynaklar",
+      company: "Kurumsal",
+      guide: "Ebeveyn Rehberi",
+      setup: "Kurulum",
+      download: "İndir",
+      contact: "İletişim",
+      privacy: "Gizlilik Politikası",
+      kvkk: "KVKK Aydınlatma",
+      help: "Acil durumda: 112 · Çocuk istismarı ihbarı: 155 (Polis) / 156 (Jandarma)",
+      rights: "Tüm hakları saklıdır.",
+    },
+  },
+  en: {
+    nav: { features: "Features", how: "How It Works", pricing: "Pricing", faq: "FAQ", guide: "Guide", signIn: "Sign In", start: "Start Free", menu: "Menu" },
+    hero: {
+      eyebrow: "AI-powered child safety",
+      title1: "Your child is never alone",
+      title2: "in the digital world.",
+      desc: "Mivvo scans incoming message notifications from WhatsApp, Instagram, TikTok and more with AI. When it spots bullying, threats, sexual risk or persistent contact from a stranger, you hear about it within seconds.",
+      primary: `Start ${trial}-Day Free Trial`,
+      secondary: "Try the live demo",
+      trust: ["No credit card", "5-minute setup", "Privacy by design"],
+      phone: {
+        time: "21:47",
+        app: "Mivvo Parent",
+        now: "now",
+        title: "Bullying risk · High",
+        body: "Degrading messages detected in Deniz's Instagram chats.",
+        tipTitle: "Conversation tip",
+        tip: "Ask without blame tonight: \"Did anything bother you at school today?\"",
+        weekly: "This week",
+        safe: "Safe messages",
+        alerts: "Alerts",
+      },
+    },
+    platformsTitle: "Works in the apps your child actually uses",
+    why: {
+      title: "What happens where parents can't see?",
+      sub: "Children rarely talk about bullying or uncomfortable messages. Mivvo surfaces only the risk, without anyone reading their conversations.",
+      items: [
+        { title: "Bullying happens quietly", desc: "Exclusion and humiliation in group chats can go on for weeks before a parent notices." },
+        { title: "Strangers are patient", desc: "Predators use compliments, gifts and \"keep this between us\" to build trust." },
+        { title: "Late hours are riskier", desc: "Risky conversations mostly happen late at night. Mivvo flags night-time activity separately." },
+      ],
+    },
+    features: {
+      title: "7 risk categories, one calm alert",
+      sub: "Built to understand real messages full of slang, abbreviations and typos.",
+      categories: [
+        { key: "bullying", title: "Bullying", desc: "Humiliation, exclusion, mockery and name-calling." },
+        { key: "threat", title: "Threats", desc: "Harm, blackmail and intimidation." },
+        { key: "sexual", title: "Sexual Risk", desc: "Inappropriate requests, photo requests, grooming language." },
+        { key: "stranger", title: "Strangers", desc: "Intense, persistent contact from unknown people." },
+        { key: "violence", title: "Violence", desc: "Fights, weapons and planning violence." },
+        { key: "profanity", title: "Profanity", desc: "Heavy swearing and insults." },
+        { key: "anger", title: "Extreme Anger", desc: "Signs your child may be going through a hard time." },
+      ],
+      extras: [
+        { title: "Instant alerts", desc: "A notification reaches your phone within seconds of a detected risk." },
+        { title: "AI coach", desc: "Each alert comes with advice on how to talk with your child." },
+        { title: "Weekly reports", desc: "Behavior score, trends and which apps carry the most risk." },
+        { title: "Night activity", desc: "Risky conversations between 23:00 and 06:00 are highlighted." },
+      ],
+    },
+    demo: {
+      eyebrow: "Live demo",
+      title: "How does Mivvo assess a message?",
+      sub: "Pick one of the sample messages. In the real system this runs in the background within seconds.",
+      pick: "Pick a sample message",
+      incoming: "Incoming message",
+      analyzing: "Analyzing…",
+      riskScore: "Risk score",
+      category: "Category",
+      why: "Why?",
+      tip: "Advice for parents",
+      safeTitle: "Safe · No alert sent",
+      disclaimer: "This section uses pre-made samples; nothing you do here is sent anywhere.",
+      samples: [
+        {
+          app: "WhatsApp", sender: "Class group",
+          text: "tomorrow we're gonna humiliate u in front of everyone, nobody will talk to u again",
+          result: { safe: false, category: "Bullying", score: 86, level: "High", why: "Intent to exclude and humiliate; targeting in a group chat.", tip: "Ask without blame and consider contacting the school together." },
+        },
+        {
+          app: "Instagram", sender: "new_friend_2009",
+          text: "dont tell anyone ok, can u send me a private photo just for me",
+          result: { safe: false, category: "Sexual Risk · Stranger", score: 97, level: "Critical", why: "Secrecy request + private photo request: a typical grooming pattern.", tip: "Stay calm, block the account and take screenshots. Contact the police if needed." },
+        },
+        {
+          app: "Telegram", sender: "Unknown number",
+          text: "i know where u live, ill be waiting after school tomorrow",
+          result: { safe: false, category: "Threat", score: 92, level: "Critical", why: "Direct physical threat based on location knowledge.", tip: "Don't leave your child alone; keep the message and report it to the police." },
+        },
+        {
+          app: "WhatsApp", sender: "Ali",
+          text: "what time does the match start? mom said be home by 8",
+          result: { safe: true, note: "An everyday conversation. Mivvo doesn't store it and doesn't notify you." },
+        },
+      ] satisfies DemoSample[],
+    },
+    how: {
+      title: "Protection in 3 steps",
+      steps: [
+        { title: "Create your account", desc: "Sign up free on the web or with the Mivvo Parent app on Google Play." },
+        { title: "Pair your child's phone", desc: "Install Mivvo Child and pair it in seconds with the on-screen code." },
+        { title: "Get alerts, talk", desc: "You hear about risks as they happen, with advice that makes hard conversations easier." },
+      ],
+    },
+    transparency: {
+      title: "Not secret spying. Transparent protection.",
+      sub: "Mivvo is designed to respect your child's privacy. The child app is never hidden; your child knows they are protected.",
+      seesTitle: "What Mivvo sees",
+      sees: ["The risky message fragment", "Which app and when", "Risk category and score"],
+      notTitle: "What Mivvo never sees",
+      not: ["Full chat history", "Photos, videos and voice notes", "Passwords and banking info", "Camera and microphone"],
+    },
+    pricing: {
+      title: "Simple, transparent pricing",
+      sub: "No commitment, cancel any time.",
+      trial: { name: "Free Trial", price: "0 TRY", period: `${trial} days`, cta: "Start Now", features: ["All features unlocked", "Instant alerts", "AI coach", "No credit card"] },
+      monthly: { badge: "Most popular", name: "Monthly", price: `${price} TRY`, period: "/ month", cta: "Try Free, Decide Later", features: ["Continuous protection in 7 categories", "Unlimited alerts", "Weekly and monthly reports", "Priority WhatsApp support"] },
+    },
+    download: {
+      title: "Get the apps",
+      parentTitle: "Mivvo Parent",
+      parentDesc: "Get alerts instantly and follow reports from your pocket.",
+      parentCta: "Get it on Google Play",
+      childTitle: "Mivvo Child",
+      childDesc: "Installed on your child's Android phone and paired with your parent account.",
+      childCta: "Download Child App",
+      childNote: "Android 8.0+. Setup steps are on the download page.",
+      qr: "Scan with your phone camera",
+      getItOn: "GET IT ON",
+    },
+    faq: {
+      title: "Frequently asked questions",
+      items: [
+        { q: "Does Mivvo read all of my child's messages?", a: "No. Mivvo scans incoming message notifications with AI and only shows you fragments that carry risk. Everyday conversations are neither stored nor shared with you." },
+        { q: "Will my child know Mivvo is installed?", a: "Yes. Mivvo is not spyware; the child app is visible and shows a notification while it's active. We recommend setting it up together with your child." },
+        { q: "Which apps does it work with?", a: "WhatsApp, Instagram, TikTok, Snapchat, Telegram and SMS. Most other messaging apps that show notifications are supported too." },
+        { q: "Does it work on iPhone?", a: "The child app currently supports Android phones. Parents can follow alerts on any device via the web dashboard, or with Mivvo Parent on Android." },
+        { q: "Where is my data and how is it protected?", a: "Data travels over encrypted connections and only risky fragments are stored. For analysis, fragments are sent to our AI provider with your explicit consent. You can request deletion of all your data at any time." },
+        { q: `What happens after the ${trial}-day trial?`, a: `You are never charged automatically. If you want to stay protected, you start the ${price} TRY monthly plan.` },
+        { q: "What about false alarms?", a: "You can mark any alert as \"Dismissed\" or \"Resolved\" in the dashboard. The AI is tuned to tell slang and jokes apart from real risk." },
+        { q: "What age is it for?", a: "Mivvo is designed for children under 18, and especially recommended for 8–15 year olds getting their first smartphone." },
+      ],
+    },
+    cta: { title: "Start protecting your child tonight", desc: `${trial} days free, no credit card. 5-minute setup.`, button: "Create Free Account" },
+    footer: {
+      tagline: "AI-powered, transparent parental protection.",
+      product: "Product",
+      resources: "Resources",
+      company: "Company",
+      guide: "Parent Guide",
+      setup: "Setup",
+      download: "Download",
+      contact: "Contact",
+      privacy: "Privacy Policy",
+      kvkk: "KVKK Notice",
+      help: "Emergency: 112 · Child abuse reports (Türkiye): 155 Police / 156 Gendarmerie",
+      rights: "All rights reserved.",
+    },
+  },
+} as const;
+
+export type LandingContent = (typeof landingContent)[Locale];

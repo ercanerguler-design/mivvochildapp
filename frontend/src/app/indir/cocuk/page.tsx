@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
+
+export const metadata: Metadata = { title: "Mivvo Çocuk Uygulamasını İndir", description: "Mivvo Çocuk uygulamasını Android telefona kurma adımları.", alternates: { canonical: "/indir/cocuk" } };
 
 const childApkUrl =
   process.env.NEXT_PUBLIC_CHILD_APK_URL ??

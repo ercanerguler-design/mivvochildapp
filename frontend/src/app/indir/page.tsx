@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
+
+export const metadata: Metadata = { title: "Uygulamayı İndir", description: "Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarını indirin. Ebeveyn uygulaması Google Play'de.", alternates: { canonical: "/indir" } };
 
 const childApkUrl =
   process.env.NEXT_PUBLIC_CHILD_APK_URL ??

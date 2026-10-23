@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { auth } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = { title: "Ebeveyn Paneli", robots: { index: false, follow: false } };
 
 export default async function DashboardLayout({
   children,
