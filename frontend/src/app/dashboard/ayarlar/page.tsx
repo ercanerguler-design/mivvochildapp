@@ -1,6 +1,9 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { CheckoutCard } from "@/components/dashboard/CheckoutCard";
+
+const MONTHLY_PRICE_TL = Number(process.env.NEXT_PUBLIC_MONTHLY_PLAN_TL ?? "299");
 
 type SettingsState = {
   id: string;
@@ -140,8 +143,10 @@ export default function SettingsPage() {
         {message && <p className="text-sm text-gray-600">{message}</p>}
       </div>
 
+      <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} unlimited={data.billing?.unlimited} />
+
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 text-sm text-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900">Banka / Havale Bilgileri</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Havale / EFT ile ödeme</h3>
         <p><span className="font-medium">Şirket Adı:</span> SCE Innovation Ltd.Şti</p>
         <p><span className="font-medium">Banka:</span> Türkiye Garanti Bankası</p>
         <p><span className="font-medium">IBAN:</span> TR48 0006 2000 7740 0006 2930 33</p>
@@ -150,9 +155,6 @@ export default function SettingsPage() {
         <p className="text-violet-700 font-medium">
           Açıklama kısmına ebeveyn ID&apos;nizi ve adınızı yazmanızı rica ederiz.
         </p>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
-          Kart ödeme (Iyzico / VISA): Yakında gelecek. Aylık abonelik bedeli 299 TL.
-        </div>
       </div>
     </div>
   );

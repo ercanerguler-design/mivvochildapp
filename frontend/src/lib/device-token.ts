@@ -27,6 +27,10 @@ export function createDeviceToken(childId: string) {
 export function verifyDeviceToken(token: string, childId: string) {
   const [version, tokenChildId, signature] = token.split(".");
   if (version !== "v1" || tokenChildId !== childId || !signature) return false;
+  if (!process.env.DEVICE_TOKEN_SECRET && !process.env.AUTH_SECRET) {
+    console.error("[device-token] DEVICE_TOKEN_SECRET/AUTH_SECRET missing; rejecting device token");
+    return false;
+  }
   const expected = Buffer.from(sign(childId));
   const provided = Buffer.from(signature);
   return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
