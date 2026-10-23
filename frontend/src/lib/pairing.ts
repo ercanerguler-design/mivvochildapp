@@ -10,14 +10,14 @@ function signPayload(payload: string) {
   return crypto.createHmac("sha256", getSigningSecret()).update(payload).digest("hex").slice(0, 16);
 }
 
-function getCurrentWindowExpiry(nowSeconds: number) {
-  const windowStart = Math.floor(nowSeconds / PAIRING_TTL_SECONDS) * PAIRING_TTL_SECONDS;
-  return windowStart + PAIRING_TTL_SECONDS;
-}
-
+/**
+ * Each code is valid for exactly PAIRING_TTL_SECONDS from the moment it is created.
+ * (Previously codes expired at the next 15-minute clock boundary, so a code made at
+ * 10:14 died at 10:15, and every code in the same window was identical.)
+ */
 export function createPairingCode(parentId: string) {
   const nowSeconds = Math.floor(Date.now() / 1000);
-  const expiresAt = getCurrentWindowExpiry(nowSeconds);
+  const expiresAt = nowSeconds + PAIRING_TTL_SECONDS;
   const payload = `${parentId}.${expiresAt}`;
   const signature = signPayload(payload);
 

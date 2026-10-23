@@ -3,6 +3,7 @@ import { AlertStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireMobileParent } from "@/lib/mobile-parent-request";
 import { getParentBillingStatus, MONTHLY_PLAN_TL } from "@/lib/subscription";
+import { getDeviceStatuses } from "@/lib/device-status";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -29,13 +30,14 @@ export async function GET(req: NextRequest) {
   const childIds = parent.children.map((c) => c.id);
   const since = new Date(Date.now() - 7 * DAY_MS);
 
-  const [pending, weekAlerts, billing] = await Promise.all([
+  const [pending, weekAlerts, billing, devices] = await Promise.all([
     db.alert.count({ where: { childId: { in: childIds }, status: AlertStatus.PENDING } }),
     db.alert.findMany({
       where: { childId: { in: childIds }, createdAt: { gte: since } },
       select: { childId: true, category: true, riskScore: true, createdAt: true },
     }),
     getParentBillingStatus(parent.id),
+    getDeviceStatuses(childIds).catch(() => new Map()),
   ]);
 
   // Alerts per day for the last 7 days (oldest first).
@@ -55,7 +57,10 @@ export async function GET(req: NextRequest) {
       id: c.id,
       displayName: c.displayName,
       birthDate: c.birthDate,
-      lastSeenAt: c.updatedAt,
+      lastSeenAt: devices.get(c.id)?.last_seen_at ?? c.updatedAt,
+      // null = unknown (older app version that does not report it)
+      protectionOn: devices.get(c.id)?.notification_access ?? null,
+      appVersion: devices.get(c.id)?.app_version ?? null,
       weekAlerts: weekAlerts.filter((a) => a.childId === c.id).length,
       highRisk: weekAlerts.filter((a) => a.childId === c.id && a.riskScore >= 85).length,
     })),

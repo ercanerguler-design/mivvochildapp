@@ -88,7 +88,7 @@ export const landingContent = {
         {
           app: "Instagram", sender: "yeni_arkadas_2009",
           text: "kimseye söyleme bunu tamam mı, sadece bana özel bi fotoğrafını atar mısın",
-          result: { safe: false, category: "Cinsel Risk · Yabancı Kişi", score: 97, level: "Kritik", why: "Gizlilik talebi + özel fotoğraf isteği: tipik istismar yaklaşımı.", tip: "Sakin kalın, hesabı engelleyip ekran görüntüsü alın. Gerekirse 155'i arayın." },
+          result: { safe: false, category: "Cinsel Risk · Yabancı Kişi", score: 97, level: "Kritik", why: "Gizlilik talebi + özel fotoğraf isteği: tipik istismar yaklaşımı.", tip: "Sakin kalın, hesabı engelleyip ekran görüntüsü alın. Gerekirse 112'yi arayın." },
         },
         {
           app: "Telegram", sender: "Bilinmeyen numara",
@@ -161,7 +161,7 @@ export const landingContent = {
       contact: "İletişim",
       privacy: "Gizlilik Politikası",
       kvkk: "KVKK Aydınlatma",
-      help: "Acil durumda: 112 · Çocuk istismarı ihbarı: 155 (Polis) / 156 (Jandarma)",
+      help: "Acil durumlar ve çocuk istismarı ihbarı: 112 · Çevrim içi istismar içeriği: ihbarweb.org.tr",
       rights: "Tüm hakları saklıdır.",
     },
   },
@@ -312,7 +312,7 @@ export const landingContent = {
       contact: "Contact",
       privacy: "Privacy Policy",
       kvkk: "KVKK Notice",
-      help: "Emergency: 112 · Child abuse reports (Türkiye): 155 Police / 156 Gendarmerie",
+      help: "Emergencies and child abuse reports (Türkiye): 112 · Online abuse content: ihbarweb.org.tr",
       rights: "All rights reserved.",
     },
   },

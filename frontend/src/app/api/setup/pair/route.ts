@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
+import { sendParentPush } from "@/lib/notifications";
 import { TOO_MANY, clientIp, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -20,6 +22,13 @@ function isUnder18(birthDate: Date) {
     today.getMonth() < birthDate.getMonth() ||
     (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
   return beforeBirthday ? age - 1 < 18 : age < 18;
+}
+
+/** Tells the parent a phone was (re)paired, so a reinstall never goes unnoticed. */
+function notifyPaired(token: string | null, name: string) {
+  after(() =>
+    sendParentPush(token, `📱 ${name} · Telefon bağlandı`, "Mivvo Çocuk bu cihazda ebeveyn hesabınızla eşleşti. Bunu siz yapmadıysanız hemen kontrol edin.", { type: "device_paired", deepLink: "mivvoparent://children" }).catch(() => undefined)
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -79,6 +88,7 @@ export async function POST(req: NextRequest) {
         select: { id: true },
       });
 
+      notifyPaired(parent.fcmToken, parsed.data.displayName);
       return NextResponse.json({ childId: reactivated.id, parentId: parent.id, deviceToken: createDeviceToken(reactivated.id), alreadyLinked: true });
     }
   }
@@ -105,7 +115,8 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
-    return NextResponse.json({ childId: reactivated.id, parentId: parent.id, deviceToken: createDeviceToken(reactivated.id), alreadyLinked: true });
+    notifyPaired(parent.fcmToken, parsed.data.displayName);
+      return NextResponse.json({ childId: reactivated.id, parentId: parent.id, deviceToken: createDeviceToken(reactivated.id), alreadyLinked: true });
   }
 
   const child = await db.childProfile.create({
@@ -119,6 +130,8 @@ export async function POST(req: NextRequest) {
       isActive: true,
     },
   });
+
+  notifyPaired(parent.fcmToken, parsed.data.displayName);
 
   return NextResponse.json(
     {

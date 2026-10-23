@@ -45,6 +45,20 @@ async function pushExpoMessage(params: {
   }
 }
 
+/** Generic parent push (device status etc.) with retries. Returns true when delivered. */
+export async function sendParentPush(token: string | null | undefined, title: string, body: string, data?: Record<string, string>) {
+  if (!token) return false;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await pushExpoMessage({ token, title, body, data });
+      return true;
+    } catch (error) {
+      console.error(`[PARENT_PUSH_ATTEMPT_${attempt}_ERROR]`, error);
+    }
+  }
+  return false;
+}
+
 export async function sendRiskNotificationWithRetry(input: RiskNotificationInput) {
   const attempts = 3;
 

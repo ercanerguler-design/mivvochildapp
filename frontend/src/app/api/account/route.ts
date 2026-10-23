@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { forgetDevice } from "@/lib/device-status";
 
 /**
  * KVKK right to erasure: deletes the account and, through cascades, every child profile,
@@ -20,6 +21,8 @@ export async function DELETE(req: NextRequest) {
   const request = await db.dataDeletionRequest.create({ data: { userId } });
 
   if (parent) {
+    const kids = await db.childProfile.findMany({ where: { parentId: parent.id }, select: { id: true } });
+    for (const k of kids) await forgetDevice(k.id).catch(() => undefined);
     // Non-financial billing state tied to the parent (credits, active plan).
     for (const table of ["parent_credits", "parent_unlimited_plans"]) {
       await db.$executeRawUnsafe(`DELETE FROM ${table} WHERE parent_id = $1`, parent.id).catch(() => undefined);

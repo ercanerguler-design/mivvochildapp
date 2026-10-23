@@ -38,6 +38,21 @@ export async function rateLimit(key: string, limit: number, windowSeconds: numbe
   }
 }
 
+/** Current count in the window without incrementing it (0 when unknown). */
+export async function peekRateLimit(key: string, windowSeconds: number) {
+  try {
+    await ensureTable();
+    const rows = await db.$queryRawUnsafe<{ count: number }[]>(
+      `SELECT count FROM rate_limits WHERE key = $1 AND window_start >= NOW() - ($2 || ' seconds')::interval`,
+      key,
+      String(windowSeconds)
+    );
+    return rows[0]?.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function clientIp(headers: Headers) {
   return (headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || headers.get("x-real-ip") || "unknown";
 }

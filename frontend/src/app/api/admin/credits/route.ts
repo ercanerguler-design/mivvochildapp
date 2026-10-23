@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/admin-auth";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -7,18 +8,6 @@ import {
   getParentBillingStatus,
 } from "@/lib/subscription";
 
-function isAdminAuthorized(req: NextRequest) {
-  const key = req.headers.get("x-admin-key")?.trim();
-  const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-  const expected = process.env.ADMIN_PANEL_KEY;
-  const normalizedExpected = expected?.trim();
-
-  return Boolean(
-    normalizedExpected &&
-      ((key && key === normalizedExpected) ||
-        (bearer && bearer === normalizedExpected))
-  );
-}
 
 const parentIdSchema = z.string().cuid();
 
@@ -43,7 +32,7 @@ function isUnder18(birthDate: Date) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAdminAuthorized(req)) {
+  if (!(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Yetkisiz erisim" }, { status: 401 });
   }
 
@@ -127,7 +116,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdminAuthorized(req)) {
+  if (!(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Yetkisiz erisim" }, { status: 401 });
   }
 
@@ -166,7 +155,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!isAdminAuthorized(req)) {
+  if (!(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Yetkisiz erisim" }, { status: 401 });
   }
 

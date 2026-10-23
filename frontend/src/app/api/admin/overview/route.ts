@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { listRecentSystemEvents } from "@/lib/system-events";
 
 let adminAnalyticsTablesReady = false;
 
-function isAdminAuthorized(req: NextRequest) {
-  const key = req.headers.get("x-admin-key")?.trim();
-  const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-  const expected = process.env.ADMIN_PANEL_KEY;
-  const normalizedExpected = expected?.trim();
-
-  return Boolean(
-    normalizedExpected &&
-      ((key && key === normalizedExpected) ||
-        (bearer && bearer === normalizedExpected))
-  );
-}
 
 async function ensureAdminAnalyticsTables() {
   if (adminAnalyticsTablesReady) return;
@@ -104,7 +93,7 @@ type CreditRow = {
 };
 
 export async function GET(req: NextRequest) {
-  if (!isAdminAuthorized(req)) {
+  if (!(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Yetkisiz erisim" }, { status: 401 });
   }
 
