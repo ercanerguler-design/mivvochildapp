@@ -315,7 +315,8 @@ export default async function SosyalMedyaPage() {
 
                       <p className="text-xs text-gray-500 mt-0.5 truncate">
                         {nightIcon}{newIcon}
-                        {act.messageContent ?? act.activityType}
+                        {act.messageContent ??
+                          (locale === "en" ? "Safe message · content not stored" : "Güvenli mesaj · içerik saklanmaz")}
                       </p>
 
                       <p className="text-xs text-gray-300 mt-0.5">

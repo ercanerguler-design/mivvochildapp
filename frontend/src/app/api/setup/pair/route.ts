@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { verifyPairingCode } from "@/lib/pairing";
+import { createDeviceToken } from "@/lib/device-token";
 
 const schema = z.object({
   pairCode: z.string().min(8),
@@ -20,20 +21,9 @@ function isUnder18(birthDate: Date) {
   return beforeBirthday ? age - 1 < 18 : age < 18;
 }
 
-function isMobileAuthorized(req: NextRequest) {
-  const expectedKey = process.env.MOBILE_API_KEY;
-  if (!expectedKey) return true;
-
-  const provided = req.headers.get("x-mobile-api-key") ?? "";
-  return provided === expectedKey;
-}
-
 export async function POST(req: NextRequest) {
-  if (!isMobileAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized mobile request" }, { status: 401 });
-  }
-
-  const body = await req.json();
+  // The signed, short-lived pairing code is the credential here; no shared app key is needed.
+  const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
 
   if (!parsed.success) {
@@ -85,7 +75,7 @@ export async function POST(req: NextRequest) {
         select: { id: true },
       });
 
-      return NextResponse.json({ childId: reactivated.id, parentId: parent.id, alreadyLinked: true });
+      return NextResponse.json({ childId: reactivated.id, parentId: parent.id, deviceToken: createDeviceToken(reactivated.id), alreadyLinked: true });
     }
   }
 
@@ -111,7 +101,7 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
-    return NextResponse.json({ childId: reactivated.id, parentId: parent.id, alreadyLinked: true });
+    return NextResponse.json({ childId: reactivated.id, parentId: parent.id, deviceToken: createDeviceToken(reactivated.id), alreadyLinked: true });
   }
 
   const child = await db.childProfile.create({
@@ -130,6 +120,7 @@ export async function POST(req: NextRequest) {
     {
       childId: child.id,
       parentId: parent.id,
+      deviceToken: createDeviceToken(child.id),
       expiresAt: verification.expiresAt,
       alreadyLinked: false,
     },

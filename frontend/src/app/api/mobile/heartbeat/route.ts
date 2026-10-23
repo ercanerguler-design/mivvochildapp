@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { isChildDeviceAuthorized } from "@/lib/device-token";
 
 const schema = z.object({
   childId: z.string().cuid(),
@@ -11,20 +12,8 @@ const schema = z.object({
   osVersion: z.string().max(32).optional(),
 });
 
-function isMobileAuthorized(req: NextRequest) {
-  const expectedKey = process.env.MOBILE_API_KEY;
-  if (!expectedKey) return true;
-
-  const provided = req.headers.get("x-api-key") ?? req.headers.get("x-mobile-api-key") ?? "";
-  return provided === expectedKey;
-}
-
 export async function POST(req: NextRequest) {
-  if (!isMobileAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
 
   if (!parsed.success) {
@@ -32,6 +21,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { childId, deviceId, fcmToken } = parsed.data;
+
+  if (!isChildDeviceAuthorized(req, childId)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const child = await db.childProfile.findUnique({ where: { id: childId } });
   if (!child || !child.isActive) {

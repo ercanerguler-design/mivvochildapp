@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { isChildDeviceAuthorized } from "@/lib/device-token";
 import { analyzeText } from "@/lib/nlp";
 import {
   calculateBillableUnits,
@@ -52,14 +53,6 @@ const bodySchema = z.object({
   activities: z.array(activityItemSchema).min(1).max(50),
 });
 
-function isMobileAuthorized(req: NextRequest) {
-  const expectedKey = process.env.MOBILE_API_KEY;
-  if (!expectedKey) return true;
-
-  const provided = req.headers.get("x-api-key") ?? req.headers.get("x-mobile-api-key") ?? "";
-  return provided === expectedKey;
-}
-
 function isUnder18(birthDate: Date) {
   const today = new Date();
   const age = today.getFullYear() - birthDate.getFullYear();
@@ -71,10 +64,6 @@ function isUnder18(birthDate: Date) {
 
 // ─── Main handler ──────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  if (!isMobileAuthorized(req)) {
-    return NextResponse.json({ error: "Yetkisiz istek" }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -88,6 +77,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { childId, activities } = parsed.data;
+
+  if (!isChildDeviceAuthorized(req, childId)) {
+    return NextResponse.json({ error: "Yetkisiz istek" }, { status: 401 });
+  }
 
   // Çocuk ve ebeveyn profili
   const child = await db.childProfile.findUnique({
@@ -263,7 +256,8 @@ export async function POST(req: NextRequest) {
           contactUsername: act.contactUsername ?? null,
           isNewContact,
           isNightTime: nightTime,
-          messageContent: detectedText || (act.content ? act.content.slice(0, 300) : null),
+          // KVKK data minimization: message text is kept only when it triggered an alert.
+          messageContent: alertCategory ? detectedText || act.content?.slice(0, 300) || null : null,
           riskScore: riskScore > 0 ? riskScore : null,
           analyzedAt: act.content ? new Date() : null,
         },
