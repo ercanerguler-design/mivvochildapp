@@ -98,16 +98,20 @@ KATEGORİLER
 - PROFANITY: Çocuğa yöneltilmiş ağır hakaret ve küfür.
 
 PUAN ÖLÇEĞİ (riskScore, 0-100)
-- 0-29: Güvenli. Gündelik konuşma, şaka, oyun, ders, aile.
-- 30-59: Hafif. Arkadaşlar arası argo/küfür, kızgınlık, belirsiz ifadeler. Ebeveyne bildirilmez.
-- 60-79: Dikkat. Yönelik hakaret, dışlama, rahatsız edici ilgi, tek başına endişe verici ama acil olmayan durumlar.
-- 80-89: Yüksek. Açık zorbalık, ısrarlı yabancı yaklaşımı, gizlilik talebi, şiddet niyeti.
-- 90-100: Kritik. Fotoğraf/cinsel içerik isteği, şantaj, konum/zaman içeren tehdit, kendine zarar verme niyeti.
+- 0-29: Güvenli. Gündelik konuşma, oyun, ders, aile.
+- 30-49: Hafif. Açıkça şaka olan atışmalar, kimseyi hedef almayan ünlem küfürler ("aq bu level çok zor"), kızgınlık.
+- 60-69: Dikkat (hafif). Çocuğa yöneltilmiş tek bir hafif hakaret: "salaksın", "aptal mısın lan", "geri zekalı".
+- 70-79: Dikkat. Çocuğa yöneltilmiş ağır küfür veya hakaret ("siktir git", "amk çocuğu", "orospu çocuğu"), birden fazla hakaret, görünüşle alay ("şişko", "çirkinsin"), değersizleştirme ("sen bir hiçsin", "ezik").
+- 80-89: Yüksek. Dışlama ve toplu zorbalık ("seni gruptan attık", "kimse seni istemiyor"), aileye hakaretle aşağılama, ısrarlı yabancı yaklaşımı, gizlilik talebi, şiddet niyeti, fiziksel zarar tehdidi.
+- 90-100: Kritik. Fotoğraf/cinsel içerik isteği, şantaj, konum/zaman içeren tehdit, kendine zarar verme niyeti, çocuğu kendine zarar vermeye teşvik ("kendini öldür", "geber").
+
+HEDEF ALMA KURALI (çok önemli)
+Mesaj çocuğa doğrudan yöneltilmişse ("sen", "seni", "sana", "-sın/-sin", "lan", "annen/ailen", isimle hitap) hakaret ve küfür ZORBALIK veya KÜFÜR riskidir ve en az 60 puan alır. Gönderenin adının görünmesi (ör. "Ahmet: ...") konuşmanın şaka olduğu anlamına gelmez.
 
 YANLIŞ ALARMDAN KAÇIN
-- Arkadaşlar arası şakalaşma (gülme emojileri, "kanka", "aga", "xd", "sjsjs", oyun dili) ve abartılı ama zararsız ifadeler ("seni öldürcem 😂 ödevi göndermedin") düşük puanlıdır (en fazla 40).
+- Düşük puan için NET şaka işareti gerekir: gülme emojileri (😂🤣), "xd", "sjsjs", "haha" veya açıkça şakalaşan bir hitap. Bu işaretlerle gelen abartılı ama zararsız ifadeler ("seni öldürcem 😂 ödevi göndermedin", "salak mısın kanka 😂") en fazla 40 puandır. Şaka işareti yoksa hakareti ciddiye al.
 - Oyun, film, dizi, şarkı sözü, haber veya alıntı içindeki şiddet çocuğa yönelik değilse risk değildir.
-- Tek başına küfür veya kızgınlık, bir kişiyi hedef almıyorsa en fazla 50'dir.
+- Kimseyi hedef almayan ünlem küfürler ve genel kızgınlık ("amk ya yine kaybettik", "aq bu ders çok sıkıcı") en fazla 45'tir.
 - Yeni birinin tek seferlik selamı, takip ettiğini söylemesi veya paylaşımlara/fotoğraflara iltifat etmesi; gizlilik talebi, hediye/para teklifi, kişisel bilgi, fotoğraf veya buluşma isteği YOKSA en fazla 55'tir.
 - Bağlam bilgileri (gece saati, yeni kişi, platform) TEK BAŞINA risk sebebi DEĞİLDİR. Sadece içerik zaten şüpheliyse puanı en fazla 10 artırabilir.
 - Emin değilsen düşük "confidence" ver; uydurma.
@@ -164,9 +168,6 @@ export function normalizeResult(raw: Partial<AnalysisResult> | null, original: s
   // (banter, friendly slang) nothing is ever reported, whatever the sensitivity.
   let isRisky =
     categories.length > 0 && confidence >= MIN_CONFIDENCE && riskScore >= ALERT_FLOOR && (raw.isRisky === true || riskScore >= 60);
-
-  // Profanity on its own is rarely worth waking a parent; keep it below the default threshold.
-  if (isRisky && categories.length === 1 && categories[0] === "PROFANITY") riskScore = Math.min(riskScore, 69);
 
   if (!isRisky) riskScore = Math.min(riskScore, ALERT_FLOOR - 1);
   isRisky = isRisky && riskScore >= ALERT_FLOOR;

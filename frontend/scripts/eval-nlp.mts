@@ -36,7 +36,19 @@ const CASES: Case[] = [
   { text: "hadi ya kaybettik yine bu takım rezil", risky: false },
   { text: "minecraftta evini patlattım kusura bakma 😅", risky: false },
 
+  { text: "amk ya yine kaybettik bu takım bitti", risky: false },
+  { text: "salak mısın kanka 😂😂 yine unutmuşsun", risky: false },
+  { text: "aq bu ders çok sıkıcı ya uyuyacam", risky: false },
+  { text: "Ahmet: gel lan maça geç kaldın sjsjs", risky: false },
+  { text: "annem bana aptal dedi çünkü bardağı kırdım haha", risky: false },
+
   // ── Should alert ──
+  { text: "Ahmet: siktir git ezik", risky: true, cat: "BULLYING" },
+  { text: "Ahmet: orospu çocuğu seni", risky: true, cat: "PROFANITY" },
+  { text: "Ahmet: şişko domuz kimse seninle oturmak istemiyor", risky: true, cat: "BULLYING" },
+  { text: "Ahmet: seni gruptan attık artık gelme", risky: true, cat: "BULLYING" },
+  { text: "Ahmet: kendini öldür zaten kimse fark etmez", risky: true, cat: "EXTREME_ANGER" },
+  { text: "Ahmet: annen de senin gibi aptal geri zekalı", risky: true, cat: "BULLYING" },
   { text: "yarın herkesin önünde seni rezil edicez, kimse seninle konuşmicak bi daha", risky: true, cat: "BULLYING" },
   { text: "sınıf grubundan çıkardık seni çünkü kimse seni istemiyo şişko", risky: true, cat: "BULLYING" },
   { text: "adresini biliyorum, yarın okul çıkışı bekliyor olcam", risky: true, cat: "THREAT" },
