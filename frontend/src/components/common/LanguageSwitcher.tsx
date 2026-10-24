@@ -39,7 +39,7 @@ export function LanguageSwitcher() {
   }
 
   // Marketing pages have their own URL-based language switch in the header.
-  if (pathname === "/" || pathname === "/en" || pathname.startsWith("/en/") || pathname.startsWith("/rehber") || LEGAL_PATHS.has(pathname)) {
+  if (pathname === "/" || pathname === "/en" || pathname.startsWith("/en/") || pathname.startsWith("/rehber") || pathname.startsWith("/e/") || LEGAL_PATHS.has(pathname)) {
     return null;
   }
 

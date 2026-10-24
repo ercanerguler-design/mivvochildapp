@@ -124,15 +124,9 @@ export default function SettingsPage() {
           E-posta bildirimleri
         </label>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">FCM token</label>
-          <input
-            type="text"
-            value={data.fcmToken ?? ""}
-            onChange={(e) => setData({ ...data, fcmToken: e.target.value || null })}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          />
-        </div>
+        <p className="rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
+          Telefon bildirimleri için bir şey girmenize gerek yok: Mivvo Ebeveyn uygulamasına giriş yaptığınızda telefonunuz otomatik olarak kaydedilir.
+        </p>
 
         <button
           onClick={save}

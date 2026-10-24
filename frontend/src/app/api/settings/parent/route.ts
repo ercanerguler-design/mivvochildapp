@@ -8,7 +8,7 @@ const updateSchema = z.object({
   sensitivityLevel: z.number().int().min(0).max(100),
   notifyPush: z.boolean(),
   notifyEmail: z.boolean(),
-  fcmToken: z.string().max(512).nullable(),
+  fcmToken: z.string().max(512).nullable().optional(),
 });
 
 export async function GET() {
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest) {
       sensitivityLevel: parsed.data.sensitivityLevel,
       notifyPush: parsed.data.notifyPush,
       notifyEmail: parsed.data.notifyEmail,
-      fcmToken: parsed.data.fcmToken,
+      // fcmToken is written only by the parent app (/api/mobile/parent/fcm-token), never from the web form.
     },
     select: {
       sensitivityLevel: true,

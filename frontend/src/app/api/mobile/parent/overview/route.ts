@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
       // null = unknown (older app version that does not report it)
       protectionOn: devices.get(c.id)?.notification_access ?? null,
       appVersion: devices.get(c.id)?.app_version ?? null,
+      unpairedAt: devices.get(c.id)?.unpaired_at ?? null,
       weekAlerts: weekAlerts.filter((a) => a.childId === c.id).length,
       highRisk: weekAlerts.filter((a) => a.childId === c.id && a.riskScore >= 85).length,
     })),

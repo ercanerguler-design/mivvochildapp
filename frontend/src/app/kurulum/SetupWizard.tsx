@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, CheckCircle2, Copy, Loader2, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { MivvoLogo } from "@/components/common/MivvoLogo";
+import { absoluteUrl } from "@/lib/site";
 
 type Step = 1 | 2 | 3;
 type Paired = { id: string; displayName: string; pairedAt: string };
@@ -142,7 +143,15 @@ export function SetupWizard({ name, qrSvg, childUrl, parentPlayUrl }: { name: st
                 {codeError && <p className="mt-3 text-rose-300">{codeError}</p>}
                 {code && (
                   <>
-                    <p className={`mt-2 break-all font-mono text-lg leading-relaxed ${expired ? "text-gray-500 line-through" : ""}`}>{code.code}</p>
+                    {!expired && (
+                      <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl bg-white p-4 text-center sm:flex-row sm:text-left">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`/api/qr?s=360&d=${encodeURIComponent(absoluteUrl(`/e/${code.code}`))}`} alt="Eşleştirme QR kodu" width={180} height={180} className="h-44 w-44 shrink-0" />
+                        <p className="text-sm text-gray-700"><b className="text-gray-900">En kolayı:</b> Çocuğunuzun telefonunda kamerayı açıp bu QR&apos;a tutun. Mivvo Çocuk açılır ve kod kendiliğinden dolar.</p>
+                      </div>
+                    )}
+                    <p className="mt-4 text-xs font-semibold text-gray-400">veya kodu kopyalayıp yapıştırın:</p>
+                    <p className={`mt-1 break-all font-mono text-sm leading-relaxed ${expired ? "text-gray-500 line-through" : ""}`}>{code.code}</p>
                     <div className="mt-4 flex gap-2">
                       {!expired ? (
                         <button
