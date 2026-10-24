@@ -19,10 +19,12 @@ function getOpenAIClient() {
 
 export const RISK_CATEGORIES = [
   "SEXUAL_RISK",
+  "EXTREME_ANGER",
   "THREAT",
   "VIOLENCE",
   "BULLYING",
-  "EXTREME_ANGER",
+  "DANGEROUS_BEHAVIOR",
+  "SUBSTANCE",
   "STRANGER_CONTACT",
   "PROFANITY",
 ] as const; // ordered by severity: the first match becomes the alert's category
@@ -96,6 +98,8 @@ KATEGORİLER
 - EXTREME_ANGER: Kendine zarar verme, intihar düşüncesi, umutsuzluk ("ölmek istiyorum", "kimse beni sevmiyor, bitsin artık") veya kontrolsüz öfke.
 - STRANGER_CONTACT: Tanınmayan birinin güven kazanmaya çalışması: aşırı iltifat, hediye/para teklifi, "kimseye söyleme", "başka uygulamaya geçelim", kişisel bilgi (adres, okul, konum) isteme.
 - PROFANITY: Çocuğa yöneltilmiş ağır hakaret ve küfür.
+- SUBSTANCE: Çocuğa alkol, sigara, elektronik sigara (vape), nargile, uyuşturucu (ot, esrar, bonzai, hap, "mal", kristal vb.) teklif etmek, birlikte kullanmayı önermek, temin etmek; ilaçları kötüye kullanma.
+- DANGEROUS_BEHAVIOR: Tehlikeli akımlar/challenge'lar (nefes tutma, bayılma, yüksekten atlama vb.), evden kaçma planı, kumar ve yasa dışı bahis, kolay para vaadi, dolandırıcılık (şifre, SMS kodu, kart bilgisi, hesap isteme), tehlikeli yerlerde buluşma, silah veya kesici alet edinme/taşıma.
 
 PUAN ÖLÇEĞİ (riskScore, 0-100)
 - 0-29: Güvenli. Gündelik konuşma, oyun, ders, aile.
@@ -103,6 +107,7 @@ PUAN ÖLÇEĞİ (riskScore, 0-100)
 - 60-69: Dikkat (hafif). Çocuğa yöneltilmiş tek bir hafif hakaret: "salaksın", "aptal mısın lan", "geri zekalı".
 - 70-79: Dikkat. Çocuğa yöneltilmiş ağır küfür veya hakaret ("siktir git", "amk çocuğu", "orospu çocuğu"), birden fazla hakaret, görünüşle alay ("şişko", "çirkinsin"), değersizleştirme ("sen bir hiçsin", "ezik").
 - 80-89: Yüksek. Dışlama ve toplu zorbalık ("seni gruptan attık", "kimse seni istemiyor"), aileye hakaretle aşağılama, ısrarlı yabancı yaklaşımı, gizlilik talebi, şiddet niyeti, fiziksel zarar tehdidi.
+- Madde ve tehlikeli davranış: çocuğa yöneltilmiş alkol/sigara/vape teklifi veya önerisi (arkadaştan bile olsa) 70-80; uyuşturucu teklifi, gizli kullanım daveti ("kimse bilmez"), yetişkin veya tanınmayan birinden gelen teklif 80-90; kumar/bahis daveti 70-80; şifre/kod/kart isteyen dolandırıcılık 80-85; tehlikeli challenge veya evden kaçma planı 80-90.
 - 90-100: Kritik. Fotoğraf/cinsel içerik isteği, şantaj, konum/zaman içeren tehdit, kendine zarar verme niyeti, çocuğu kendine zarar vermeye teşvik ("kendini öldür", "geber").
 
 HEDEF ALMA KURALI (çok önemli)
@@ -111,6 +116,7 @@ Mesaj çocuğa doğrudan yöneltilmişse ("sen", "seni", "sana", "-sın/-sin", "
 YANLIŞ ALARMDAN KAÇIN
 - Düşük puan için NET şaka işareti gerekir: gülme emojileri (😂🤣), "xd", "sjsjs", "haha" veya açıkça şakalaşan bir hitap. Bu işaretlerle gelen abartılı ama zararsız ifadeler ("seni öldürcem 😂 ödevi göndermedin", "salak mısın kanka 😂") en fazla 40 puandır. Şaka işareti yoksa hakareti ciddiye al.
 - Oyun, film, dizi, şarkı sözü, haber veya alıntı içindeki şiddet çocuğa yönelik değilse risk değildir.
+- Madde, silah veya tehlike sözcüklerinin bilgi, ders, haber, aile ya da sağlık bağlamında geçmesi risk değildir ("alkolün zararları ödevi", "babam akşama şarap aldı", "annem ilacını içti", "mutfak bıçağı keskin"). Risk, çocuğa teklif, davet, temin veya kullanım planı olduğunda vardır.
 - Kimseyi hedef almayan ünlem küfürler ve genel kızgınlık ("amk ya yine kaybettik", "aq bu ders çok sıkıcı") en fazla 45'tir.
 - Yeni birinin tek seferlik selamı, takip ettiğini söylemesi veya paylaşımlara/fotoğraflara iltifat etmesi; gizlilik talebi, hediye/para teklifi, kişisel bilgi, fotoğraf veya buluşma isteği YOKSA en fazla 55'tir.
 - Bağlam bilgileri (gece saati, yeni kişi, platform) TEK BAŞINA risk sebebi DEĞİLDİR. Sadece içerik zaten şüpheliyse puanı en fazla 10 artırabilir.

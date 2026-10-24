@@ -120,6 +120,8 @@ enum RiskCategory {
   PROFANITY        // Küfür / hakaret
   EXTREME_ANGER    // Aşırı öfke
   STRANGER_CONTACT // Bilinmeyen kişi / yoğun mesajlaşma riski
+  SUBSTANCE        // Alkol, sigara/vape, uyuşturucu, ilaç kötüye kullanımı
+  DANGEROUS_BEHAVIOR // Tehlikeli akımlar, evden kaçma, kumar/bahis, dolandırıcılık
 }
 
 enum AlertStatus {

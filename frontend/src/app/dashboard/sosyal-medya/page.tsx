@@ -30,6 +30,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   PROFANITY: "Küfür",
   EXTREME_ANGER: "Aşırı Öfke",
   STRANGER_CONTACT: "Yabancı Kişi",
+  SUBSTANCE: "Alkol / Madde",
+  DANGEROUS_BEHAVIOR: "Tehlikeli Davranış",
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -40,6 +42,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   PROFANITY: "bg-yellow-100 text-yellow-700",
   EXTREME_ANGER: "bg-pink-100 text-pink-700",
   STRANGER_CONTACT: "bg-indigo-100 text-indigo-700",
+  SUBSTANCE: "bg-teal-100 text-teal-700",
+  DANGEROUS_BEHAVIOR: "bg-yellow-100 text-yellow-800",
 };
 
 export default async function SosyalMedyaPage() {

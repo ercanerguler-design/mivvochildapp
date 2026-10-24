@@ -20,6 +20,8 @@ import {
   MessageCircleWarning,
   Download,
   Play,
+  Wine,
+  TriangleAlert,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { SITE, absoluteUrl } from "@/lib/site";
@@ -38,6 +40,8 @@ const categoryIcons = {
   violence: { icon: Swords, color: "bg-amber-100 text-amber-700" },
   profanity: { icon: MessageCircleWarning, color: "bg-sky-100 text-sky-600" },
   anger: { icon: Flame, color: "bg-violet-100 text-violet-600" },
+  substance: { icon: Wine, color: "bg-teal-100 text-teal-700" },
+  danger: { icon: TriangleAlert, color: "bg-yellow-100 text-yellow-700" },
 } as const;
 
 const extraIcons = [BellRing, Bot, BarChart3, Moon];
@@ -188,7 +192,7 @@ export async function LandingPage({ locale }: { locale: Locale }) {
         <section id="ozellikler" className="scroll-mt-20 bg-gray-950 py-20 text-white sm:py-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionTitle title={c.features.title} sub={c.features.sub} light />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {c.features.categories.map((cat) => {
                 const meta = categoryIcons[cat.key];
                 return (

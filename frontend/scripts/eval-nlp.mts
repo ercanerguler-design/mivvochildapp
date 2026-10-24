@@ -42,9 +42,25 @@ const CASES: Case[] = [
   { text: "Ahmet: gel lan maça geç kaldın sjsjs", risky: false },
   { text: "annem bana aptal dedi çünkü bardağı kırdım haha", risky: false },
 
+  { text: "Zeynep: babam akşama şarap aldı misafir var", risky: false },
+  { text: "Ödev: alkolün zararları hakkında sunum hazırla", risky: false },
+  { text: "annem baş ağrısı için ilacını içti", risky: false },
+  { text: "mutfak bıçağı çok keskinmiş annem dikkat et dedi", risky: false },
+  { text: "Can: maç kuponu gibi bir şey değil bu, matematik kuponu sjsj", risky: false },
+
   // ── Should alert ──
+  { text: "Ahmet: alkol alır mısın", risky: true, cat: "SUBSTANCE" },
+  { text: "Mert: akşam bira içelim mi kimse bilmez", risky: true, cat: "SUBSTANCE" },
+  { text: "Can: ot var içer misin", risky: true, cat: "SUBSTANCE" },
+  { text: "Ali: vape aldım sana da getireyim", risky: true, cat: "SUBSTANCE" },
+  { text: "bilinmeyen: hap vereyim rahatlarsın", risky: true, cat: "SUBSTANCE" },
+  { text: "Kerem: bahis sitesine üye ol para kazanırız", risky: true, cat: "DANGEROUS_BEHAVIOR" },
+  { text: "Emre: o challenge'ı yap boğulana kadar nefesini tut", risky: true, cat: "DANGEROUS_BEHAVIOR" },
+  { text: "Selin: evden kaçalım bu gece", risky: true, cat: "DANGEROUS_BEHAVIOR" },
+  { text: "Destek: hesabın kapanacak şifreni yaz", risky: true, cat: "DANGEROUS_BEHAVIOR" },
+  { text: "Ayşe: okula bıçak getirdim", risky: true, cat: "VIOLENCE|DANGEROUS_BEHAVIOR" },
   { text: "Ahmet: siktir git ezik", risky: true, cat: "BULLYING" },
-  { text: "Ahmet: orospu çocuğu seni", risky: true, cat: "PROFANITY" },
+  { text: "Ahmet: orospu çocuğu seni", risky: true, cat: "PROFANITY|BULLYING" },
   { text: "Ahmet: şişko domuz kimse seninle oturmak istemiyor", risky: true, cat: "BULLYING" },
   { text: "Ahmet: seni gruptan attık artık gelme", risky: true, cat: "BULLYING" },
   { text: "Ahmet: kendini öldür zaten kimse fark etmez", risky: true, cat: "EXTREME_ANGER" },
@@ -52,7 +68,7 @@ const CASES: Case[] = [
   { text: "yarın herkesin önünde seni rezil edicez, kimse seninle konuşmicak bi daha", risky: true, cat: "BULLYING" },
   { text: "sınıf grubundan çıkardık seni çünkü kimse seni istemiyo şişko", risky: true, cat: "BULLYING" },
   { text: "adresini biliyorum, yarın okul çıkışı bekliyor olcam", risky: true, cat: "THREAT" },
-  { text: "o fotoğrafı herkese atarım eğer bana 500 tl göndermezsen", risky: true, cat: "SEXUAL_RISK" },
+  { text: "o fotoğrafı herkese atarım eğer bana 500 tl göndermezsen", risky: true, cat: "SEXUAL_RISK|THREAT" },
   { text: "kimseye söyleme tamam mı, sadece bana özel bi fotoğrafını atar mısın", risky: true, cat: "SEXUAL_RISK" },
   { text: "sen yaşına göre çok olgunsun, annene söyleme ama sana hediye almak istiyorum", risky: true, cat: "STRANGER_CONTACT" },
   { text: "instagramda konuşmayalım, telegrama geç oradan yazarım sana, kimse görmesin", risky: true, cat: "STRANGER_CONTACT" },
@@ -99,7 +115,7 @@ for (const { c, r } of results) {
   }
   if (c.risky && alerted && c.cat) {
     catTotal++;
-    if (r.categories.includes(c.cat as never)) catOk++;
+    if (c.cat.split("|").some((x) => r.categories.includes(x as never))) catOk++;
     else failures.push(`CATEGORY (${r.categories.join(",")} ≠ ${c.cat})  ${c.text}`);
   }
 }

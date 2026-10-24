@@ -12,7 +12,7 @@ import { sendWhatsAppFallbackIfEnabled } from "@/lib/whatsapp";
 import { z } from "zod";
 
 type Platform = "INSTAGRAM" | "SNAPCHAT" | "TIKTOK" | "WHATSAPP" | "TELEGRAM" | "SMS" | "OTHER";
-type RiskCategory = "BULLYING" | "VIOLENCE" | "SEXUAL_RISK" | "THREAT" | "PROFANITY" | "EXTREME_ANGER" | "STRANGER_CONTACT";
+type RiskCategory = "BULLYING" | "VIOLENCE" | "SEXUAL_RISK" | "THREAT" | "PROFANITY" | "EXTREME_ANGER" | "STRANGER_CONTACT" | "SUBSTANCE" | "DANGEROUS_BEHAVIOR";
 
 // ─── Platform görünen adları ───────────────────────────────
 const PLATFORM_LABELS: Record<string, string> = {
@@ -33,6 +33,8 @@ const CATEGORY_LABELS_TR: Record<RiskCategory, string> = {
   PROFANITY: "Ağır hakaret",
   EXTREME_ANGER: "Kendine zarar / aşırı öfke",
   STRANGER_CONTACT: "Yabancı kişi",
+  SUBSTANCE: "Alkol / madde",
+  DANGEROUS_BEHAVIOR: "Tehlikeli davranış",
 };
 
 // ─── Gece saati kontrolü (23:00 - 06:00) ─────────────────
@@ -174,41 +176,29 @@ export async function POST(req: NextRequest) {
       let contact = null;
       let isNewContact = false;
 
-      if (act.contactUsername) {
+      // The child app sends the sender's display name; it is the contact key when no username exists.
+      const contactKey = (act.contactUsername ?? act.contactDisplayName ?? "").trim().slice(0, 100);
+      if (contactKey) {
         const now = new Date();
         const existing = await db.contact.findUnique({
-          where: {
-            childId_platform_username: {
-              childId,
-              platform: platformKey,
-              username: act.contactUsername,
-            },
-          },
+          where: { childId_platform_username: { childId, platform: platformKey, username: contactKey } },
         });
+        // Everyone looks "new" right after installation; only people who first appear after a
+        // 3-day warm-up count as newly met, and they stay "new" for 7 days.
+        const warmedUp = now.getTime() - child.consentAt.getTime() > 3 * 24 * 60 * 60 * 1000;
 
         if (!existing) {
           contact = await db.contact.create({
-            data: {
-              childId,
-              platform: platformKey,
-              username: act.contactUsername,
-              displayName: act.contactDisplayName ?? null,
-              messageCount: 1,
-            },
+            data: { childId, platform: platformKey, username: contactKey, displayName: act.contactDisplayName ?? null, messageCount: 1 },
           });
-          isNewContact = true;
+          isNewContact = warmedUp;
         } else {
           contact = await db.contact.update({
             where: { id: existing.id },
-            data: {
-              messageCount: { increment: 1 },
-              lastSeenAt: now,
-              displayName: act.contactDisplayName ?? undefined,
-            },
+            data: { messageCount: { increment: 1 }, lastSeenAt: now, displayName: act.contactDisplayName ?? undefined },
           });
-          // 24 saatin altında ilk görüşme → yeni sayılır
-          isNewContact =
-            now.getTime() - existing.firstSeenAt.getTime() < 24 * 60 * 60 * 1000;
+          const firstSeenAfterWarmup = existing.firstSeenAt.getTime() - child.consentAt.getTime() > 3 * 24 * 60 * 60 * 1000;
+          isNewContact = firstSeenAfterWarmup && now.getTime() - existing.firstSeenAt.getTime() < 7 * 24 * 60 * 60 * 1000;
         }
       }
 
@@ -280,7 +270,7 @@ export async function POST(req: NextRequest) {
             category: alertCategory,
             riskScore,
             originalText: detectedText || act.content?.slice(0, 500) || `@${act.contactUsername}`,
-            context: `${platformLabel}${act.contactUsername ? ` — @${act.contactUsername}` : ""}`,
+            context: `${platformLabel}${contactKey ? ` — ${contactKey}` : ""}${isNewContact ? " · yeni tanışılan kişi" : ""}`,
             sourceApp: platformLabel,
             platform: platformKey,
             isNightTime: nightTime,

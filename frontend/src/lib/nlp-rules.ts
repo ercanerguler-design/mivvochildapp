@@ -23,6 +23,36 @@ type Rule = { category: RiskCategory; score: number; why: string; all: RegExp[] 
 
 const RULES: Rule[] = [
   {
+    category: "SUBSTANCE",
+    score: 85,
+    why: "Uyuşturucu teklifi veya birlikte kullanma daveti içeriyor olabilir.",
+    all: [/(ot|esrar|bonzai|uyusturucu|mal|kristal|ekstazi|extacy|hap|kokain|eroin|joint)/, /(ister misin|icer misin|icelim|cekelim|vereyim|veririm|getireyim|getiririm|deneyelim|dene|kullan|al(sana|ir misin))/],
+  },
+  {
+    category: "SUBSTANCE",
+    score: 72,
+    why: "Alkol, sigara veya elektronik sigara teklifi içeriyor olabilir.",
+    all: [/(alkol|bira|votka|raki|sarap|viski|icki|sigara|vape|elektronik sigara|puff|nargile)/, /(ister misin|icer misin|icelim|alir misin|alalim|vereyim|getireyim|getiririm|aldim sana|kimse bilmez|deneyelim|ic(sene|ebilirsin))/],
+  },
+  {
+    category: "DANGEROUS_BEHAVIOR",
+    score: 82,
+    why: "Şifre, doğrulama kodu veya kart bilgisi isteyen dolandırıcılık girişimi olabilir.",
+    all: [/(sifreni|sifre|dogrulama kodu|sms kodu|gelen kodu|kart bilgi|kart numara|cvv|iban)/, /(yaz|gonder|at|soyle|paylas|ver)/, /(hesab|kapan|odul|kazandin|hediye|destek|guvenlik|instagram|whatsapp)/],
+  },
+  {
+    category: "DANGEROUS_BEHAVIOR",
+    score: 80,
+    why: "Kumar veya yasa dışı bahis daveti içeriyor olabilir.",
+    all: [/(bahis|kumar|casino|kupon|slot|rulet|iddaa)/, /(uye ol|oyna|yatir|kazan|para|link|site)/],
+  },
+  {
+    category: "DANGEROUS_BEHAVIOR",
+    score: 85,
+    why: "Evden kaçma planı veya tehlikeli bir akım (challenge) içeriyor olabilir.",
+    all: [/(evden kac|kacalim|kacicam|kacacagim|challenge|nefesini tut|bayilana kadar|bogulana kadar|atlayalim|catidan|kopruden)/],
+  },
+  {
     category: "EXTREME_ANGER",
     score: 92,
     why: "Kendine zarar verme veya yaşamak istememe ifadesi içeriyor olabilir.",

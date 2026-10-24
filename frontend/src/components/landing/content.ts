@@ -48,7 +48,7 @@ export const landingContent = {
       ],
     },
     features: {
-      title: "7 risk kategorisi, tek bir sakin bildirim",
+      title: "9 risk kategorisi, tek bir sakin bildirim",
       sub: "Mivvo argo, kısaltma ve yazım hatalarıyla dolu gerçek Türkçe mesajları anlamak için tasarlandı.",
       categories: [
         { key: "bullying", title: "Zorbalık", desc: "Aşağılama, dışlama, alay ve lakap takma." },
@@ -57,7 +57,9 @@ export const landingContent = {
         { key: "stranger", title: "Yabancı Kişi", desc: "Tanınmayan birinin yoğun ve ısrarlı teması." },
         { key: "violence", title: "Şiddet", desc: "Kavga, silah ve şiddet planlama dili." },
         { key: "profanity", title: "Küfür & Hakaret", desc: "Ağır küfür ve hakaret içeren yazışmalar." },
-        { key: "anger", title: "Aşırı Öfke", desc: "Çocuğunuzun zor bir dönemden geçtiğine dair işaretler." },
+        { key: "anger", title: "Kendine Zarar", desc: "Umutsuzluk, kendine zarar verme ve kontrolsüz öfke işaretleri." },
+        { key: "substance", title: "Alkol & Madde", desc: "Alkol, sigara, vape ve uyuşturucu teklifleri." },
+        { key: "danger", title: "Tehlikeli Davranış", desc: "Tehlikeli akımlar, evden kaçma, bahis ve dolandırıcılık." },
       ],
       extras: [
         { title: "Anında bildirim", desc: "Risk tespit edildiğinde telefonunuza saniyeler içinde bildirim düşer." },
@@ -199,7 +201,7 @@ export const landingContent = {
       ],
     },
     features: {
-      title: "7 risk categories, one calm alert",
+      title: "9 risk categories, one calm alert",
       sub: "Built to understand real messages full of slang, abbreviations and typos.",
       categories: [
         { key: "bullying", title: "Bullying", desc: "Humiliation, exclusion, mockery and name-calling." },
@@ -208,7 +210,9 @@ export const landingContent = {
         { key: "stranger", title: "Strangers", desc: "Intense, persistent contact from unknown people." },
         { key: "violence", title: "Violence", desc: "Fights, weapons and planning violence." },
         { key: "profanity", title: "Profanity", desc: "Heavy swearing and insults." },
-        { key: "anger", title: "Extreme Anger", desc: "Signs your child may be going through a hard time." },
+        { key: "anger", title: "Self-harm", desc: "Hopelessness, self-harm and uncontrolled anger." },
+        { key: "substance", title: "Alcohol & Drugs", desc: "Offers of alcohol, cigarettes, vapes and drugs." },
+        { key: "danger", title: "Dangerous Behaviour", desc: "Risky challenges, running away, gambling and scams." },
       ],
       extras: [
         { title: "Instant alerts", desc: "A notification reaches your phone within seconds of a detected risk." },
