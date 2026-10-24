@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE } from "@/lib/site";
 import Link from "next/link";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 
@@ -61,8 +62,8 @@ export default async function ContactPage() {
           </div>
           <div className="mt-3 rounded-lg border border-violet-200 bg-violet-50 p-3 text-violet-800">
             {isEn
-              ? "Monthly subscription fee: 299 TRY. To activate after trial, contact us via WhatsApp or email, then include Parent ID in bank transfer note."
-              : "Aylık abonelik bedeli: 299 TL. Deneme bitince WhatsApp veya e-posta ile başvurun, havale açıklamasına Parent ID yazın."}
+              ? `Monthly subscription fee: ${SITE.monthlyPriceTl} TRY (VAT incl.). To activate after trial, contact us via WhatsApp or email, then include Parent ID in bank transfer note.`
+              : `Aylık abonelik bedeli: ${SITE.monthlyPriceTl} TL (KDV dahil). Deneme bitince WhatsApp veya e-posta ile başvurun, havale açıklamasına Parent ID yazın.`}
           </div>
         </div>
 

@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { initializeCheckout, isIyzicoConfigured } from "@/lib/iyzico";
 import { attachToken, createPendingPayment, settlePayment } from "@/lib/payments";
 import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS } from "@/lib/subscription";
-import { SITE_URL } from "@/lib/site";
+import { SITE, SITE_URL } from "@/lib/site";
 import { CHECKOUT_CONSENTS, recordConsents } from "@/lib/consents";
 
 const schema = z.object({
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Oturum açmanız gerekiyor." }, { status: 401 });
   if (!(await rateLimit(`checkout:${session.user.id}`, 10, 3600)).ok) return NextResponse.json(TOO_MANY, { status: 429 });
-  if (!isIyzicoConfigured()) return NextResponse.json({ error: "Kartla ödeme şu an kullanılamıyor." }, { status: 503 });
+  if (!SITE.cardPaymentsEnabled || !isIyzicoConfigured()) return NextResponse.json({ error: "Kartla ödeme şu an kullanılamıyor." }, { status: 503 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

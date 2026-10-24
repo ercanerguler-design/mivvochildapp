@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { CheckoutCard } from "@/components/dashboard/CheckoutCard";
+import { SITE } from "@/lib/site";
 import { DeleteAccountCard } from "@/components/dashboard/DeleteAccountCard";
 
-const MONTHLY_PRICE_TL = Number(process.env.NEXT_PUBLIC_MONTHLY_PLAN_TL ?? "299");
+const MONTHLY_PRICE_TL = SITE.monthlyPriceTl;
 
 type SettingsState = {
   id: string;
@@ -144,7 +145,14 @@ export default function SettingsPage() {
         {message && <p className="text-sm text-gray-600">{message}</p>}
       </div>
 
-      <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} unlimited={data.billing?.unlimited} />
+      {SITE.cardPaymentsEnabled ? (
+        <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} unlimited={data.billing?.unlimited} />
+      ) : (
+        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-sm text-violet-900">
+          <p className="font-semibold">Aylık abonelik: {MONTHLY_PRICE_TL} TL (KDV dahil) · 30 gün</p>
+          <p className="mt-1">Ödemeler şu an havale/EFT ile alınmaktadır. Ödemenizi aşağıdaki hesaba yaptıktan sonra WhatsApp veya e-posta ile bize bildirin; aboneliğiniz aynı gün aktif edilir. Kartla ödeme yakında.</p>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 text-sm text-gray-700">
         <h3 className="text-lg font-semibold text-gray-900">Havale / EFT ile ödeme</h3>
