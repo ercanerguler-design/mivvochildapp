@@ -4,6 +4,7 @@ import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { redirect } from "next/navigation";
+import { listSos } from "@/lib/sos";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -20,7 +21,10 @@ const categoryLabels: Record<"tr" | "en", Record<string, string>> = {
     SEXUAL_RISK: "Cinsel Risk",
     THREAT: "Tehdit",
     PROFANITY: "Küfür",
-    EXTREME_ANGER: "Aşırı Öfke",
+    EXTREME_ANGER: "Kendine Zarar / Öfke",
+    STRANGER_CONTACT: "Yabancı Kişi",
+    SUBSTANCE: "Alkol / Madde",
+    DANGEROUS_BEHAVIOR: "Tehlikeli Davranış",
   },
   en: {
     BULLYING: "Bullying",
@@ -28,7 +32,10 @@ const categoryLabels: Record<"tr" | "en", Record<string, string>> = {
     SEXUAL_RISK: "Sexual Risk",
     THREAT: "Threat",
     PROFANITY: "Profanity",
-    EXTREME_ANGER: "Extreme Anger",
+    EXTREME_ANGER: "Self-harm / Anger",
+    STRANGER_CONTACT: "Stranger",
+    SUBSTANCE: "Alcohol / Drugs",
+    DANGEROUS_BEHAVIOR: "Dangerous Behaviour",
   },
 };
 
@@ -109,8 +116,28 @@ export default async function DashboardPage() {
     },
   ];
 
+  const sosEvents = await listSos(parent.children.map((c) => c.id), 24).catch(() => []);
+
   return (
     <div className="space-y-6">
+      {sosEvents.map((e) => (
+        <div key={e.id} className="flex flex-col gap-3 rounded-2xl bg-red-600 p-5 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-lg font-black">🆘 {e.childName} yardım istedi</p>
+            <p className="text-sm text-red-100">
+              {new Date(e.createdAt).toLocaleString("tr-TR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+              {e.accuracyM ? ` · konum doğruluğu ~${Math.round(e.accuracyM)} m` : ""}
+              {e.mapUrl ? "" : " · konum alınamadı"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {e.mapUrl && (
+              <a href={e.mapUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-red-700">Haritada aç</a>
+            )}
+            <a href="tel:112" className="rounded-xl bg-red-800 px-4 py-2.5 text-sm font-bold text-white">112</a>
+          </div>
+        </div>
+      ))}
       <div>
         <h2 className="text-2xl font-bold text-gray-900">
           {text.dashboard.welcome}, {session.user.name ?? text.dashboard.parentDefaultName} 👋

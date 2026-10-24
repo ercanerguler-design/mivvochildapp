@@ -105,6 +105,15 @@ check("exact repeat → merged", exact.status === 200 && exact.data?.alerts === 
 const alcohol = await call("POST", "/api/activity", { token: deviceToken, json: { childId, activities: [{ platform: "WHATSAPP", type: "MESSAGE", content: "Ahmet: alkol alır mısın", contactDisplayName: "Ahmet" }] } });
 check("alcohol offer → alert", alcohol.status === 200 && alcohol.data?.alerts === 1, `alerts=${alcohol.data?.alerts}`);
 
+const sos = await call("POST", "/api/mobile/sos", { token: deviceToken, json: { childId, latitude: 39.92077, longitude: 32.85411, accuracy: 25 } });
+check("SOS from child", sos.status === 200 && sos.data?.ok === true, String(sos.status));
+const sosList = await call("GET", "/api/mobile/parent/sos", { token: jwt });
+check("parent sees SOS with map link", sosList.data?.events?.[0]?.mapUrl?.includes("39.920770,32.854110"), sosList.data?.events?.[0]?.mapUrl);
+const sosAck = await call("PATCH", "/api/mobile/parent/sos", { token: jwt, json: { id: sosList.data?.events?.[0]?.id } });
+check("parent acknowledges SOS", sosAck.status === 200);
+const sosNoAuth = await call("POST", "/api/mobile/sos", { json: { childId } });
+check("SOS rejects missing auth", sosNoAuth.status === 401);
+
 // 7. Parent sees and resolves the alert
 const list = await call("GET", "/api/mobile/parent/alerts?page=1", { token: jwt });
 const alert = list.data?.alerts?.find((a: any) => a.originalText?.includes("adresini"));

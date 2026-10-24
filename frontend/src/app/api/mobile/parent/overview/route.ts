@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireMobileParent } from "@/lib/mobile-parent-request";
 import { getParentBillingStatus, MONTHLY_PLAN_TL } from "@/lib/subscription";
 import { getDeviceStatuses } from "@/lib/device-status";
+import { listSos } from "@/lib/sos";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
   const childIds = parent.children.map((c) => c.id);
   const since = new Date(Date.now() - 7 * DAY_MS);
 
-  const [pending, weekAlerts, billing, devices] = await Promise.all([
+  const [pending, weekAlerts, billing, devices, sos] = await Promise.all([
     db.alert.count({ where: { childId: { in: childIds }, status: AlertStatus.PENDING } }),
     db.alert.findMany({
       where: { childId: { in: childIds }, createdAt: { gte: since } },
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
     }),
     getParentBillingStatus(parent.id),
     getDeviceStatuses(childIds).catch(() => new Map()),
+    listSos(childIds, 24).catch(() => []),
   ]);
 
   // Alerts per day for the last 7 days (oldest first).
@@ -65,6 +67,8 @@ export async function GET(req: NextRequest) {
       weekAlerts: weekAlerts.filter((a) => a.childId === c.id).length,
       highRisk: weekAlerts.filter((a) => a.childId === c.id && a.riskScore >= 85).length,
     })),
+    // Help requests from the last 24 hours, newest first.
+    sos,
     stats: { pending, weekTotal: weekAlerts.length, highRisk: weekAlerts.filter((a) => a.riskScore >= 85).length, daily, byCategory },
     billing: {
       trialActive: billing.trial.active,

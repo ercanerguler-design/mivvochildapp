@@ -39,6 +39,7 @@ const RETENTION = {
     ["Güvenli mesajlar", "Saklanmaz; analizden hemen sonra yalnızca \"güvenli\" sonucu tutulur"],
     ["Aktivite kayıtları (uygulama, saat, risk puanı; mesaj metni olmadan)", "90 gün; ardından otomatik silinir"],
     ["Kişi özet kayıtları (gönderen görünen adı, mesaj sayısı)", "Son görülmeden itibaren 90 gün"],
+    ["Acil yardım çağrıları (o anki konum dahil)", "30 gün; ardından otomatik silinir"],
     ["Ebeveyn hesabı ve çocuk profilleri", "Hesap silinene kadar; silme talebinden sonra en geç 30 gün içinde"],
     ["Onay (rıza) kayıtları", "Hesabın silinmesinden sonra ispat amacıyla 3 yıl"],
     ["Ödeme ve fatura kayıtları", "Vergi ve ticaret mevzuatı gereği 10 yıl"],
@@ -52,7 +53,7 @@ export const legalDocs: LegalDoc[] = [
     title: "KVKK Aydınlatma Metni",
     short: "KVKK Aydınlatma",
     description: "6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında Mivvo kullanıcılarına yönelik aydınlatma metni.",
-    version: "2.0",
+    version: "2.1",
     updated: "2026-10-24",
     sections: [
       {
@@ -68,14 +69,14 @@ export const legalDocs: LegalDoc[] = [
           { p: "Ebeveyn (hesap sahibi) için:" },
           { ul: ["Kimlik ve iletişim: ad soyad, e-posta adresi, cep telefonu (ödeme sırasında verilirse)", "Hesap güvenliği: şifrenin geri döndürülemez özeti (hash), oturum ve cihaz bildirim anahtarı", "Fatura ve ödeme: fatura adresi, şehir, ödeme tutarı ve iyzico işlem numarası (kart bilgileri bize ulaşmaz)", "Kullanım: uyarı tercihleri, hassasiyet seviyesi, onay kayıtları, IP adresi ve işlem zamanları"] },
           { p: "Çocuk (18 yaş altı, ebeveyn tarafından eklenen) için:" },
-          { ul: ["Kimlik: ad (veya takma ad) ve doğum tarihi (yalnızca 18 yaş kontrolü için)", "Cihaz: uygulamaya özel rastgele cihaz kimliği, uygulama sürümü, uygulamanın en son ne zaman bağlandığı ve korumanın (bildirim erişiminin) açık olup olmadığı", "İletişim içeriği: WhatsApp, Instagram, TikTok, Snapchat, Telegram ve SMS uygulamalarından gelen bildirimlerdeki gönderen görünen adı ve mesaj metni", "Risk sonuçları: risk kategorisi, puanı, açıklama ve yalnızca risk tespit edilen mesajın ilgili parçası"] },
-          { p: "Mivvo; fotoğraf, video, sesli mesaj, konum, rehber, arama kayıtları, kamera veya mikrofon verilerine erişmez ve bunları işlemez. Mesaj içerikleri, niteliği gereği sağlık veya cinsel hayata ilişkin bilgiler içerebilir; bu tür veriler yalnızca risk tespiti amacıyla ve aşağıdaki güvencelerle işlenir." },
+          { ul: ["Kimlik: ad (veya takma ad) ve doğum tarihi (yalnızca 18 yaş kontrolü için)", "Cihaz: uygulamaya özel rastgele cihaz kimliği, uygulama sürümü, uygulamanın en son ne zaman bağlandığı ve korumanın (bildirim erişiminin) açık olup olmadığı", "İletişim içeriği: WhatsApp, Instagram, TikTok, Snapchat, Telegram ve SMS uygulamalarından gelen bildirimlerdeki gönderen görünen adı ve mesaj metni", "Risk sonuçları: risk kategorisi, puanı, açıklama ve yalnızca risk tespit edilen mesajın ilgili parçası", "Acil durum konumu: yalnızca çocuk uygulamadaki Yardım butonuna bastığında, o anki konum bir kez alınır ve ebeveyne iletilir"] },
+          { p: "Mivvo; fotoğraf, video, sesli mesaj, rehber, arama kayıtları, kamera veya mikrofon verilerine erişmez ve bunları işlemez. Konum sürekli veya arka planda izlenmez; yalnızca çocuk Yardım butonuna bastığı anda alınır. Mesaj içerikleri, niteliği gereği sağlık veya cinsel hayata ilişkin bilgiler içerebilir; bu tür veriler yalnızca risk tespiti amacıyla ve aşağıdaki güvencelerle işlenir." },
         ],
       },
       {
         h: "3. Hangi amaçlarla işliyoruz?",
         blocks: [
-          { ul: ["Çocuğa yönelik siber zorbalık, tehdit, cinsel istismar, şiddet ve kendine zarar verme risklerinin tespit edilmesi ve ebeveynin uyarılması", "Ebeveyne konuşma önerileri ve dönemsel raporlar sunulması", "Üyelik, kimlik doğrulama, eşleştirme ve hizmetin sürekliliğinin sağlanması", "Abonelik, ödeme ve faturalandırma işlemlerinin yürütülmesi", "Bilgi güvenliği, kötüye kullanımın önlenmesi ve hataların giderilmesi", "Yasal yükümlülüklerin yerine getirilmesi ve yetkili kurumlara bilgi verilmesi"] },
+          { ul: ["Çocuğa yönelik siber zorbalık, tehdit, cinsel istismar, şiddet ve kendine zarar verme risklerinin tespit edilmesi ve ebeveynin uyarılması", "Ebeveyne konuşma önerileri ve dönemsel raporlar sunulması", "Çocuk acil yardım istediğinde ebeveynin çocuğun o anki konumuna ulaşabilmesi", "Üyelik, kimlik doğrulama, eşleştirme ve hizmetin sürekliliğinin sağlanması", "Abonelik, ödeme ve faturalandırma işlemlerinin yürütülmesi", "Bilgi güvenliği, kötüye kullanımın önlenmesi ve hataların giderilmesi", "Yasal yükümlülüklerin yerine getirilmesi ve yetkili kurumlara bilgi verilmesi"] },
           { p: "Kişisel veriler reklam, profilleme amaçlı pazarlama veya üçüncü kişilere satış amacıyla kullanılmaz. Yapay zekâ analizi yalnızca ebeveyne uyarı üretmek için yapılır; çocuk hakkında otomatik olarak hukuki sonuç doğuran bir karar alınmaz ve her uyarı ebeveyn tarafından değerlendirilir." },
         ],
       },
@@ -125,13 +126,13 @@ export const legalDocs: LegalDoc[] = [
     title: "Gizlilik Politikası",
     short: "Gizlilik",
     description: "Mivvo'nun hangi verileri neden işlediği, nasıl koruduğu ve ne kadar sakladığı hakkında sade dilde gizlilik politikası.",
-    version: "2.0",
+    version: "2.1",
     updated: "2026-10-24",
     sections: [
       {
         h: "Kısaca",
         blocks: [
-          { ul: ["Mivvo bir gizli takip uygulaması değildir. Çocuk uygulaması görünür çalışır ve çocuk korunduğunu bilir.", "Yalnızca mesajlaşma uygulamalarından gelen bildirim metinleri risk açısından analiz edilir.", "Güvenli mesajlar saklanmaz. Yalnızca risk tespit edilen mesajın ilgili parçası ebeveyne gösterilir.", "Fotoğraf, video, ses, konum, rehber, kamera ve mikrofona erişilmez.", "Verileriniz satılmaz, reklam için kullanılmaz.", "Hesabınızı ve tüm verilerinizi istediğiniz an silebilirsiniz."] },
+          { ul: ["Mivvo bir gizli takip uygulaması değildir. Çocuk uygulaması görünür çalışır ve çocuk korunduğunu bilir.", "Yalnızca mesajlaşma uygulamalarından gelen bildirim metinleri risk açısından analiz edilir.", "Güvenli mesajlar saklanmaz. Yalnızca risk tespit edilen mesajın ilgili parçası ebeveyne gösterilir.", "Fotoğraf, video, ses, rehber, kamera ve mikrofona erişilmez. Konum sürekli izlenmez; yalnızca çocuk Yardım butonuna bastığında bir kez alınır.", "Verileriniz satılmaz, reklam için kullanılmaz.", "Hesabınızı ve tüm verilerinizi istediğiniz an silebilirsiniz."] },
         ],
       },
       {
@@ -176,14 +177,14 @@ export const legalDocs: LegalDoc[] = [
     title: "Açık Rıza Metni",
     short: "Açık Rıza",
     description: "Mivvo hizmeti kapsamında çocuğa ait mesaj içeriklerinin işlenmesi ve yurt dışına aktarılmasına ilişkin açık rıza metni.",
-    version: "1.0",
+    version: "1.1",
     updated: "2026-10-24",
     sections: [
       {
         h: "Rıza beyanı",
         blocks: [
           { p: `KVKK Aydınlatma Metni'ni okuduğumu ve anladığımı; 18 yaşından küçük çocuğumun velayet hakkına sahip ebeveyni (veya yasal temsilcisi) olduğumu beyan ederek, ${company} tarafından aşağıdaki işlemlerin yapılmasına özgür irademle açık rıza veriyorum:` },
-          { ul: ["Çocuğumun telefonuna kurulacak Mivvo Çocuk uygulamasının, desteklenen mesajlaşma uygulamalarından gelen bildirimlerdeki gönderen adı ve mesaj metinlerini okuması ve risk analizi amacıyla Mivvo sunucularına iletmesi,", "Bu mesaj metinlerinin yapay zekâ ile analiz edilmesi ve analiz sırasında ortaya çıkabilecek sağlık, cinsel hayat gibi özel nitelikli kişisel verilerin yalnızca risk tespiti amacıyla işlenmesi,", "Analiz için mesaj metinlerinin ve hizmetin sunulması için gerekli diğer verilerin, Aydınlatma Metni'nde belirtilen ve yurt dışında bulunan hizmet sağlayıcılara (OpenAI, Vercel, Neon, Expo, Google) aktarılması,", "Risk tespit edilen mesaj parçalarının, uyarı olarak tarafıma gösterilmek üzere 12 ay süreyle saklanması."] },
+          { ul: ["Çocuğumun telefonuna kurulacak Mivvo Çocuk uygulamasının, desteklenen mesajlaşma uygulamalarından gelen bildirimlerdeki gönderen adı ve mesaj metinlerini okuması ve risk analizi amacıyla Mivvo sunucularına iletmesi,", "Bu mesaj metinlerinin yapay zekâ ile analiz edilmesi ve analiz sırasında ortaya çıkabilecek sağlık, cinsel hayat gibi özel nitelikli kişisel verilerin yalnızca risk tespiti amacıyla işlenmesi,", "Analiz için mesaj metinlerinin ve hizmetin sunulması için gerekli diğer verilerin, Aydınlatma Metni'nde belirtilen ve yurt dışında bulunan hizmet sağlayıcılara (OpenAI, Vercel, Neon, Expo, Google) aktarılması,", "Risk tespit edilen mesaj parçalarının, uyarı olarak tarafıma gösterilmek üzere 12 ay süreyle saklanması,", "Çocuğumun Yardım butonuna bastığı anda telefonunun konumunun alınıp tarafıma iletilmesi ve 30 gün saklanması."] },
         ],
       },
       {

@@ -13,7 +13,7 @@ Uygulamanın 2.0.0 sürümü (versionCode 7) bu politikanın teknik şartların�
 | Kendini casus / gizli takip aracı olarak sunmamak | ✅ Tüm metinler "şeffaf koruma" diliyle yazıldı |
 | İzleme işlevini gizlememek, yanıltmamak | ✅ İlk açılışta açıklama + onay ekranı |
 | Kişisel veri için belirgin açıklama (prominent disclosure) ve onay | ✅ İzin istenmeden önce, "Kabul Et" ile |
-| Gereksiz izin yok | ✅ Kamera, mikrofon, konum, depolama, overlay, telefon durumu engellendi |
+| Gereksiz izin yok | ✅ Kamera, mikrofon, **arka plan konumu**, depolama, overlay, telefon durumu engellendi. Konum yalnızca "uygulamayı kullanırken" ve sadece Yardım butonunda istenir |
 | Yalnızca gerekli veriyi işlemek | ✅ Yalnızca mesajlaşma uygulamalarının bildirimleri, resim/ses okunmaz |
 
 ## 2. Build ve yükleme
@@ -50,7 +50,8 @@ Mivvo; WhatsApp, Instagram, TikTok, Snapchat, Telegram ve SMS uygulamalarından 
 HANGİ VERİLER İŞLENİR?
 • Desteklenen mesajlaşma uygulamalarından gelen bildirimlerdeki gönderen adı ve mesaj metni.
 • Yalnızca risk tespit edilen mesajlar saklanır ve ebeveyne gösterilir; güvenli mesajlar saklanmaz.
-• Fotoğraf, video, sesli mesaj, konum, rehber, arama geçmişi, kamera ve mikrofon erişimi YOKTUR.
+• Fotoğraf, video, sesli mesaj, rehber, arama geçmişi, kamera ve mikrofon erişimi YOKTUR.
+• Konum sürekli izlenmez; yalnızca çocuk "Yardım İste" butonuna bastığında o anki konum ebeveyne bir kez gönderilir.
 
 KİMLER İÇİN?
 18 yaş altı çocuğu olan ebeveynler için tasarlanmıştır. Başka bir yetişkini (eş, çalışan vb.) izlemek için kullanılamaz.
@@ -75,6 +76,7 @@ Gizlilik politikası: https://mivvo.org/gizlilik
 | Cihaz kimlikleri | Evet (uygulamaya özel rastgele kimlik) | Hayır | Uygulama işlevi | Evet |
 | Kişisel bilgi → Ad | Evet (çocuğun adı) | Hayır | Uygulama işlevi | Evet |
 | Kişisel bilgi → Diğer (doğum tarihi) | Evet | Hayır | Uygulama işlevi, yaş doğrulama | Evet |
+| Konum → Hassas konum | Evet (yalnızca çocuk Yardım butonuna bastığında, o an bir kez) | Hayır | Uygulama işlevi (acil durum) | **İsteğe bağlı** |
 
 \* Analiz için yapay zekâ sağlayıcısına aktarım, Google'ın tanımına göre "hizmet sağlayıcı" aktarımıdır ve "paylaşım" sayılmaz.
 - Veriler aktarım sırasında şifreleniyor mu? **Evet**
