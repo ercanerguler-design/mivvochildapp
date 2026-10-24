@@ -98,20 +98,22 @@ const safe = await call("POST", "/api/activity", { token: deviceToken, json: { c
 check("safe message → no alert", safe.status === 200 && safe.data?.alerts === 0, `alerts=${safe.data?.alerts}`);
 const risky = await call("POST", "/api/activity", { token: deviceToken, json: { childId, activities: [{ platform: "TELEGRAM", type: "MESSAGE", content: "Bilinmeyen: adresini biliyorum, yarın okul çıkışı bekliyor olcam" }] } });
 check("threat message → alert", risky.status === 200 && risky.data?.alerts === 1, `alerts=${risky.data?.alerts}`);
-const dup = await call("POST", "/api/activity", { token: deviceToken, json: { childId, activities: [{ platform: "TELEGRAM", type: "MESSAGE", content: "Bilinmeyen: seni bekliyorum okul çıkışında adresini biliyorum" }] } });
-check("repeat within 15 min → de-duplicated", dup.status === 200 && dup.data?.alerts === 0, `alerts=${dup.data?.alerts}`);
+const second = await call("POST", "/api/activity", { token: deviceToken, json: { childId, activities: [{ platform: "TELEGRAM", type: "MESSAGE", content: "Bilinmeyen: seni okulda bi yakalarsam kafanı kırarım bak görürsün" }] } });
+check("second different threat → its own alert", second.status === 200 && second.data?.alerts === 1, `alerts=${second.data?.alerts}`);
+const exact = await call("POST", "/api/activity", { token: deviceToken, json: { childId, activities: [{ platform: "TELEGRAM", type: "MESSAGE", content: "Bilinmeyen: adresini biliyorum, yarın okul çıkışı bekliyor olcam" }] } });
+check("exact repeat → merged", exact.status === 200 && exact.data?.alerts === 0, `alerts=${exact.data?.alerts}`);
 
 // 7. Parent sees and resolves the alert
 const list = await call("GET", "/api/mobile/parent/alerts?page=1", { token: jwt });
-const alert = list.data?.alerts?.[0];
-check("parent alert list", list.status === 200 && list.data?.alerts?.length === 1, `count=${list.data?.alerts?.length}`);
+const alert = list.data?.alerts?.find((a: any) => a.originalText?.includes("adresini"));
+check("parent alert list", list.status === 200 && list.data?.alerts?.length === 2, `count=${list.data?.alerts?.length}`);
 check("alert category is THREAT", alert?.category === "THREAT", alert?.category);
 check("alert keeps only risky fragment", typeof alert?.originalText === "string" && alert.originalText.length > 0 && alert.originalText.length <= 300);
 check("alert has explanation", typeof alert?.aiExplanation === "string" && alert.aiExplanation.length > 5, alert?.aiExplanation?.slice(0, 60));
 const patch = await call("PATCH", `/api/mobile/parent/alerts/${alert?.id}`, { token: jwt, json: { status: "RESOLVED" } });
 check("resolve alert", patch.status === 200 && patch.data?.status === "RESOLVED", String(patch.status));
 const ov2 = await call("GET", "/api/mobile/parent/overview", { token: jwt });
-check("overview shows child online", ov2.data?.children?.[0]?.displayName === "Smoke Çocuk" && ov2.data?.stats?.weekTotal === 1, `weekTotal=${ov2.data?.stats?.weekTotal}`);
+check("overview shows child online", ov2.data?.children?.[0]?.displayName === "Smoke Çocuk" && ov2.data?.stats?.weekTotal === 2, `weekTotal=${ov2.data?.stats?.weekTotal}`);
 
 // 8. Web session (NextAuth credentials) → settings, checkout guard, account deletion
 const csrf = await call("GET", "/api/auth/csrf", { useCookies: true });

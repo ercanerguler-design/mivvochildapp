@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { isChildDeviceAuthorized } from "@/lib/device-token";
 import { analyzeMessage } from "@/lib/analysis";
@@ -240,14 +240,19 @@ export async function POST(req: NextRequest) {
       // Note: metadata alone (night time, new contact) never creates an alert; only message content does.
       // This avoids false alarms for ordinary late-night chats with new friends.
 
-      // De-duplicate: one alert per child and category within 15 minutes (e.g. a threat split over several messages).
+      // Every distinct risky message becomes an alert the parent can see. Only exact repeats
+      // (same text, e.g. a notification posted twice) are merged, and the phone push is not
+      // repeated for the same category within 10 minutes so parents aren't flooded.
       let duplicateOfRecentAlert = false;
+      let pushRecentlySent = false;
       if (alertCategory) {
-        const recent = await db.alert.findFirst({
-          where: { childId, category: alertCategory, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } },
-          select: { id: true },
-        });
-        duplicateOfRecentAlert = Boolean(recent);
+        const evidence = detectedText || act.content?.slice(0, 500) || "";
+        const [sameText, sameCategory] = await Promise.all([
+          db.alert.findFirst({ where: { childId, category: alertCategory, originalText: evidence, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } }, select: { id: true } }),
+          db.alert.findFirst({ where: { childId, category: alertCategory, createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) } }, select: { id: true } }),
+        ]);
+        duplicateOfRecentAlert = Boolean(sameText);
+        pushRecentlySent = Boolean(sameCategory);
       }
 
       // ── SocialActivity kaydı ─────────────────────────────
@@ -289,8 +294,9 @@ export async function POST(req: NextRequest) {
           data: { alertId: alert.id },
         });
 
-        // Push notification (non-blocking)
-        void sendRiskNotificationWithRetry({
+        // Push notification after the response (after() keeps the function alive until it is sent).
+        const shouldPush = !pushRecentlySent || riskScore >= 90;
+        if (shouldPush) after(() => sendRiskNotificationWithRetry({
           parent: { fcmToken: child.parent.fcmToken },
           alertId: alert.id,
           title: `${riskScore >= 90 ? "🚨" : "⚠️"} ${child.displayName} · ${CATEGORY_LABELS_TR[alertCategory]}`,
@@ -303,16 +309,17 @@ export async function POST(req: NextRequest) {
             childId,
             deepLink: `mivvoparent://alerts/${alert.id}`,
           },
-        });
+        }));
 
-        if (riskScore >= 85 && child.parent.user?.phone) {
-          void sendWhatsAppFallbackIfEnabled({
-            toPhone: child.parent.user.phone,
+        const parentPhone = child.parent.user?.phone;
+        if (riskScore >= 85 && parentPhone) {
+          after(() => sendWhatsAppFallbackIfEnabled({
+            toPhone: parentPhone,
             childName: child.displayName,
             category: alertCategory,
             riskScore,
             alertId: alert.id,
-          });
+          }));
         }
 
         alertCount++;

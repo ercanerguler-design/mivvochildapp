@@ -47,6 +47,8 @@ export interface AnalyzeContext {
 
 /** Below this confidence the model's "risky" verdict is not trusted enough to alert a parent. */
 const MIN_CONFIDENCE = 0.6;
+/** Lowest score that can ever reach a parent (only when they lowered their sensitivity below 70). */
+export const ALERT_FLOOR = 50;
 
 const SAFE = (explanation: string): AnalysisResult => ({
   isRisky: false,
@@ -157,13 +159,17 @@ export function normalizeResult(raw: Partial<AnalysisResult> | null, original: s
   const categories = RISK_CATEGORIES.filter((c) => Array.isArray(raw.categories) && raw.categories.includes(c));
   const confidence = clamp(raw.confidence, 0, 1, 0.5);
   let riskScore = Math.round(clamp(raw.riskScore, 0, 100, 0));
-  let isRisky = raw.isRisky === true && categories.length > 0 && riskScore >= 60 && confidence >= MIN_CONFIDENCE;
+  // "Risky" here means "worth showing to a parent who asked for it": the parent's sensitivity
+  // (default 70) decides in the activity route whether it becomes an alert. Below ALERT_FLOOR
+  // (banter, friendly slang) nothing is ever reported, whatever the sensitivity.
+  let isRisky =
+    categories.length > 0 && confidence >= MIN_CONFIDENCE && riskScore >= ALERT_FLOOR && (raw.isRisky === true || riskScore >= 60);
 
   // Profanity on its own is rarely worth waking a parent; keep it below the default threshold.
   if (isRisky && categories.length === 1 && categories[0] === "PROFANITY") riskScore = Math.min(riskScore, 69);
 
-  if (!isRisky) riskScore = Math.min(riskScore, 59);
-  isRisky = isRisky && riskScore >= 60;
+  if (!isRisky) riskScore = Math.min(riskScore, ALERT_FLOOR - 1);
+  isRisky = isRisky && riskScore >= ALERT_FLOOR;
 
   const explanation = typeof raw.explanation === "string" && raw.explanation.trim() ? raw.explanation.trim().slice(0, 300) : isRisky ? "Riskli ifade tespit edildi." : "Güvenli içerik";
 
