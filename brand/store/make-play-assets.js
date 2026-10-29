@@ -68,6 +68,47 @@ async function screenshot({ i, file, title, sub }, n) {
   console.log("wrote", path.relative(outDir, out));
 }
 
+/** Splits text into lines of at most `max` characters on word boundaries. */
+function wrap(text, max) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    if (line && (line + " " + word).length > max) {
+      lines.push(line);
+      line = word;
+    } else line = line ? line + " " + word : word;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/** Landscape 16:9 tablet screenshot: headline on the left, phone on the right. Laid out at 1920x1080 and scaled by k. */
+async function tabletShot({ i, file, title, sub }, n, dir, k) {
+  const w = Math.round(1920 * k), h = Math.round(1080 * k);
+  const p = await phone(i, Math.round(940 * k));
+  const markSvg = `<g transform="translate(${130 * k} ${120 * k}) scale(${0.075 * k})"><rect width="1024" height="1024" rx="232" fill="#ffffff" fill-opacity="0.18"/><path d="M268 470 Q268 790 512 790 Q756 790 756 470" fill="none" stroke="#fff" stroke-width="104" stroke-linecap="round"/><circle cx="512" cy="520" r="112" fill="#FF8A65"/><circle cx="512" cy="268" r="84" fill="#fff"/></g>`;
+  const subLines = wrap(sub, 34)
+    .map((l, j) => `<text x="${130 * k}" y="${(640 + j * 54) * k}" font-family="${FONT}" font-size="${40 * k}" fill="#E9E7FF">${esc(l)}</text>`)
+    .join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${background(w, h)}
+    ${markSvg}
+    <text x="${226 * k}" y="${172 * k}" font-family="${FONT}" font-size="${44 * k}" font-weight="800" fill="#fff">mivvo</text>
+    <text x="${130 * k}" y="${440 * k}" font-family="${FONT}" font-size="${104 * k}" font-weight="800" fill="#fff">${esc(title[0])}</text>
+    <text x="${130 * k}" y="${560 * k}" font-family="${FONT}" font-size="${104 * k}" font-weight="800" fill="#FFB199">${esc(title[1])}</text>
+    ${subLines}
+  </svg>`;
+  const shadow = Buffer.from(`<svg width="${p.width + 80}" height="${p.height + 80}"><rect x="40" y="50" width="${p.width}" height="${p.height}" rx="${p.width * 0.11}" fill="#1E1B4B" fill-opacity="0.45"/></svg>`);
+  const shadowBlur = await sharp(shadow).blur(24).png().toBuffer();
+  const left = Math.round(w - p.width - 220 * k);
+  const top = Math.round((h - p.height) / 2);
+  const out = path.join(outDir, dir, `${String(n).padStart(2, "0")}-${file}.png`);
+  await sharp(Buffer.from(svg))
+    .composite([{ input: shadowBlur, left: left - 40, top: top - 40 }, { input: p.buf, left, top }])
+    .png()
+    .toFile(out);
+  console.log("wrote", path.relative(outDir, out));
+}
+
 async function featureGraphic() {
   const w = 1024, h = 500;
   const p = await phone(0, 620);
@@ -97,6 +138,12 @@ async function featureGraphic() {
   let n = 1;
   for (const s of SHOTS) await screenshot(s, n++);
   await featureGraphic();
+  // 7" tablets accept 320-3840 px, 10" tablets 1080-7680 px.
+  for (const [dir, k] of [["tablet-7-inc", 1], ["tablet-10-inc", 4 / 3]]) {
+    fs.mkdirSync(path.join(outDir, dir), { recursive: true });
+    n = 1;
+    for (const s of SHOTS) await tabletShot(s, n++, dir, k);
+  }
 })().catch((e) => {
   console.error(e);
   process.exit(1);
