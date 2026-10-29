@@ -124,7 +124,7 @@ export const landingContent = {
       title: "Basit ve şeffaf fiyat",
       sub: "Taahhüt yok, istediğiniz zaman iptal edin.",
       trial: { name: "Ücretsiz Deneme", price: "0 TL", period: `${trial} gün`, cta: "Hemen Başla", features: ["Tüm özellikler açık", "Anında bildirimler", "Yapay zeka koçu", "Kredi kartı gerekmez"] },
-      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay", cta: "Ücretsiz Dene, Sonra Karar Ver", features: ["7 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
+      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay", cta: "Ücretsiz Dene, Sonra Karar Ver", features: ["9 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
     },
     download: {
       title: "Uygulamaları indirin",
