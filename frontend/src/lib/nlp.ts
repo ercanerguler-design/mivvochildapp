@@ -18,6 +18,24 @@ function getOpenAIClient() {
   return openaiClient;
 }
 
+/** Analysis model; switch with OPENAI_MODEL without a code change. */
+// gpt-5.5 had no missed risk and no false alarm on the 108-case Turkish test set (scripts/eval-nlp.mts).
+export const ANALYSIS_MODEL = process.env.OPENAI_MODEL ?? "gpt-5.5";
+const FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL ?? "gpt-4o";
+const SCREEN_MODEL = process.env.OPENAI_SCREEN_MODEL ?? "gpt-4o-mini";
+
+/**
+ * Reasoning models (gpt-5.x, o-series) take no temperature and count their thinking in
+ * max_completion_tokens; classic chat models take temperature 0 and max_tokens.
+ */
+function generationParams(model: string, maxOutput: number) {
+  if (/^(gpt-5(?!.*chat)|o\d)/.test(model)) {
+    const effort = (process.env.OPENAI_REASONING_EFFORT ?? "low") as "minimal" | "low" | "medium" | "high";
+    return { max_completion_tokens: maxOutput + 4000, reasoning_effort: effort };
+  }
+  return { temperature: 0, max_tokens: maxOutput };
+}
+
 export const RISK_CATEGORIES = [
   "SEXUAL_RISK",
   "EXTREME_ANGER",
@@ -77,6 +95,23 @@ const SYSTEM_TEXT_PATTERNS = [
   /doğrulama kodu|verification code|tek kullanımlık şifre/i,
 ];
 
+/**
+ * Joins words split into letters to dodge filters: "ö l D ü r" -> "öldür", "s.i.la.h" -> "silah",
+ * "b-ı-ç-a-k" -> "bıçak". Only runs of mostly single letters are joined, so ordinary short words
+ * ("o da ne") stay as they are. Returns null when nothing was hidden.
+ */
+export function revealHiddenWords(text: string): string | null {
+  let changed = false;
+  const out = text.replace(/(?<!\p{L})\p{L}{1,2}(?:[\s.\-_*+|/\\]+\p{L}{1,2}){2,}(?!\p{L})/gu, (run) => {
+    const parts = run.split(/[\s.\-_*+|/\\]+/);
+    const singles = parts.filter((p) => [...p].length === 1).length;
+    if (singles < Math.ceil(parts.length * 0.6)) return run;
+    changed = true;
+    return parts.join("");
+  });
+  return changed ? out : null;
+}
+
 /** "WhatsApp · Ali: selam" / "Ali: selam" -> "selam" (sender names are at most ~100 chars). */
 export function messageBody(text: string) {
   const m = /^[^\n:]{1,120}?:\s+([\s\S]+)$/.exec(text.trim());
@@ -105,12 +140,23 @@ KATEGORİLER (her birinin sınırı kesindir)
 - SEXUAL_RISK: SADECE cinsellik: cinsel içerikli söz veya teklif ("seks", "sevişelim"), çocuktan fotoğraf/video/kamera isteme, vücut üzerine cinsel yorum, cinsel amaçlı buluşma baskısı, cinsel şantaj. Cinsel bir öğe yoksa ASLA bu kategori seçilmez.
 - THREAT: Gönderenin ÇOCUĞA zarar vereceğini söylemesi veya ima etmesi: "seni öldüreceğim", "öleceksin", "seni 12 yerinden vururum", "kimse cesedini bulamayacak", "okul çıkışı bekliyorum", "görürsün", şantaj, korkutma.
 - VIOLENCE: Çocuğa yöneltilmiş doğrudan tehdit OLMAYAN şiddet: kavga/saldırı planı, başkasına zarar verme, silah veya kesici alet (bıçak, silah, "s.i.l.a.h", "bicak") isteme, taşıma, getirme, konuşma.
-- EXTREME_ANGER: Gönderenin KENDİSİNE zarar verme düşüncesi, intihar, umutsuzluk ("ölmek istiyorum", "kendimi keseceğim", "her şey bitsin"). Başkasına "öleceksin" demek bu kategori DEĞİL, THREAT'tir.
+- EXTREME_ANGER: Kendine zarar verme riski: gönderenin kendine zarar verme düşüncesi, intihar, umutsuzluk ("ölmek istiyorum", "kendimi keseceğim", "her şey bitsin") VE çocuğu kendine zarar vermeye veya intihara teşvik etmek ("kendini öldür", "git kendini as", "bileklerini kes"). Başkasına "öleceksin" demek bu kategori DEĞİL, THREAT'tir.
+- BULLYING ile PROFANITY ayrımı: kişiyi aşağılayan bir nitelendirme varsa ("ezik", "çirkin", "salak", "kimse seni sevmiyor") BULLYING; sadece küfür varsa PROFANITY.
 - BULLYING: Aşağılama, dışlama, alay, lakap, toplu hedef gösterme, utandırıcı içerik yayma.
 - PROFANITY: Çocuğa yöneltilmiş ağır hakaret ve küfür (zorbalık veya tehdit içermiyorsa).
 - STRANGER_CONTACT: Tanınmayan birinin güven kazanmaya çalışması: aşırı iltifat, hediye/para teklifi, "kimseye söyleme", "başka uygulamaya geçelim", kişisel bilgi (yaş, okul, adres, konum, evde yalnız mı) isteme.
 - SUBSTANCE: Alkol, sigara, elektronik sigara (vape), nargile, uyuşturucu (ot, esrar, bonzai, hap, "mal", kristal vb.) teklifi, sorusu ("alkol alıyon mu"), birlikte kullanma önerisi, temin etme; ilaçları kötüye kullanma.
 - DANGEROUS_BEHAVIOR: Tehlikeli akımlar/challenge'lar, evden kaçma planı, kumar ve yasa dışı bahis, kolay para vaadi, dolandırıcılık (şifre, SMS kodu, kart bilgisi, hesap isteme), tehlikeli yerlerde buluşma.
+
+TÜRKÇE TEHDİT VE ŞİDDET KALIPLARI (bağlam ne olursa olsun)
+- Örtülü tehditler THREAT'tir ve en az 80 puandır: "seninle görüşeceğiz", "seninle görüşürüz", "hesaplaşacağız", "görürsün", "bekle sen", "sana gösteririm", "pişman olacaksın", "okul çıkışı bekliyorum", "yakarım seni", "gebertirim", "öleceksin", "seni bulurum". "Görüşeceğiz" gibi bir söz bağlamda cinsellik geçse bile tehdit olarak okunur; açıkça bir buluşma planı (saat, yer, ders, oyun) değilse.
+- Birine zarar vermeye çağırmak veya niyet etmek VIOLENCE'tır ve en az 85 puandır: "onu öldür", "dövün onu", "bıçakla", "vurun onu". Oyun bağlamı AÇIKÇA varsa ("oyunda onu öldür", "bossu öldür", "valorant'ta vur") risk değildir.
+- Silah ve kesici aletler ("bıçak", "silah", "tabanca", "satır", "jilet") tek kelime olarak bile gelse VIOLENCE'tır ve en az 70 puandır. Yemek, mutfak, ders veya oyun bağlamı AÇIKÇA varsa risk değildir.
+- Harfleri ayrılmış veya noktalarla bölünmüş kelimeler ("ö l D ü r", "s.i.la.h") filtreden kaçma girişimidir; anlamını okuyarak değerlendir ve gizleme çabası puanı artırır. Varsa <okunus> etiketinde birleştirilmiş hali verilir.
+
+KARAR SIRASI
+1. Önce <mesaj>'ı TEK BAŞINA oku ve ana kategorisini, puanını belirle.
+2. Sonra <onceki>'ye bak: yalnızca <mesaj> belirsizse anlamını netleştirmek veya puanı artırmak için kullan. Önceki mesajların konusu <mesaj>'ın ana kategorisini DEĞİŞTİRMEZ.
 
 ANA KATEGORİ ("primaryCategory")
 - <mesaj>'ın KENDİ içeriğini en iyi anlatan TEK kategoridir; ebeveyne bu gösterilir. Önceki mesajların konusu ana kategoriyi belirlemez.
@@ -134,6 +180,7 @@ YANLIŞ ALARMDAN KAÇIN
 - Oyun, film, dizi, şarkı sözü, haber veya alıntı içindeki şiddet çocuğa yönelik değilse risk değildir.
 - Madde, silah veya tehlike sözcüklerinin bilgi, ders, haber, aile ya da sağlık bağlamında geçmesi risk değildir ("alkolün zararları ödevi", "babam akşama şarap aldı", "annem ilacını içti", "mutfak bıçağı keskin"). Risk, çocuğa teklif, davet, temin veya kullanım planı olduğunda vardır.
 - Kimseyi hedef almayan ünlem küfürler ve genel kızgınlık ("amk ya yine kaybettik", "aq bu ders çok sıkıcı") en fazla 45'tir.
+- Abartı kalıpları kendine zarar DEĞİLDİR: "öldüm gülmekten", "stresten öleceğim", "utancımdan öldüm", "açlıktan ölüyorum", "sıkıntıdan patlayacağım". Gerçek niyet, yöntem veya umutsuzluk yoksa en fazla 40'tır.
 - Yeni birinin tek seferlik selamı, takip ettiğini söylemesi veya paylaşımlara/fotoğraflara iltifat etmesi; gizlilik talebi, hediye/para teklifi, kişisel bilgi, fotoğraf veya buluşma isteği YOKSA en fazla 55'tir.
 - Arkadaş ya da aileyle buluşmak için konum veya adres paylaşmak ("konum at geliyorum", "neredesin", "otobüsteyim") risk değildir. Risk ancak yeni/tanınmayan biri konum, adres veya buluşma isterse ya da gizlilik baskısı varsa vardır.
 - Bağlam bilgileri (gece saati, yeni kişi, platform) TEK BAŞINA risk sebebi DEĞİLDİR. Sadece içerik zaten şüpheliyse puanı en fazla 10 artırabilir.
@@ -259,14 +306,13 @@ function screeningEnabled() {
 /** Returns true when the message should get the full analysis. */
 async function screenMessage(userMessage: string): Promise<boolean> {
   const response = await getOpenAIClient().chat.completions.create({
-    model: process.env.OPENAI_SCREEN_MODEL ?? "gpt-4o-mini",
+    model: SCREEN_MODEL,
     messages: [
       { role: "system", content: SCREEN_PROMPT },
       { role: "user", content: userMessage },
     ],
     response_format: { type: "json_schema", json_schema: { name: "screen", strict: true, schema: SCREEN_SCHEMA } },
-    temperature: 0,
-    max_tokens: 20,
+    ...generationParams(SCREEN_MODEL, 20),
   });
   const content = response.choices[0]?.message?.content;
   if (!content) return true;
@@ -290,14 +336,21 @@ export async function analyzeText(text: string, ctx?: AnalyzeContext): Promise<A
   if (ctx?.isNightTime) contextLines.push("Saat: gece (23:00-06:00)");
   if (ctx?.isNewContact) contextLines.push("Gönderen: çocuğun yeni tanıştığı biri");
 
-  const strip = (s: string) => s.replace(/<\/?(mesaj|onceki)>/gi, "");
-  const history = (ctx?.history ?? []).map((h) => strip(h).trim().slice(0, 500)).filter(Boolean).slice(-6);
+  const strip = (s: string) => s.replace(/<\/?(mesaj|onceki|okunus)>/gi, "");
+  const history = (ctx?.history ?? [])
+    .map((h) => strip(h).trim().slice(0, 500))
+    .filter(Boolean)
+    .slice(-6)
+    .map((h) => revealHiddenWords(h) ?? h);
   const historyBlock = history.length ? `<onceki>\n${history.join("\n")}\n</onceki>\n\n` : "";
-  const userMessage = `${contextLines.length ? `Bağlam (tek başına risk değildir):\n${contextLines.join("\n")}\n\n` : ""}${historyBlock}<mesaj>\n${message}\n</mesaj>`;
+  // Words split into letters ("ö l D ü r") are shown to the model joined as well.
+  const revealed = revealHiddenWords(message);
+  const revealedBlock = revealed ? `\n<okunus>\n${revealed}\n</okunus>` : "";
+  const userMessage = `${contextLines.length ? `Bağlam (tek başına risk değildir):\n${contextLines.join("\n")}\n\n` : ""}${historyBlock}<mesaj>\n${message}\n</mesaj>${revealedBlock}`;
 
   // Cost control: a cheap model screens every message first; only possibly risky ones reach the
-  // full analysis. Anything the offline rule engine flags always gets the full analysis.
-  if (screeningEnabled() && !analyzeWithRules(message).isRisky) {
+  // full analysis. Anything the offline rule engine flags, or any disguised word, always gets it.
+  if (screeningEnabled() && !revealed && !analyzeWithRules(message).isRisky) {
     const flagged = await screenMessage(userMessage).catch((e: Error) => {
       console.warn("[nlp] screening failed, running full analysis:", e.message);
       return true;
@@ -309,19 +362,30 @@ export async function analyzeText(text: string, ctx?: AnalyzeContext): Promise<A
     }
   }
 
-  const response = await getOpenAIClient().chat.completions.create({
-    model: process.env.OPENAI_MODEL ?? "gpt-4o",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    response_format: { type: "json_schema", json_schema: { name: "risk_analysis", strict: true, schema: RESPONSE_SCHEMA } },
-    temperature: 0,
-    max_tokens: 400,
-  });
+  const ask = async (model: string) => {
+    const response = await getOpenAIClient().chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+      response_format: { type: "json_schema", json_schema: { name: "risk_analysis", strict: true, schema: RESPONSE_SCHEMA } },
+      ...generationParams(model, 400),
+    });
+    const text = response.choices[0]?.message?.content;
+    if (!text) throw new Error(`${model} boş yanıt döndü`);
+    return text;
+  };
 
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error("OpenAI boş yanıt döndü");
+  // If the main model is unavailable, a second model answers before the rule engine has to.
+  let content: string;
+  try {
+    content = await ask(ANALYSIS_MODEL);
+  } catch (e) {
+    if (ANALYSIS_MODEL === FALLBACK_MODEL) throw e;
+    console.warn(`[nlp] ${ANALYSIS_MODEL} failed, using ${FALLBACK_MODEL}:`, (e as Error).message);
+    content = await ask(FALLBACK_MODEL);
+  }
 
   let parsed: Partial<AnalysisResult> | null = null;
   try {

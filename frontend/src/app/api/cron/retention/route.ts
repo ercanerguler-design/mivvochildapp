@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recordSystemEvent } from "@/lib/system-events";
 import { purgeOldSos } from "@/lib/sos";
+import { purgeOldClaims } from "@/lib/alert-claims";
 
 /**
  * Daily data-retention job (Vercel Cron, see vercel.json). Enforces the periods published in
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
     db.$executeRawUnsafe(`DELETE FROM rate_limits WHERE window_start < NOW() - interval '1 day'`).catch(() => 0),
   ]);
   const sos = await purgeOldSos(30).catch(() => 0);
+  await purgeOldClaims().catch(() => 0);
 
   const summary = { activities: activities.count, alerts: alerts.count, contacts: contacts.count, rateLimits, sos };
   await recordSystemEvent("retention_run", JSON.stringify(summary));

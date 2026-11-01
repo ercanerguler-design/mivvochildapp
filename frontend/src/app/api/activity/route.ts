@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { isChildDeviceAuthorized } from "@/lib/device-token";
 import { analyzeMessageOnce } from "@/lib/analysis";
+import { claimAlert } from "@/lib/alert-claims";
 import { messageBody } from "@/lib/nlp";
 import { SITE } from "@/lib/site";
 
@@ -278,6 +279,10 @@ export async function POST(req: NextRequest) {
       });
 
       // ── Alert oluştur ────────────────────────────────────
+      // Parallel requests for the same message: only the first one to claim it creates the alert.
+      if (alertCategory && riskScore >= sensitivityLevel && !duplicateOfRecentAlert && !(await claimAlert(childId, fold(act.content ?? detectedText)))) {
+        duplicateOfRecentAlert = true;
+      }
       if (alertCategory && riskScore >= sensitivityLevel && !duplicateOfRecentAlert) {
         const alert = await db.alert.create({
           data: {
