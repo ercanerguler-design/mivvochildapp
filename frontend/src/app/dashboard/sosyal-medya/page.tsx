@@ -28,7 +28,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   SEXUAL_RISK: "Cinsel Risk",
   THREAT: "Tehdit",
   PROFANITY: "Küfür",
-  EXTREME_ANGER: "Aşırı Öfke",
+  EXTREME_ANGER: "Kendine Zarar",
   STRANGER_CONTACT: "Yabancı Kişi",
   SUBSTANCE: "Alkol / Madde",
   DANGEROUS_BEHAVIOR: "Tehlikeli Davranış",

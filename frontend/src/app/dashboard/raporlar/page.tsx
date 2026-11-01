@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { redirect } from "next/navigation";
+import { ALERT_FLOOR } from "@/lib/nlp";
 
 export default async function ReportsPage() {
   const locale = await getLocaleFromServerCookie();
@@ -67,11 +68,13 @@ export default async function ReportsPage() {
   );
 
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  // Only risky messages at night count; ordinary late-night chats are not a risk.
   const nightRiskCount = await db.socialActivity.count({
     where: {
       childId: { in: childIds },
       isNightTime: true,
       createdAt: { gte: since24h },
+      riskScore: { gte: ALERT_FLOOR },
     },
   });
 
@@ -110,7 +113,7 @@ export default async function ReportsPage() {
     WHATSAPP: "WhatsApp",
     TELEGRAM: "Telegram",
     SMS: "SMS",
-    OTHER: "Other",
+    OTHER: locale === "en" ? "Other" : "Diğer",
   };
 
   return (
@@ -158,7 +161,7 @@ export default async function ReportsPage() {
           <p className={`text-sm font-semibold ${nightRiskActive ? "text-red-700" : "text-emerald-700"}`}>
             {nightRiskActive ? text.reportsPage.nightRiskActive : text.reportsPage.nightRiskPassive}
           </p>
-          <p className="text-xs text-gray-500 mt-1">24h: {nightRiskCount}</p>
+          <p className="text-xs text-gray-500 mt-1">{locale === "en" ? "Risky night messages (24h)" : "Riskli gece mesajı (24 saat)"}: {nightRiskCount}</p>
         </div>
       </div>
 
@@ -173,7 +176,7 @@ export default async function ReportsPage() {
                 <span className="font-semibold text-gray-900">{row._count.id}</span>
               </div>
             ))}
-            {totalAlerts > 0 && <p className="text-xs text-gray-400 pt-1">Total: {totalAlerts}</p>}
+            {totalAlerts > 0 && <p className="text-xs text-gray-400 pt-1">{locale === "en" ? "Total" : "Toplam"}: {totalAlerts}</p>}
           </div>
         </div>
 
