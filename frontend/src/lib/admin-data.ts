@@ -68,6 +68,7 @@ export type Member = {
   paymentCount: number;
   children: number;
   childList: { id: string; name: string; planExpiresAt: string | null }[];
+  accountPlanExpiresAt: string | null;
   lastDeviceSeenAt: string | null;
   alerts30d: number;
 };
@@ -101,7 +102,9 @@ export async function loadMembers(): Promise<Member[]> {
   // Latest expiry per parent (any plan), and per child.
   const planBy = new Map<string, Date>();
   const childPlanBy = new Map<string, Date>();
+  const accountPlanBy = new Map<string, Date>();
   for (const p of plans) {
+    if (!p.child_id) accountPlanBy.set(p.parent_id, p.expires_at);
     const cur = planBy.get(p.parent_id);
     if (!cur || p.expires_at > cur) planBy.set(p.parent_id, p.expires_at);
     if (p.child_id) childPlanBy.set(p.child_id, p.expires_at);
@@ -132,6 +135,7 @@ export async function loadMembers(): Promise<Member[]> {
       totalPaidTl: payBy.get(p.id)?.total ?? 0,
       paymentCount: payBy.get(p.id)?.count ?? 0,
       children: p.children.length,
+      accountPlanExpiresAt: accountPlanBy.get(p.id)?.toISOString() ?? null,
       childList: p.children.map((c) => ({ id: c.id, name: c.displayName, planExpiresAt: childPlanBy.get(c.id)?.toISOString() ?? null })),
       lastDeviceSeenAt: lastSeen?.toISOString() ?? null,
       alerts30d: p.children.reduce((sum, c) => sum + (alertsByChild.get(c.id) ?? 0), 0),

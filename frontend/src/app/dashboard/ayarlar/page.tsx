@@ -28,7 +28,7 @@ type SettingsState = {
       expiresAt?: string;
     };
     credits: number;
-    children?: { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number }[];
+    children?: { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number; coveredBy?: "account" | "child" | null }[];
     unlimited?: {
       active: boolean;
       startAt?: string | null;
@@ -95,7 +95,7 @@ export default function SettingsPage() {
           ) : (
             (data.billing?.children ?? []).map((c) => (
               <p key={c.childId}>
-                {c.displayName}: {c.active ? `abonelik aktif (${c.daysRemaining} gün kaldı)` : data.billing?.trial.active ? "deneme süresinde" : "aboneliği yok, mesajlar analiz edilmiyor"}
+                {c.displayName}: {c.coveredBy === "account" ? `hesap aboneliği kapsıyor (${c.daysRemaining} gün kaldı)` : c.active ? `abonelik aktif (${c.daysRemaining} gün kaldı)` : data.billing?.trial.active ? "deneme süresinde" : "aboneliği yok, mesajlar analiz edilmiyor"}
               </p>
             ))
           )}

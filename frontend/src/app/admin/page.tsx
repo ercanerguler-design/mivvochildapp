@@ -41,6 +41,7 @@ type Member = {
   paymentCount: number;
   children: number;
   childList: { id: string; name: string; planExpiresAt: string | null }[];
+  accountPlanExpiresAt: string | null;
   lastDeviceSeenAt: string | null;
   alerts30d: number;
 };
@@ -563,7 +564,12 @@ function GrantModal({ member, priceTl, onClose, onSubmit }: { member: Member; pr
           <select value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2">
             {kids.map((k) => (
               <option key={k.id} value={k.id}>
-                {k.name}{k.planExpiresAt && new Date(k.planExpiresAt) > new Date() ? ` (aktif, ${new Date(k.planExpiresAt).toLocaleDateString("tr-TR")} bitiş)` : " (aboneliği yok)"}
+                {k.name}
+                {k.planExpiresAt && new Date(k.planExpiresAt) > new Date()
+                  ? ` (aktif, ${new Date(k.planExpiresAt).toLocaleDateString("tr-TR")} bitiş)`
+                  : member.accountPlanExpiresAt && new Date(member.accountPlanExpiresAt) > new Date()
+                    ? " (hesap aboneliği kapsıyor)"
+                    : " (aboneliği yok)"}
               </option>
             ))}
             <option value="all">Hesabın tüm çocukları (hediye / demo)</option>

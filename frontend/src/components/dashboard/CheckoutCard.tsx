@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, Lock, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 
-export type ChildBilling = { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number };
+export type ChildBilling = { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number; coveredBy?: "account" | "child" | null };
 
 type Props = {
   priceTl: number;
@@ -85,7 +85,7 @@ export function CheckoutCard({ priceTl, days, childPlans }: Props) {
                 <span>
                   <span className="font-semibold text-gray-900">{c.displayName}</span>
                   <span className={`ml-2 text-xs ${c.active ? "text-emerald-700" : "text-rose-700"}`}>
-                    {c.active ? `Aktif · ${fmtDate(c.expiresAt) ?? ""} tarihine kadar (${c.daysRemaining} gün)` : "Aboneliği yok"}
+                    {c.coveredBy === "account" ? `Hesap aboneliği kapsıyor · ${fmtDate(c.expiresAt) ?? ""} tarihine kadar` : c.active ? `Aktif · ${fmtDate(c.expiresAt) ?? ""} tarihine kadar (${c.daysRemaining} gün)` : "Aboneliği yok · mesajları analiz edilmiyor"}
                   </span>
                 </span>
               </span>

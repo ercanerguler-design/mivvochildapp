@@ -5,6 +5,7 @@ import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { redirect } from "next/navigation";
 import { listSos } from "@/lib/sos";
+import { getParentBillingStatus } from "@/lib/subscription";
 import { PLATFORM_FROM, PLATFORM_LABEL, listSilentPlatforms } from "@/lib/platform-silence";
 import {
   ShieldCheck,
@@ -120,6 +121,9 @@ export default async function DashboardPage() {
   const sosEvents = await listSos(parent.children.map((c) => c.id), 24).catch(() => []);
   const childName = new Map(parent.children.map((c) => [c.id, c.displayName]));
   const silent = await listSilentPlatforms(parent.children.map((c) => c.id)).catch(() => []);
+  // Per-child pricing: after the trial, children without a plan are not analysed. Say so plainly.
+  const billing = await getParentBillingStatus(parent.id).catch(() => null);
+  const unprotected = billing && !billing.trial.active ? billing.children.filter((c) => !c.active) : [];
 
   return (
     <div className="space-y-6">
@@ -141,6 +145,15 @@ export default async function DashboardPage() {
           </div>
         </div>
       ))}
+      {unprotected.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-900 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-bold">🔒 {unprotected.map((c) => c.displayName).join(", ")} için abonelik yok</p>
+            <p className="mt-1 text-sm">Abonelik çocuk başınadır. Bu {unprotected.length > 1 ? "çocukların" : "çocuğun"} telefonundan gelen mesajlar şu an analiz edilmiyor ve uyarı gönderilmiyor.</p>
+          </div>
+          <a href="/dashboard/ayarlar#abonelik" className="shrink-0 rounded-xl bg-rose-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-rose-700">Abonelik başlat</a>
+        </div>
+      )}
       {silent.map((s) => (
         <div key={`${s.child_id}-${s.platform}`} className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
           <p className="font-bold">⚠️ {childName.get(s.child_id) ?? "Çocuğunuz"} · {PLATFORM_FROM[s.platform] ?? s.platform} mesaj gelmiyor</p>

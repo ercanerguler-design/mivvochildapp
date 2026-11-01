@@ -394,7 +394,14 @@ export async function getParentBillingStatus(parentId: string, childId?: string)
     credits,
     unlimited,
     parentPlan,
-    children: children.map((c) => ({ ...c, active: parentPlan.active || c.active })),
+    // Shown per child: covered by its own paid period, or by the account-wide plan (gift/demo),
+    // whichever lasts longer; coveredBy tells the screens which one.
+    children: children.map((c) => {
+      const accountLonger = parentPlan.active && (!c.active || (parentPlan.expiresAt && c.expiresAt && parentPlan.expiresAt > c.expiresAt));
+      return accountLonger
+        ? { ...c, active: true, expiresAt: parentPlan.expiresAt, daysRemaining: parentPlan.daysRemaining, coveredBy: "account" as const }
+        : { ...c, coveredBy: c.active ? ("child" as const) : null };
+    }),
     allChildrenCovered: children.length > 0 && coveredChildren === children.length,
     isUnlimitedActive: unlimited.active,
     childAppFree: true,
