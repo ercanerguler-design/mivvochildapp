@@ -58,6 +58,9 @@ const activityItemSchema = z.object({
   contactUsername: z.string().max(200).optional(),
   contactDisplayName: z.string().max(200).optional(),
   timestamp: z.string().datetime().optional(),
+  // Earlier messages of the same conversation (oldest first), only to understand this one.
+  // They are not stored and never become alerts themselves.
+  history: z.array(z.string().max(500)).max(6).optional(),
 });
 
 const bodySchema = z.object({
@@ -214,6 +217,7 @@ export async function POST(req: NextRequest) {
           isNewContact,
           isNightTime: nightTime,
           contactUsername: act.contactUsername,
+          history: act.history,
         });
 
         analyzedCount++;

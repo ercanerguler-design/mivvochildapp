@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
       where: {
         parentId: parent.id,
         deviceId: parsed.data.deviceId,
+        isActive: true,
       },
       select: { id: true },
     });
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
       parentId: parent.id,
       displayName: { equals: parsed.data.displayName.trim(), mode: "insensitive" },
       birthDate,
+      isActive: true,
     },
     orderBy: { updatedAt: "desc" },
     select: { id: true },

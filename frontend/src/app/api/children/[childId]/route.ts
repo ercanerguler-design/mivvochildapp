@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { deleteChildCompletely } from "@/lib/child-delete";
 import { NextRequest, NextResponse } from "next/server";
 
 type RouteParams = {
@@ -29,7 +30,6 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     where: {
       id: childId,
       parentId: parent.id,
-      isActive: true,
     },
     select: { id: true },
   });
@@ -38,12 +38,8 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Cocuk bulunamadi" }, { status: 404 });
   }
 
-  await db.childProfile.update({
-    where: { id: child.id },
-    data: {
-      isActive: false,
-    },
-  });
+  // A deleted child is gone for good: all alerts, messages and contacts are removed with it.
+  await deleteChildCompletely(child.id);
 
   return NextResponse.json({ ok: true });
 }

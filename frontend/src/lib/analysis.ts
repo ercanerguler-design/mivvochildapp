@@ -28,7 +28,7 @@ const recent = new Map<string, { at: number; result: ReturnType<typeof analyzeMe
 
 export function analyzeMessageOnce(scope: string, text: string, ctx?: AnalyzeContext) {
   const now = Date.now();
-  const key = `${scope}\u0000${ctx?.platform ?? ""}\u0000${ctx?.isNewContact ? 1 : 0}${ctx?.isNightTime ? 1 : 0}\u0000${text.trim()}`;
+  const key = `${scope}\u0000${ctx?.platform ?? ""}\u0000${ctx?.isNewContact ? 1 : 0}${ctx?.isNightTime ? 1 : 0}\u0000${(ctx?.history ?? []).join("\u0001")}\u0000${text.trim()}`;
   const hit = recent.get(key);
   if (hit && now - hit.at < RECENT_TTL_MS) return hit.result;
   if (recent.size > 1000) {

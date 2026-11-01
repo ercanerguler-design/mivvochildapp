@@ -11,9 +11,17 @@ const { analyzeText, screenStats } = await import("../src/lib/nlp.ts");
 const { analyzeWithRules } = await import("../src/lib/nlp-rules.ts");
 const analyze = (t: string, ctx?: object) => (RULES_ONLY ? Promise.resolve(analyzeWithRules(t)) : analyzeText(t, ctx));
 
-type Case = { text: string; risky: boolean; cat?: string; ctx?: { isNightTime?: boolean; isNewContact?: boolean; platform?: string } };
+type Case = { text: string; risky: boolean; cat?: string; ctx?: { isNightTime?: boolean; isNewContact?: boolean; platform?: string; history?: string[] } };
 
 const CASES: Case[] = [
+  // ── Conversation context: the last message only makes sense with the earlier ones ──
+  { text: "Mert: gel bize akşam kimse bilmez", risky: true, cat: "SUBSTANCE", ctx: { history: ["Mert: babamın birasından 4 tane aldım", "Mert: bir de ot var"] } },
+  { text: "Kaan: bi resmini atsana", risky: true, cat: "SEXUAL_RISK|STRANGER_CONTACT", ctx: { isNewContact: true, history: ["Kaan: kaç yaşındasın", "Kaan: hangi okula gidiyorsun", "Kaan: evde yalnız mısın"] } },
+  { text: "Can: yarın görürsün", risky: true, cat: "THREAT|BULLYING", ctx: { history: ["Can: ezik", "Can: sınıfta herkes senden nefret ediyor"] } },
+  { text: "Deniz: neyse artık hiçbir şeyin önemi yok", risky: true, cat: "EXTREME_ANGER", ctx: { history: ["Deniz: artık yaşamak istemiyorum", "Deniz: herkes bensiz daha mutlu olur"] } },
+  { text: "Ali: yarın maç saat kaçta", risky: false, ctx: { history: ["Ali: amk yine kaybettik", "Ali: hakem rezaletti"] } },
+  { text: "Elif: gel bizde birlikte yapalım", risky: false, ctx: { history: ["Elif: matematik ödevi çok zor", "Elif: annem kek yaptı"] } },
+
   // ── Should NOT alert ──
   { text: "kanka yarın maç kaçta", risky: false },
   { text: "seni öldürcem ödevi atmadın 😂😂", risky: false },

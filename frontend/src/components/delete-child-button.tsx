@@ -17,16 +17,16 @@ export function DeleteChildButton({ childId, childName, locale }: DeleteChildBut
     locale === "en"
       ? {
           button: "Delete Child",
-          confirm: `Delete ${childName}? This action will hide this child from active lists.`,
+          confirm: `Delete ${childName}? All alerts, messages and contacts of this child are permanently deleted. The phone must be paired again.`,
           success: "Child removed successfully.",
           error: "Deletion failed",
           working: "Deleting...",
         }
       : {
-          button: "Cocugu Sil",
-          confirm: `${childName} silinsin mi? Bu islem cocugu aktif listelerden kaldirir.`,
-          success: "Cocuk basariyla silindi.",
-          error: "Silme basarisiz",
+          button: "Çocuğu Sil",
+          confirm: `${childName} silinsin mi? Bu çocuğa ait tüm uyarılar, mesajlar ve kişiler kalıcı olarak silinir. Telefonun yeniden eşleştirilmesi gerekir.`,
+          success: "Çocuk ve tüm kayıtları silindi.",
+          error: "Silme başarısız",
           working: "Siliniyor...",
         };
 
