@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getParentBillingStatus } from "@/lib/subscription";
+import { cardPaymentsAvailable } from "@/lib/paytr";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -37,6 +38,8 @@ export async function GET() {
   return NextResponse.json({
     ...profile,
     billing,
+    // Server decides: card payments switch on by themselves once the PayTR keys are set.
+    cardPayments: cardPaymentsAvailable(),
   });
 }
 

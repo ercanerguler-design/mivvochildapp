@@ -14,7 +14,7 @@ async function ensurePaymentsTable() {
     CREATE TABLE IF NOT EXISTS parent_payments (
       id TEXT PRIMARY KEY,
       parent_id TEXT NOT NULL,
-      provider TEXT NOT NULL DEFAULT 'iyzico',
+      provider TEXT NOT NULL DEFAULT 'paytr',
       conversation_id TEXT NOT NULL UNIQUE,
       token TEXT UNIQUE,
       amount_tl INTEGER NOT NULL,
@@ -40,24 +40,34 @@ export type PaymentRow = {
   status: string;
 };
 
-export async function createPendingPayment(params: { parentId: string; amountTl: number; days: number }) {
+/** conversationId is the order number sent to the payment provider (PayTR merchant_oid). */
+export async function createPendingPayment(params: { parentId: string; amountTl: number; days: number; conversationId: string; provider?: string }) {
   await ensurePaymentsTable();
   const id = crypto.randomUUID();
-  const conversationId = `mivvo-${id}`;
   await db.$executeRawUnsafe(
-    `INSERT INTO parent_payments (id, parent_id, conversation_id, amount_tl, days) VALUES ($1, $2, $3, $4, $5)`,
+    `INSERT INTO parent_payments (id, parent_id, provider, conversation_id, amount_tl, days) VALUES ($1, $2, $3, $4, $5, $6)`,
     id,
     params.parentId,
-    conversationId,
+    params.provider ?? "paytr",
+    params.conversationId,
     params.amountTl,
     params.days
   );
-  return { id, conversationId };
+  return { id, conversationId: params.conversationId };
 }
 
 export async function attachToken(id: string, token: string) {
   await ensurePaymentsTable();
   await db.$executeRawUnsafe(`UPDATE parent_payments SET token = $2, updated_at = NOW() WHERE id = $1`, id, token);
+}
+
+export async function findPaymentByConversationId(conversationId: string) {
+  await ensurePaymentsTable();
+  const rows = await db.$queryRawUnsafe<PaymentRow[]>(
+    `SELECT id, parent_id, conversation_id, token, amount_tl, days, status FROM parent_payments WHERE conversation_id = $1 LIMIT 1`,
+    conversationId
+  );
+  return rows[0] ?? null;
 }
 
 export async function findPaymentByToken(token: string) {

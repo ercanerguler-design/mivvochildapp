@@ -13,6 +13,7 @@ type SettingsState = {
   notifyPush: boolean;
   notifyEmail: boolean;
   fcmToken: string | null;
+  cardPayments?: boolean;
   billing?: {
     trial: {
       limit: number;
@@ -85,7 +86,7 @@ export default function SettingsPage() {
 
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 space-y-1">
           <p className="font-semibold text-gray-900">Kullanım Durumu</p>
-          <p>14 gün deneme: {data.billing?.trial.active ? "Aktif" : "Sona erdi"}</p>
+          <p>{SITE.trialDays} gün deneme: {data.billing?.trial.active ? "Aktif" : "Sona erdi"}</p>
           <p>Kalan deneme günü: {data.billing?.trial.daysRemaining ?? data.billing?.trial.remaining ?? 0}</p>
           <p>Toplam analiz (deneme dahil): {data.billing?.trial.used ?? 0}</p>
           <p>Aylık sınırsız plan: {data.billing?.unlimited?.active ? "Aktif" : "Pasif"}</p>
@@ -139,7 +140,8 @@ export default function SettingsPage() {
         {message && <p className="text-sm text-gray-600">{message}</p>}
       </div>
 
-      {SITE.cardPaymentsEnabled ? (
+      <div id="abonelik" className="scroll-mt-24" />
+      {data.cardPayments ? (
         <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} unlimited={data.billing?.unlimited} />
       ) : (
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-sm text-violet-900">

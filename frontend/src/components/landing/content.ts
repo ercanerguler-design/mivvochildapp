@@ -123,8 +123,8 @@ export const landingContent = {
     pricing: {
       title: "Basit ve şeffaf fiyat",
       sub: "Taahhüt yok, istediğiniz zaman iptal edin.",
-      trial: { name: "Ücretsiz Deneme", price: "0 TL", period: `${trial} gün`, cta: "Hemen Başla", features: ["Tüm özellikler açık", "Anında bildirimler", "Yapay zeka koçu", "Kredi kartı gerekmez"] },
-      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay", cta: "Ücretsiz Dene, Sonra Karar Ver", features: ["9 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
+      trial: { name: "Ücretsiz Deneme", price: "0 TL", period: `${trial} gün`, cta: "Hemen Başla", href: "/kayit", features: ["Tüm özellikler açık", "Anında bildirimler", "Yapay zeka koçu", "Kredi kartı gerekmez"] },
+      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay", cta: "Sepete Ekle", href: "/sepet", features: ["9 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
     },
     download: {
       title: "Uygulamaları indirin",
@@ -276,8 +276,8 @@ export const landingContent = {
     pricing: {
       title: "Simple, transparent pricing",
       sub: "No commitment, cancel any time.",
-      trial: { name: "Free Trial", price: "0 TRY", period: `${trial} days`, cta: "Start Now", features: ["All features unlocked", "Instant alerts", "AI coach", "No credit card"] },
-      monthly: { badge: "Most popular", name: "Monthly", price: `${price} TRY`, period: "/ month", cta: "Try Free, Decide Later", features: ["Continuous protection in 7 categories", "Unlimited alerts", "Weekly and monthly reports", "Priority WhatsApp support"] },
+      trial: { name: "Free Trial", price: "0 TRY", period: `${trial} days`, cta: "Start Now", href: "/kayit", features: ["All features unlocked", "Instant alerts", "AI coach", "No credit card"] },
+      monthly: { badge: "Most popular", name: "Monthly", price: `${price} TRY`, period: "/ month", cta: "Add to Cart", href: "/sepet", features: ["Continuous protection in 9 categories", "Unlimited alerts", "Weekly and monthly reports", "Priority WhatsApp support"] },
     },
     download: {
       title: "Get the apps",

@@ -69,7 +69,7 @@ const EXPENSE_CATEGORIES = [
   "Yapay zekâ (OpenAI)",
   "Uygulama (Expo/EAS)",
   "Google Play",
-  "Ödeme komisyonu (iyzico)",
+  "Ödeme komisyonu (PayTR)",
   "Pazarlama / Reklam",
   "Personel",
   "Muhasebe / Hukuk",

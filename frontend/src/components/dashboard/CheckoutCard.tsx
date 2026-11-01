@@ -13,6 +13,7 @@ type Props = {
 const RESULT = {
   basarili: { tone: "bg-emerald-50 text-emerald-800 ring-emerald-200", icon: CheckCircle2, text: "Ödemeniz alındı, aboneliğiniz aktif. Teşekkür ederiz!" },
   basarisiz: { tone: "bg-rose-50 text-rose-800 ring-rose-200", icon: AlertTriangle, text: "Ödeme tamamlanamadı. Kartınızdan çekim yapılmadıysa tekrar deneyebilirsiniz." },
+  islemde: { tone: "bg-emerald-50 text-emerald-800 ring-emerald-200", icon: Clock, text: "Ödemeniz alındı ve doğrulanıyor. Aboneliğiniz birkaç saniye içinde aktif olur; görmek için sayfayı yenileyebilirsiniz." },
   inceleme: { tone: "bg-amber-50 text-amber-800 ring-amber-200", icon: Clock, text: "Ödemeniz banka tarafından inceleniyor. Onaylanınca aboneliğiniz açılır; sorunuz olursa bize yazın." },
 } as const;
 
@@ -22,7 +23,7 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const r = useSearchParams().get("odeme");
-  const result = r === "basarili" || r === "basarisiz" || r === "inceleme" ? r : null;
+  const result = r === "basarili" || r === "basarisiz" || r === "inceleme" || r === "islemde" ? r : null;
 
   const valid = form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5 && acceptSale;
 
@@ -107,7 +108,7 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
         <Lock className="h-4 w-4" />
         {busy ? "Güvenli ödeme sayfası açılıyor…" : `Kartla Öde · ${priceTl} TL`}
       </button>
-      <p className="text-center text-xs text-gray-400">Ödemeler iyzico güvencesiyle alınır. Kart bilgileriniz Mivvo&apos;ya iletilmez.</p>
+      <p className="text-center text-xs text-gray-400">Ödemeler PayTR güvencesiyle alınır. Kart bilgileriniz Mivvo&apos;ya iletilmez.</p>
     </div>
   );
 }

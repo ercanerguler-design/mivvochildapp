@@ -20,9 +20,7 @@ export const SITE = {
   childDownloadUrl: process.env.NEXT_PUBLIC_CHILD_APK_URL ?? "/api/download/child",
   // Single source of truth for the price (server code reads it via subscription.ts).
   monthlyPriceTl: Number(process.env.NEXT_PUBLIC_MONTHLY_PLAN_TL ?? "399"),
-  // Card payments (iyzico) are switched off until the merchant account is live.
-  cardPaymentsEnabled: process.env.NEXT_PUBLIC_CARD_PAYMENTS_ENABLED === "true",
-  trialDays: Number(process.env.NEXT_PUBLIC_FREE_TRIAL_DAYS ?? "14"),
+  trialDays: Number(process.env.NEXT_PUBLIC_FREE_TRIAL_DAYS ?? "3"),
 } as const;
 
 export const absoluteUrl = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;

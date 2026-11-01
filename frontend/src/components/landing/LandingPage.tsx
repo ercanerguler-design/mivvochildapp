@@ -295,7 +295,7 @@ export async function LandingPage({ locale }: { locale: Locale }) {
                         </li>
                       ))}
                     </ul>
-                    <Link href="/kayit" className={`rounded-2xl px-6 py-3.5 text-center font-bold transition-colors ${featured ? "bg-white text-gray-950 hover:bg-brand-50" : "bg-brand-600 text-white hover:bg-brand-700"}`}>
+                    <Link href={plan.href ?? "/kayit"} className={`rounded-2xl px-6 py-3.5 text-center font-bold transition-colors ${featured ? "bg-white text-gray-950 hover:bg-brand-50" : "bg-brand-600 text-white hover:bg-brand-700"}`}>
                       {plan.cta}
                     </Link>
                   </div>

@@ -15,6 +15,9 @@ export function LoginForm({ locale }: { locale: Locale }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Only same-site paths, e.g. /dashboard/ayarlar after "Ödemeye geç" in the cart.
+  const nextParam = searchParams.get("next") ?? "";
+  const afterLogin = /^\/(?!\/)[\w\-/?=&#]*$/.test(nextParam) ? nextParam : "/dashboard";
   const oauthError = searchParams.get("error");
   const oauthBlocked = oauthError === "OAuthSignin" || oauthError === "OAuthCallback" || oauthError === "AccessDenied";
   const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
@@ -40,7 +43,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(afterLogin);
   }
 
   return (
@@ -111,7 +114,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
 
       <button
         type="button"
-        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+        onClick={() => signIn("google", { callbackUrl: afterLogin })}
         className="w-full border border-gray-200 hover:border-gray-300 text-gray-700 font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24">

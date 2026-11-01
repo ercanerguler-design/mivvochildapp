@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { isChildDeviceAuthorized } from "@/lib/device-token";
-import { analyzeMessage } from "@/lib/analysis";
+import { analyzeMessageOnce } from "@/lib/analysis";
 import {
   calculateBillableUnits,
   consumeParentCredits,
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
       let detectedText = "";
 
       if (act.content && act.content.trim().length > 3) {
-        const analysis = await analyzeMessage(act.content, {
+        const analysis = await analyzeMessageOnce(childId, act.content, {
           platform: act.platform,
           isNewContact,
           isNightTime: nightTime,

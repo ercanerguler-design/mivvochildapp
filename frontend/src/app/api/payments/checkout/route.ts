@@ -3,32 +3,33 @@ import { TOO_MANY, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { initializeCheckout, isIyzicoConfigured } from "@/lib/iyzico";
+import { cardPaymentsAvailable, getIframeToken, newMerchantOid } from "@/lib/paytr";
 import { attachToken, createPendingPayment, settlePayment } from "@/lib/payments";
 import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS } from "@/lib/subscription";
-import { SITE, SITE_URL } from "@/lib/site";
+import { SITE_URL } from "@/lib/site";
 import { CHECKOUT_CONSENTS, recordConsents } from "@/lib/consents";
 
 const schema = z.object({
-  fullName: z.string().trim().min(3).max(100),
+  fullName: z.string().trim().min(3).max(60),
   phone: z.string().trim().regex(/^\+?[0-9 ()-]{10,20}$/),
   city: z.string().trim().min(2).max(50),
-  address: z.string().trim().min(5).max(250),
+  address: z.string().trim().min(5).max(200),
   acceptSale: z.literal(true),
 });
 
+/** "0532 123 45 67" -> "05321234567" (PayTR wants a plain number, max 20 chars). */
 function normalizePhone(raw: string) {
   const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("90")) return `+${digits}`;
-  if (digits.startsWith("0")) return `+9${digits}`;
-  return `+90${digits}`;
+  if (digits.startsWith("90")) return `0${digits.slice(2)}`;
+  if (digits.startsWith("0")) return digits;
+  return `0${digits}`;
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Oturum açmanız gerekiyor." }, { status: 401 });
   if (!(await rateLimit(`checkout:${session.user.id}`, 10, 3600)).ok) return NextResponse.json(TOO_MANY, { status: 429 });
-  if (!SITE.cardPaymentsEnabled || !isIyzicoConfigured()) return NextResponse.json({ error: "Kartla ödeme şu an kullanılamıyor." }, { status: 503 });
+  if (!cardPaymentsAvailable()) return NextResponse.json({ error: "Kartla ödeme şu an kullanılamıyor." }, { status: 503 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -38,45 +39,42 @@ export async function POST(req: NextRequest) {
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, email: true, createdAt: true, parentProfile: { select: { id: true } } },
+    select: { id: true, email: true, parentProfile: { select: { id: true } } },
   });
   if (!user?.parentProfile || !user.email) return NextResponse.json({ error: "Ebeveyn profili bulunamadı." }, { status: 404 });
 
-  const [name, ...rest] = parsed.data.fullName.split(/\s+/);
-  const surname = rest.join(" ") || name;
   const amountTl = MONTHLY_PLAN_TL;
   const days = PAID_UNLIMITED_DAYS;
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
+  if (!ip) return NextResponse.json({ error: "Ödeme başlatılamadı. Lütfen tekrar deneyin." }, { status: 400 });
 
-  await recordConsents(user.id, CHECKOUT_CONSENTS, { ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim(), userAgent: req.headers.get("user-agent") ?? undefined });
+  await recordConsents(user.id, CHECKOUT_CONSENTS, { ip, userAgent: req.headers.get("user-agent") ?? undefined });
 
-  const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days });
-  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "85.34.78.112";
+  const merchantOid = newMerchantOid();
+  const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days, conversationId: merchantOid, provider: "paytr" });
+  const phone = normalizePhone(parsed.data.phone);
 
-  const result = await initializeCheckout({
-    conversationId: payment.conversationId,
-    basketId: payment.id,
+  const result = await getIframeToken({
+    merchantOid,
+    email: user.email,
     amountTl,
     itemName: `Mivvo Aylık Abonelik (${days} gün)`,
-    callbackUrl: `${SITE_URL}/api/payments/callback`,
-    buyer: {
-      id: user.parentProfile.id,
-      name,
-      surname,
-      email: user.email,
-      gsmNumber: normalizePhone(parsed.data.phone),
-      city: parsed.data.city,
-      address: parsed.data.address,
-      ip,
-    },
-  }).catch((e: Error) => ({ status: "failure" as const, errorMessage: e.message, token: undefined, paymentPageUrl: undefined }));
+    userIp: ip,
+    userName: parsed.data.fullName,
+    userAddress: `${parsed.data.address} ${parsed.data.city}`.slice(0, 400),
+    userPhone: phone,
+    okUrl: `${SITE_URL}/odeme/sonuc?d=islemde`,
+    failUrl: `${SITE_URL}/odeme/sonuc?d=basarisiz`,
+  });
 
-  if (result.status !== "success" || !result.token || !result.paymentPageUrl) {
-    await settlePayment(payment.id, "failed", { error: result.errorMessage ?? "init_failed" });
-    return NextResponse.json({ error: result.errorMessage ?? "Ödeme başlatılamadı." }, { status: 502 });
+  if (!result.ok) {
+    console.error("[paytr] get-token failed", result.reason);
+    await settlePayment(payment.id, "failed", { error: result.reason });
+    return NextResponse.json({ error: "Ödeme başlatılamadı. Lütfen biraz sonra tekrar deneyin." }, { status: 502 });
   }
 
   await attachToken(payment.id, result.token);
-  await db.user.update({ where: { id: user.id }, data: { phone: normalizePhone(parsed.data.phone) } }).catch(() => undefined);
+  await db.user.update({ where: { id: user.id }, data: { phone } }).catch(() => undefined);
 
-  return NextResponse.json({ paymentPageUrl: result.paymentPageUrl });
+  return NextResponse.json({ paymentPageUrl: `/dashboard/odeme?t=${encodeURIComponent(result.token)}` });
 }

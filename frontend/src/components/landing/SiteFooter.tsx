@@ -30,6 +30,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <ul className={col}>
               <li><Link className={link} href={`${home}#ozellikler`}>{c.nav.features}</Link></li>
               <li><Link className={link} href={`${home}#fiyat`}>{c.nav.pricing}</Link></li>
+              <li><Link className={link} href="/sepet">{locale === "en" ? "Buy" : "Satın Al"}</Link></li>
               <li><Link className={link} href="/indir">{f.download}</Link></li>
               <li><Link className={link} href={`${home}#sss`}>{c.nav.faq}</Link></li>
             </ul>

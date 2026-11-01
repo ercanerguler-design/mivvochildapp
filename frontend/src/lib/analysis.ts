@@ -20,3 +20,24 @@ export async function analyzeMessage(text: string, ctx?: AnalyzeContext): Promis
     return { ...analyzeWithRules(text), source: "rules" };
   }
 }
+
+// The child app often reports the same message twice (single + grouped notification).
+// Repeats within a short window reuse the first result instead of paying for a second analysis.
+const RECENT_TTL_MS = 3 * 60 * 1000;
+const recent = new Map<string, { at: number; result: ReturnType<typeof analyzeMessage> }>();
+
+export function analyzeMessageOnce(scope: string, text: string, ctx?: AnalyzeContext) {
+  const now = Date.now();
+  const key = `${scope}\u0000${ctx?.platform ?? ""}\u0000${ctx?.isNewContact ? 1 : 0}${ctx?.isNightTime ? 1 : 0}\u0000${text.trim()}`;
+  const hit = recent.get(key);
+  if (hit && now - hit.at < RECENT_TTL_MS) return hit.result;
+  if (recent.size > 1000) {
+    for (const [k, v] of recent) if (now - v.at >= RECENT_TTL_MS) recent.delete(k);
+    if (recent.size > 1000) recent.clear();
+  }
+  const result = analyzeMessage(text, ctx);
+  recent.set(key, { at: now, result });
+  // A failed analysis must not be reused.
+  result.catch(() => recent.delete(key));
+  return result;
+}

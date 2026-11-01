@@ -1,13 +1,13 @@
 /**
  * Evaluates the risk analyzer against a labeled Turkish test set.
- * Usage (from frontend/frontend): node scripts/eval-nlp.mts         (AI analyzer)
- *                                   node scripts/eval-nlp.mts --rules (offline rule fallback)
+ * Usage (from frontend/frontend): npx tsx scripts/eval-nlp.mts         (AI analyzer)
+ *                                   npx tsx scripts/eval-nlp.mts --rules (offline rule fallback)
  * Needs OPENAI_API_KEY (read from .env.local). Costs roughly a cent per run.
  */
 import { config } from "dotenv";
 config({ path: ".env.local" });
 const RULES_ONLY = process.argv.includes("--rules");
-const { analyzeText } = await import("../src/lib/nlp.ts");
+const { analyzeText, screenStats } = await import("../src/lib/nlp.ts");
 const { analyzeWithRules } = await import("../src/lib/nlp-rules.ts");
 const analyze = (t: string, ctx?: object) => (RULES_ONLY ? Promise.resolve(analyzeWithRules(t)) : analyzeText(t, ctx));
 
@@ -91,6 +91,16 @@ const CASES: Case[] = [
   { text: "çok tatlısın, kaç yaşındasın? kimseye söyleme konuştuğumuzu", risky: true, cat: "STRANGER_CONTACT", ctx: { isNightTime: true, isNewContact: true } },
 ];
 
+// Typical group-chat traffic: must stay quiet, and shows how much the cheap screen saves.
+const EVERYDAY = [
+  "akşam kaçta çıkıyoruz", "yarın okul var mı bayram tatili mi", "matematik ödevi hangi sayfalar", "annem makarna yaptı gelin", "tamamdır görüşürüz",
+  "maç başladı mı", "bu videoya bakın çok komik", "kim geliyor sinemaya cumartesi", "ben otobüsteyim 10 dk", "fotoğrafları gruba atar mısın",
+  "hocaya mail attım cevap vermedi", "doğum günü pastası çok güzeldi", "valorant akşam 9da", "netflixte yeni dizi çıkmış", "yarın sınav var çalıştınız mı",
+  "babam arabayla alacak beni", "kaç kişiyiz piknik için", "su almayı unutmayın", "konum at geliyorum", "evet ben de geliyorum",
+  "müzik dersi iptal olmuş", "abla saat kaçta dönüyorsun", "kedimiz yavruladı 😍", "ödev teslim tarihi cuma", "servis geç kaldı yine",
+  "ders notlarını pdf olarak attım", "yemekhanede ne var bugün", "teşekkürler 🙏", "iyi akşamlar herkese", "hafta sonu dedemlere gidiyoruz",
+];
+
 let tp = 0, tn = 0, fp = 0, fn = 0, catOk = 0, catTotal = 0;
 const failures: string[] = [];
 
@@ -120,10 +130,18 @@ for (const { c, r } of results) {
   }
 }
 
+let everydayAlerts = 0;
+if (!RULES_ONLY) {
+  const before = { ...screenStats };
+  const everyday = await Promise.all(EVERYDAY.map((x) => analyze(x).catch(() => null)));
+  everydayAlerts = everyday.filter((r) => r && r.isRisky && r.riskScore >= 70).length;
+  console.log(`\nEveryday messages: ${EVERYDAY.length}, alerts: ${everydayAlerts}, cleared by cheap screen: ${screenStats.cleared - before.cleared}/${screenStats.screened - before.screened}`);
+  console.log(`Test set: cheap screen cleared ${before.cleared}/${before.screened}`);
+}
 console.log(`\nCases: ${CASES.length}`);
 console.log(`Detected risks (recall):   ${tp}/${tp + fn}`);
 console.log(`Correctly quiet:           ${tn}/${tn + fp}`);
 console.log(`False alarms:              ${fp}`);
 console.log(`Category includes target:  ${catOk}/${catTotal}`);
 if (failures.length) console.log(`\n${failures.join("\n")}`);
-process.exit(fn > 0 || fp > 0 ? 1 : 0);
+process.exit(fn > 0 || fp > 0 || everydayAlerts > 0 ? 1 : 0);

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | Mivvo",
   },
   description:
-    "Mivvo, çocuğunuzun mesajlarındaki siber zorbalık, tehdit, cinsel risk ve yabancı kişi temaslarını Türkçe yapay zeka ile tespit edip size anında bildiren ebeveyn kontrol uygulamasıdır. 14 gün ücretsiz.",
+    `Mivvo, çocuğunuzun mesajlarındaki siber zorbalık, tehdit, cinsel risk ve yabancı kişi temaslarını Türkçe yapay zeka ile tespit edip size anında bildiren ebeveyn kontrol uygulamasıdır. ${SITE.trialDays} gün ücretsiz.`,
   applicationName: SITE.name,
   keywords: [
     "ebeveyn kontrol uygulaması",

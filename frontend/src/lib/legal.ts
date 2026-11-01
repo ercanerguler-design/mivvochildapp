@@ -1,4 +1,5 @@
 import { SITE } from "@/lib/site";
+import { cardPaymentsAvailable } from "@/lib/paytr";
 
 /**
  * Mivvo legal documents (Turkish). Facts here must match the code:
@@ -15,8 +16,9 @@ const company = C.name;
 const contactLine = `${company}, ${SITE.address.street}, ${SITE.address.city} · E-posta: ${SITE.email} · Telefon/WhatsApp: ${SITE.phoneDisplay}`;
 const price = SITE.monthlyPriceTl;
 const trial = SITE.trialDays;
-const paymentMethods = SITE.cardPaymentsEnabled
-  ? "Ödeme, iyzico güvencesiyle kredi/banka kartıyla tek seferde veya havale/EFT ile alınır."
+const cardPayments = cardPaymentsAvailable();
+const paymentMethods = cardPayments
+  ? "Ödeme, PayTR güvencesiyle kredi/banka kartıyla tek seferde (taksitsiz) veya havale/EFT ile alınır."
   : "Ödeme havale/EFT ile alınır. Kartla ödeme seçeneği devreye alındığında bu formda ayrıca belirtilecektir.";
 
 const PROCESSORS = {
@@ -27,7 +29,7 @@ const PROCESSORS = {
     ["OpenAI, L.L.C.", "Mesaj parçalarının yapay zekâ ile risk analizi", "ABD"],
     ["650 Industries, Inc. (Expo)", "Ebeveyn uygulamasına anlık bildirim iletimi", "ABD"],
     ["Google LLC", "\"Google ile giriş\" kimlik doğrulaması ve Google Play dağıtımı", "ABD"],
-    ["iyzi Ödeme ve Elektronik Para Hizmetleri A.Ş. (iyzico)", "Kartlı ödemelerin alınması (kart bilgileri Mivvo'ya iletilmez)", "Türkiye"],
+    ["PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.", "Kartlı ödemelerin alınması (kart bilgileri Mivvo'ya iletilmez)", "Türkiye"],
     ["Meta Platforms, Inc. (WhatsApp)", "Yalnızca etkinleştirilmesi halinde, kritik uyarıların WhatsApp ile iletilmesi", "ABD / AB"],
   ],
 };
@@ -53,8 +55,8 @@ export const legalDocs: LegalDoc[] = [
     title: "KVKK Aydınlatma Metni",
     short: "KVKK Aydınlatma",
     description: "6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında Mivvo kullanıcılarına yönelik aydınlatma metni.",
-    version: "2.1",
-    updated: "2026-10-24",
+    version: "2.2",
+    updated: "2026-11-01",
     sections: [
       {
         h: "1. Veri sorumlusu",
@@ -67,7 +69,7 @@ export const legalDocs: LegalDoc[] = [
         h: "2. Hangi kişisel verileri işliyoruz?",
         blocks: [
           { p: "Ebeveyn (hesap sahibi) için:" },
-          { ul: ["Kimlik ve iletişim: ad soyad, e-posta adresi, cep telefonu (ödeme sırasında verilirse)", "Hesap güvenliği: şifrenin geri döndürülemez özeti (hash), oturum ve cihaz bildirim anahtarı", "Fatura ve ödeme: fatura adresi, şehir, ödeme tutarı ve iyzico işlem numarası (kart bilgileri bize ulaşmaz)", "Kullanım: uyarı tercihleri, hassasiyet seviyesi, onay kayıtları, IP adresi ve işlem zamanları"] },
+          { ul: ["Kimlik ve iletişim: ad soyad, e-posta adresi, cep telefonu (ödeme sırasında verilirse)", "Hesap güvenliği: şifrenin geri döndürülemez özeti (hash), oturum ve cihaz bildirim anahtarı", "Fatura ve ödeme: fatura adresi, şehir, ödeme tutarı ve ödeme kuruluşu (PayTR) sipariş numarası (kart bilgileri bize ulaşmaz)", "Kullanım: uyarı tercihleri, hassasiyet seviyesi, onay kayıtları, IP adresi ve işlem zamanları"] },
           { p: "Çocuk (18 yaş altı, ebeveyn tarafından eklenen) için:" },
           { ul: ["Kimlik: ad (veya takma ad) ve doğum tarihi (yalnızca 18 yaş kontrolü için)", "Cihaz: uygulamaya özel rastgele cihaz kimliği, uygulama sürümü, uygulamanın en son ne zaman bağlandığı ve korumanın (bildirim erişiminin) açık olup olmadığı", "İletişim içeriği: WhatsApp, Instagram, TikTok, Snapchat, Telegram ve SMS uygulamalarından gelen bildirimlerdeki gönderen görünen adı ve mesaj metni", "Risk sonuçları: risk kategorisi, puanı, açıklama ve yalnızca risk tespit edilen mesajın ilgili parçası", "Acil durum konumu: yalnızca çocuk uygulamadaki Yardım butonuna bastığında, o anki konum bir kez alınır ve ebeveyne iletilir"] },
           { p: "Mivvo; fotoğraf, video, sesli mesaj, rehber, arama kayıtları, kamera veya mikrofon verilerine erişmez ve bunları işlemez. Konum sürekli veya arka planda izlenmez; yalnızca çocuk Yardım butonuna bastığı anda alınır. Mesaj içerikleri, niteliği gereği sağlık veya cinsel hayata ilişkin bilgiler içerebilir; bu tür veriler yalnızca risk tespiti amacıyla ve aşağıdaki güvencelerle işlenir." },
@@ -126,8 +128,8 @@ export const legalDocs: LegalDoc[] = [
     title: "Gizlilik Politikası",
     short: "Gizlilik",
     description: "Mivvo'nun hangi verileri neden işlediği, nasıl koruduğu ve ne kadar sakladığı hakkında sade dilde gizlilik politikası.",
-    version: "2.1",
-    updated: "2026-10-24",
+    version: "2.2",
+    updated: "2026-11-01",
     sections: [
       {
         h: "Kısaca",
@@ -206,8 +208,8 @@ export const legalDocs: LegalDoc[] = [
     title: "Kullanım Koşulları ve Üyelik Sözleşmesi",
     short: "Kullanım Koşulları",
     description: "Mivvo web sitesi, Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarının kullanım koşulları.",
-    version: "1.1",
-    updated: "2026-10-24",
+    version: "1.2",
+    updated: "2026-11-01",
     sections: [
       { h: "1. Taraflar ve kapsam", blocks: [{ p: `Bu sözleşme, ${company} ("Mivvo") ile Mivvo web sitesi (mivvo.org), Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarını ("Hizmet") kullanmak üzere üye olan kişi ("Kullanıcı") arasındadır. Üye olarak bu koşulları, Gizlilik Politikası'nı ve KVKK Aydınlatma Metni'ni kabul etmiş sayılırsınız.` }] },
       { h: "2. Hizmetin tanımı", blocks: [{ p: "Mivvo; ebeveynlerin, 18 yaş altındaki çocuklarının telefonuna gelen mesaj bildirimlerinde siber zorbalık, tehdit, cinsel istismar, şiddet, kendine zarar verme ve yabancı kişi risklerini yapay zekâ yardımıyla fark etmelerine yardımcı olan bir ebeveyn kontrol hizmetidir." }] },
@@ -249,8 +251,8 @@ export const legalDocs: LegalDoc[] = [
     title: "Ön Bilgilendirme Formu",
     short: "Ön Bilgilendirme",
     description: "Mesafeli Sözleşmeler Yönetmeliği uyarınca Mivvo aboneliği satın alımından önce tüketiciye sunulan ön bilgilendirme formu.",
-    version: "1.1",
-    updated: "2026-10-24",
+    version: "1.2",
+    updated: "2026-11-01",
     sections: [
       {
         h: "1. Satıcı / hizmet sağlayıcı",
@@ -279,15 +281,15 @@ export const legalDocs: LegalDoc[] = [
     title: "Mesafeli Satış Sözleşmesi",
     short: "Mesafeli Satış",
     description: "6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca Mivvo abonelik satış sözleşmesi.",
-    version: "1.1",
-    updated: "2026-10-24",
+    version: "1.2",
+    updated: "2026-11-01",
     sections: [
       { h: "Madde 1 – Taraflar", blocks: [{ p: `SATICI: ${company}, ${SITE.address.street}, ${SITE.address.city}, ${SITE.email}, ${SITE.phoneDisplay}${C.mersis ? `, MERSİS: ${C.mersis}` : ""}.` }, { p: "ALICI: Mivvo üyelik kaydında ve ödeme sırasında bilgileri yer alan ebeveyn hesabı sahibi." }] },
       { h: "Madde 2 – Konu", blocks: [{ p: "Bu sözleşmenin konusu, ALICI'nın mivvo.org üzerinden elektronik ortamda satın aldığı Mivvo Aylık Abonelik hizmetinin satışı ve ifasına ilişkin tarafların hak ve yükümlülükleridir. ALICI, satın alma öncesinde Ön Bilgilendirme Formu'nu okuyup onayladığını kabul eder." }] },
-      { h: "Madde 3 – Hizmet ve bedel", blocks: [{ ul: ["Hizmet: Mivvo Aylık Abonelik (30 gün).", `Bedel: ${price} TL (KDV dahil).`, SITE.cardPaymentsEnabled ? "Ödeme yöntemi: Kredi/banka kartı (iyzico) veya havale/EFT." : "Ödeme yöntemi: Havale/EFT.", "İfa: Ödemenin onaylanmasıyla derhal, elektronik ortamda."] }] },
+      { h: "Madde 3 – Hizmet ve bedel", blocks: [{ ul: ["Hizmet: Mivvo Aylık Abonelik (30 gün).", `Bedel: ${price} TL (KDV dahil).`, cardPayments ? "Ödeme yöntemi: Kredi/banka kartı (PayTR) veya havale/EFT." : "Ödeme yöntemi: Havale/EFT.", "İfa: Ödemenin onaylanmasıyla derhal, elektronik ortamda."] }] },
       { h: "Madde 4 – Genel hükümler", blocks: [{ ul: ["SATICI, hizmeti Kullanım Koşulları'nda belirtilen nitelikte ve kesintisiz sunmak için gerekli özeni gösterir.", "Hizmetin; üçüncü taraf altyapı, işletim sistemi veya internet kesintileri nedeniyle geçici olarak sunulamaması halinde SATICI, makul süre içinde hizmeti yeniden sağlar. Uzun süreli kesintilerde kullanılmayan süre ALICI'ya ek süre olarak tanımlanabilir.", "Ödemenin banka veya ödeme kuruluşu tarafından herhangi bir nedenle gerçekleştirilmemesi halinde abonelik etkinleşmez."] }] },
       { h: "Madde 5 – Cayma hakkı", blocks: [{ p: "ALICI, sözleşmenin kurulmasından itibaren 14 gün içinde gerekçe göstermeksizin cayma hakkına sahiptir. Cayma bildirimi sce@scegrup.com adresine yapılır. SATICI, bildirimin kendisine ulaşmasından itibaren 14 gün içinde tahsil edilen bedelin tamamını ALICI'nın ödeme yaptığı yönteme iade eder." }] },
-      { h: "Madde 6 – Kişisel veriler", blocks: [{ p: "ALICI'ya ait kişisel veriler, KVKK Aydınlatma Metni ve Gizlilik Politikası'na uygun olarak işlenir. Kart bilgileri yalnızca iyzico tarafından işlenir ve SATICI'ya iletilmez." }] },
+      { h: "Madde 6 – Kişisel veriler", blocks: [{ p: "ALICI'ya ait kişisel veriler, KVKK Aydınlatma Metni ve Gizlilik Politikası'na uygun olarak işlenir. Kart bilgileri yalnızca lisanslı ödeme kuruluşu PayTR tarafından işlenir ve SATICI'ya iletilmez." }] },
       { h: "Madde 7 – Uyuşmazlıkların çözümü", blocks: [{ p: "Bu sözleşmeden doğan uyuşmazlıklarda, Ticaret Bakanlığı'nca her yıl ilan edilen parasal sınırlar dahilinde ALICI'nın yerleşim yerindeki veya işlemin yapıldığı yerdeki Tüketici Hakem Heyetleri, sınırların üzerindeki uyuşmazlıklarda Tüketici Mahkemeleri yetkilidir." }] },
       { h: "Madde 8 – Yürürlük", blocks: [{ p: "ALICI, ödeme adımında bu sözleşmeyi elektronik ortamda onayladığı anda sözleşme kurulmuş ve yürürlüğe girmiş olur. Sözleşmenin bir örneği ALICI'nın talebi halinde e-posta ile iletilir ve bu sayfada her zaman erişilebilir durumdadır." }] },
     ],
@@ -299,8 +301,8 @@ export const legalDocs: LegalDoc[] = [
     title: "İptal ve İade Politikası",
     short: "İptal ve İade",
     description: "Mivvo abonelik iptali, cayma hakkı ve iade koşulları.",
-    version: "1.0",
-    updated: "2026-10-24",
+    version: "1.1",
+    updated: "2026-11-01",
     sections: [
       { h: "Ücretsiz deneme", blocks: [{ p: `İlk ${trial} gün ücretsizdir ve kart bilgisi istenmez. Deneme süresinin sonunda herhangi bir ücret alınmaz.` }] },
       { h: "Otomatik yenileme yok", blocks: [{ p: "Aylık abonelik 30 gün sonunda kendiliğinden sona erer ve yenilenmez. Bu nedenle iptal etmeniz gereken bir otomatik ödeme talimatı yoktur." }] },
@@ -335,12 +337,12 @@ export const legalDocs: LegalDoc[] = [
     title: "Güvenlik",
     short: "Güvenlik",
     description: "Mivvo'nun aileleri ve çocukları korumak için uyguladığı teknik ve idari güvenlik önlemleri.",
-    version: "1.0",
-    updated: "2026-10-24",
+    version: "1.1",
+    updated: "2026-11-01",
     sections: [
       {
         h: "Teknik önlemler",
-        blocks: [{ ul: ["Tüm trafik TLS ile şifrelenir; sunucular HSTS ve güvenlik başlıklarıyla korunur.", "Şifreler bcrypt ile özetlenerek saklanır; hiçbir çalışanımız şifrenizi göremez.", "Çocuk cihazları, eşleşme sırasında yalnızca o cihaza özel ve imzalı bir erişim anahtarı alır. Uygulama paketinin içinde ortak bir gizli anahtar bulunmaz.", "Eşleştirme kodları kısa sürelidir (15 dakika) ve kriptografik olarak imzalanır.", "Giriş, kayıt ve eşleştirme uç noktalarında deneme sayısı sınırlandırılır.", "Ödemeler iyzico'nun güvenli ödeme sayfasında alınır; kart bilgileri sistemlerimize ulaşmaz ve her ödeme sunucu tarafında iyzico'dan yeniden doğrulanır.", "Çocuk uygulaması yalnızca izin verilen mesajlaşma uygulamalarının bildirimlerini işler; resim ve ses içeriklerini hiç okumaz."] }],
+        blocks: [{ ul: ["Tüm trafik TLS ile şifrelenir; sunucular HSTS ve güvenlik başlıklarıyla korunur.", "Şifreler bcrypt ile özetlenerek saklanır; hiçbir çalışanımız şifrenizi göremez.", "Çocuk cihazları, eşleşme sırasında yalnızca o cihaza özel ve imzalı bir erişim anahtarı alır. Uygulama paketinin içinde ortak bir gizli anahtar bulunmaz.", "Eşleştirme kodları kısa sürelidir (15 dakika) ve kriptografik olarak imzalanır.", "Giriş, kayıt ve eşleştirme uç noktalarında deneme sayısı sınırlandırılır.", "Ödemeler PayTR'ın güvenli ödeme ekranında alınır; kart bilgileri sistemlerimize ulaşmaz ve abonelik yalnızca PayTR'ın imzalı ödeme bildirimi doğrulandıktan sonra açılır.", "Çocuk uygulaması yalnızca izin verilen mesajlaşma uygulamalarının bildirimlerini işler; resim ve ses içeriklerini hiç okumaz."] }],
       },
       {
         h: "Veri minimizasyonu",

@@ -12,7 +12,15 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // PayTR opens the payment result page inside its iframe (which sits inside our /dashboard/odeme page),
+    // so that one page may be framed by us and by PayTR. Every other page can never be framed.
+    const framedByPaytr = securityHeaders
+      .filter((h) => h.key !== "X-Frame-Options")
+      .map((h) => (h.key === "Content-Security-Policy" ? { ...h, value: "frame-ancestors 'self' https://www.paytr.com; base-uri 'self'; object-src 'none'" } : h));
+    return [
+      { source: "/((?!odeme/sonuc).*)", headers: securityHeaders },
+      { source: "/odeme/sonuc", headers: framedByPaytr },
+    ];
   },
 };
 

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/LandingPage";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: { absolute: "Mivvo — AI-Powered Parental Control App | 14-Day Free Trial" },
+  title: { absolute: `Mivvo — AI-Powered Parental Control App | ${SITE.trialDays}-Day Free Trial` },
   description:
-    "Detect cyberbullying, threats, sexual risk and stranger contact in your child's WhatsApp, Instagram and TikTok messages with AI. Instant alerts, transparent protection. 14 days free.",
+    `Detect cyberbullying, threats, sexual risk and stranger contact in your child's WhatsApp, Instagram and TikTok messages with AI. Instant alerts, transparent protection. ${SITE.trialDays} days free.`,
   alternates: { canonical: "/en", languages: { tr: "/", en: "/en", "x-default": "/" } },
   openGraph: {
     title: "Mivvo — Your child is never alone in the digital world",
