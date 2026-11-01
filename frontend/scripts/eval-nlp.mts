@@ -14,6 +14,16 @@ const analyze = (t: string, ctx?: object) => (RULES_ONLY ? Promise.resolve(analy
 type Case = { text: string; risky: boolean; cat?: string; ctx?: { isNightTime?: boolean; isNewContact?: boolean; platform?: string; history?: string[] } };
 
 const CASES: Case[] = [
+  // ── Real conversation from a test phone: the topic of earlier messages must not leak into the category ──
+  { text: "AŞK♥️: Bıçak", risky: true, cat: "VIOLENCE|THREAT", ctx: { platform: "WHATSAPP", history: ["AŞK♥️: Seviselim", "AŞK♥️: Seks"] } },
+  { text: "AŞK♥️: Alkol alıyonmu", risky: true, cat: "SUBSTANCE", ctx: { platform: "WHATSAPP", history: ["AŞK♥️: Seviselim", "AŞK♥️: Seks"] } },
+  { text: "AŞK♥️: Seviselim", risky: true, cat: "SEXUAL_RISK", ctx: { platform: "WHATSAPP" } },
+  { text: "Derinimmm❤️: seni 12 yerinden vurucam", risky: true, cat: "THREAT", ctx: { platform: "WHATSAPP" } },
+  { text: "Derinimmm❤️: ölceksin", risky: true, cat: "THREAT", ctx: { platform: "WHATSAPP" } },
+  { text: "Derinimmm❤️: kimse cesedini bulamayacak", risky: true, cat: "THREAT", ctx: { platform: "WHATSAPP" } },
+  { text: "Derinimmm❤️: s i l a h", risky: true, cat: "VIOLENCE|THREAT", ctx: { platform: "WHATSAPP", history: ["Derinimmm❤️: seni 12 yerinden vurucam"] } },
+  { text: "Derinimmm❤️ · 🎤 Sesli mesaj (0: 15)", risky: false, ctx: { platform: "WHATSAPP", history: ["Derinimmm❤️: ölceksin", "Derinimmm❤️: seni 12 yerinden vurucam"] } },
+  { text: "Elif: 📷 Fotoğraf", risky: false, ctx: { platform: "WHATSAPP", history: ["Kaan: bi resmini atsana"] } },
   // ── Conversation context: the last message only makes sense with the earlier ones ──
   { text: "Mert: gel bize akşam kimse bilmez", risky: true, cat: "SUBSTANCE", ctx: { history: ["Mert: babamın birasından 4 tane aldım", "Mert: bir de ot var"] } },
   { text: "Kaan: bi resmini atsana", risky: true, cat: "SEXUAL_RISK|STRANGER_CONTACT", ctx: { isNewContact: true, history: ["Kaan: kaç yaşındasın", "Kaan: hangi okula gidiyorsun", "Kaan: evde yalnız mısın"] } },
@@ -133,8 +143,9 @@ for (const { c, r } of results) {
   }
   if (c.risky && alerted && c.cat) {
     catTotal++;
-    if (c.cat.split("|").some((x) => r.categories.includes(x as never))) catOk++;
-    else failures.push(`CATEGORY (${r.categories.join(",")} ≠ ${c.cat})  ${c.text}`);
+    // Strict: the category the parent sees (the first one) must be an expected one.
+    if (c.cat.split("|").includes(r.categories[0] as string)) catOk++;
+    else failures.push(`CATEGORY (shown ${r.categories[0]}; all ${r.categories.join(",")} ≠ ${c.cat})  ${c.text}`);
   }
 }
 
@@ -150,6 +161,6 @@ console.log(`\nCases: ${CASES.length}`);
 console.log(`Detected risks (recall):   ${tp}/${tp + fn}`);
 console.log(`Correctly quiet:           ${tn}/${tn + fp}`);
 console.log(`False alarms:              ${fp}`);
-console.log(`Category includes target:  ${catOk}/${catTotal}`);
+console.log(`Shown category correct:    ${catOk}/${catTotal}`);
 if (failures.length) console.log(`\n${failures.join("\n")}`);
 process.exit(fn > 0 || fp > 0 || everydayAlerts > 0 ? 1 : 0);

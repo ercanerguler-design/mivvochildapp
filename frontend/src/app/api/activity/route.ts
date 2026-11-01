@@ -2,6 +2,14 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { isChildDeviceAuthorized } from "@/lib/device-token";
 import { analyzeMessageOnce } from "@/lib/analysis";
+import { messageBody } from "@/lib/nlp";
+import { SITE } from "@/lib/site";
+
+// Summary notifications are titled with the app's own name ("WhatsApp · Ali: selam"), while the
+// single notification for the same message says "Ali: selam". Drop the app name so both match.
+const APP_TITLE_PREFIX = /^(WhatsApp( Business)?|Instagram|Telegram|TikTok|Snapchat|Mesajlar|Messages|Samsung Messages)\s·\s/i;
+const fold = (s: string) => messageBody(s).toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+const sameMessage = (a: string, b: string) => fold(a) === fold(b);
 import {
   calculateBillableUnits,
   consumeParentCredits,
@@ -152,7 +160,7 @@ export async function POST(req: NextRequest) {
     if (potentialBillableUnits > billingBefore.credits) {
       return NextResponse.json(
         {
-          error: "14 gunluk ucretsiz deneme suresi bitti. Devam etmek icin kredi yukleyin veya aylik abonelige gecin.",
+          error: `${SITE.trialDays} günlük ücretsiz deneme süresi bitti. Devam etmek için aylık aboneliğe geçin.`,
           code: "TRIAL_LIMIT_EXCEEDED",
           billing: {
             ...billingBefore,
@@ -169,6 +177,7 @@ export async function POST(req: NextRequest) {
   let analyzedCount = 0;
 
   for (const act of activities) {
+    if (act.content) act.content = act.content.replace(APP_TITLE_PREFIX, "");
     try {
       const timestamp = act.timestamp ? new Date(act.timestamp) : new Date();
       const nightTime = isNightTime(timestamp);
@@ -241,11 +250,13 @@ export async function POST(req: NextRequest) {
       let pushRecentlySent = false;
       if (alertCategory) {
         const evidence = detectedText || act.content?.slice(0, 500) || "";
-        const [sameText, sameCategory] = await Promise.all([
-          db.alert.findFirst({ where: { childId, category: alertCategory, originalText: evidence, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } }, select: { id: true } }),
+        // The same message often arrives twice (single + summary notification); whatever category
+        // the second analysis picked, it must not become a second alert.
+        const [recent, sameCategory] = await Promise.all([
+          db.alert.findMany({ where: { childId, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } }, select: { originalText: true }, take: 50 }),
           db.alert.findFirst({ where: { childId, category: alertCategory, createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) } }, select: { id: true } }),
         ]);
-        duplicateOfRecentAlert = Boolean(sameText);
+        duplicateOfRecentAlert = recent.some((a) => sameMessage(a.originalText ?? "", evidence) || sameMessage(a.originalText ?? "", act.content ?? ""));
         pushRecentlySent = Boolean(sameCategory);
       }
 

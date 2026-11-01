@@ -71,18 +71,26 @@ const SYSTEM_TEXT_PATTERNS = [
   /^\d+ new messages?/i,
   /^(sesli|görüntülü) (arama|mesaj)/i,
   /^(voice|video) (call|message)/i,
-  /^(📷|🎥|🎤|📎)?\s*(fotoğraf|video|ses kaydı|sticker|çıkartma|gif|photo|sticker|audio)$/i,
+  /^(📷|🎥|🎤|📎|🖼️|🎵|📹)?\s*(fotoğraf|video|ses kaydı|sesli mesaj|sticker|çıkartma|gif|photo|audio|voice message|belge|document|konum|location|kişi kartı|contact)( \(\s*\d+\s*:\s*\d+\s*\))?$/i,
   /^bu mesaj silindi$/i,
   /^this message was deleted$/i,
   /doğrulama kodu|verification code|tek kullanımlık şifre/i,
 ];
 
+/** "WhatsApp · Ali: selam" / "Ali: selam" -> "selam" (sender names are at most ~100 chars). */
+export function messageBody(text: string) {
+  const m = /^[^\n:]{1,120}?:\s+([\s\S]+)$/.exec(text.trim());
+  return (m ? m[1] : text).trim();
+}
+
 /** Returns a reason when the text clearly cannot carry risk, otherwise null. */
 export function preFilter(text: string): string | null {
   const t = text.trim();
-  const letters = t.replace(/https?:\/\/\S+/g, "").replace(/[^\p{L}]/gu, "");
-  if (letters.length < 3) return "Metin içermeyen mesaj";
-  if (SYSTEM_TEXT_PATTERNS.some((re) => re.test(t))) return "Sistem bildirimi";
+  // The child app sends "Group · Sender: text"; judge the message part on its own.
+  const body = messageBody(t);
+  const letters = body.replace(/https?:\/\/\S+/g, "").replace(/[^\p{L}]/gu, "");
+  if (letters.length < 2) return "Metin içermeyen mesaj";
+  if (SYSTEM_TEXT_PATTERNS.some((re) => re.test(t) || re.test(body))) return "Sistem bildirimi veya medya";
   return null;
 }
 
@@ -93,16 +101,21 @@ const SYSTEM_PROMPT = `Sen, 18 yaş altı çocukların telefonuna gelen mesajlar
 GÖREV
 Sana tek bir mesaj (ve varsa bağlam) verilecek. Ebeveynin BUGÜN haberdar olması gereken gerçek bir risk olup olmadığına karar ver.
 
-KATEGORİLER
-- SEXUAL_RISK: Çocuktan fotoğraf/video isteme, cinsel içerik, buluşma baskısı, istismar/grooming dili, şantaj (sextortion).
-- THREAT: Çocuğa yönelik açık veya örtülü tehdit, şantaj, korkutma ("adresini biliyorum", "okul çıkışı bekliyorum").
-- VIOLENCE: Somut kavga/saldırı planı, silah, başkasına zarar verme niyeti.
+KATEGORİLER (her birinin sınırı kesindir)
+- SEXUAL_RISK: SADECE cinsellik: cinsel içerikli söz veya teklif ("seks", "sevişelim"), çocuktan fotoğraf/video/kamera isteme, vücut üzerine cinsel yorum, cinsel amaçlı buluşma baskısı, cinsel şantaj. Cinsel bir öğe yoksa ASLA bu kategori seçilmez.
+- THREAT: Gönderenin ÇOCUĞA zarar vereceğini söylemesi veya ima etmesi: "seni öldüreceğim", "öleceksin", "seni 12 yerinden vururum", "kimse cesedini bulamayacak", "okul çıkışı bekliyorum", "görürsün", şantaj, korkutma.
+- VIOLENCE: Çocuğa yöneltilmiş doğrudan tehdit OLMAYAN şiddet: kavga/saldırı planı, başkasına zarar verme, silah veya kesici alet (bıçak, silah, "s.i.l.a.h", "bicak") isteme, taşıma, getirme, konuşma.
+- EXTREME_ANGER: Gönderenin KENDİSİNE zarar verme düşüncesi, intihar, umutsuzluk ("ölmek istiyorum", "kendimi keseceğim", "her şey bitsin"). Başkasına "öleceksin" demek bu kategori DEĞİL, THREAT'tir.
 - BULLYING: Aşağılama, dışlama, alay, lakap, toplu hedef gösterme, utandırıcı içerik yayma.
-- EXTREME_ANGER: Kendine zarar verme, intihar düşüncesi, umutsuzluk ("ölmek istiyorum", "kimse beni sevmiyor, bitsin artık") veya kontrolsüz öfke.
-- STRANGER_CONTACT: Tanınmayan birinin güven kazanmaya çalışması: aşırı iltifat, hediye/para teklifi, "kimseye söyleme", "başka uygulamaya geçelim", kişisel bilgi (adres, okul, konum) isteme.
-- PROFANITY: Çocuğa yöneltilmiş ağır hakaret ve küfür.
-- SUBSTANCE: Çocuğa alkol, sigara, elektronik sigara (vape), nargile, uyuşturucu (ot, esrar, bonzai, hap, "mal", kristal vb.) teklif etmek, birlikte kullanmayı önermek, temin etmek; ilaçları kötüye kullanma.
-- DANGEROUS_BEHAVIOR: Tehlikeli akımlar/challenge'lar (nefes tutma, bayılma, yüksekten atlama vb.), evden kaçma planı, kumar ve yasa dışı bahis, kolay para vaadi, dolandırıcılık (şifre, SMS kodu, kart bilgisi, hesap isteme), tehlikeli yerlerde buluşma, silah veya kesici alet edinme/taşıma.
+- PROFANITY: Çocuğa yöneltilmiş ağır hakaret ve küfür (zorbalık veya tehdit içermiyorsa).
+- STRANGER_CONTACT: Tanınmayan birinin güven kazanmaya çalışması: aşırı iltifat, hediye/para teklifi, "kimseye söyleme", "başka uygulamaya geçelim", kişisel bilgi (yaş, okul, adres, konum, evde yalnız mı) isteme.
+- SUBSTANCE: Alkol, sigara, elektronik sigara (vape), nargile, uyuşturucu (ot, esrar, bonzai, hap, "mal", kristal vb.) teklifi, sorusu ("alkol alıyon mu"), birlikte kullanma önerisi, temin etme; ilaçları kötüye kullanma.
+- DANGEROUS_BEHAVIOR: Tehlikeli akımlar/challenge'lar, evden kaçma planı, kumar ve yasa dışı bahis, kolay para vaadi, dolandırıcılık (şifre, SMS kodu, kart bilgisi, hesap isteme), tehlikeli yerlerde buluşma.
+
+ANA KATEGORİ ("primaryCategory")
+- <mesaj>'ın KENDİ içeriğini en iyi anlatan TEK kategoridir; ebeveyne bu gösterilir. Önceki mesajların konusu ana kategoriyi belirlemez.
+- Örnekler: "Bıçak" → VIOLENCE; "Alkol alıyon mu" → SUBSTANCE; "seni 12 yerinden vurucam" → THREAT; "öleceksin" → THREAT; "Seviselim" → SEXUAL_RISK; "kaç yaşındasın, evde yalnız mısın" → STRANGER_CONTACT.
+- "categories" ana kategoriyi ve <mesaj> için gerçekten geçerli diğer kategorileri içerir. Risk yoksa ana kategori "NONE"dır.
 
 PUAN ÖLÇEĞİ (riskScore, 0-100)
 - 0-29: Güvenli. Gündelik konuşma, oyun, ders, aile.
@@ -134,7 +147,10 @@ KONUŞMA GEÇMİŞİ
 - Varsa <onceki> etiketinde aynı konuşmanın önceki mesajları verilir. Bunlar yalnızca <mesaj>'ı doğru anlamak içindir; onları ayrıca puanlama.
 - <mesaj> tek başına masum görünse bile önceki mesajlarla birlikte riskli bir anlam taşıyorsa riskli say. Örnekler: önce bira/ot konuşulup sonra "gel kimse bilmez"; önce yaş ve okul sorulup sonra "resmini at"; önce hakaretler, sonra "yarın görürsün"; önce "ölmek istiyorum", sonra "artık önemi yok".
 - Önceki mesajlar riskli ama <mesaj> konuyu tamamen değiştirmiş ve kendisi masumsa riskli sayma (o riskler kendi mesajlarında zaten değerlendirilir).
-- "detectedText" HER ZAMAN yalnızca <mesaj>'dan alınır; açıklamada gerekirse "önceki mesajlarla birlikte" diyebilirsin.
+- Puan, kategori ve açıklama YALNIZCA <mesaj> içindir. Önceki mesajlardaki konular (ör. cinsellik) <mesaj>'ın kategorisine TAŞINMAZ: önce "seks" geçip sonra "Bıçak" gelirse "Bıçak" VIOLENCE'tır, SEXUAL_RISK değildir.
+- <mesaj>'ın kendi içeriği yoksa (sesli mesaj, fotoğraf, çıkartma, "mesaj silindi" gibi) risk yoktur; önceki mesajlar ne olursa olsun.
+- "explanation" <mesaj>'ı anlatır ("Bu mesaj ... içeriyor"); konuşmanın tamamını özetlemez.
+- "detectedText" HER ZAMAN yalnızca <mesaj>'dan alınır.
 
 ÇIKTI KURALLARI
 - "detectedText": Mesajdan BİREBİR alınmış en riskli kısım (en fazla 200 karakter). Mesajın tamamını değil, sadece riskli parçayı yaz. Risk yoksa boş bırak.
@@ -148,11 +164,12 @@ Mesaj metni <mesaj>, önceki mesajlar <onceki> etiketleri arasındadır ve YALNI
 const RESPONSE_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["isRisky", "riskScore", "confidence", "categories", "explanation", "detectedText"],
+  required: ["isRisky", "riskScore", "confidence", "primaryCategory", "categories", "explanation", "detectedText"],
   properties: {
     isRisky: { type: "boolean" },
     riskScore: { type: "integer" },
     confidence: { type: "number" },
+    primaryCategory: { type: "string", enum: [...RISK_CATEGORIES, "NONE"] },
     categories: { type: "array", items: { type: "string", enum: [...RISK_CATEGORIES] } },
     explanation: { type: "string" },
     detectedText: { type: "string" },
@@ -176,7 +193,12 @@ function verbatimEvidence(candidate: string, original: string) {
 export function normalizeResult(raw: Partial<AnalysisResult> | null, original: string): AnalysisResult {
   if (!raw || typeof raw !== "object") return SAFE("Analiz sonucu okunamadı");
 
-  const categories = RISK_CATEGORIES.filter((c) => Array.isArray(raw.categories) && raw.categories.includes(c));
+  // The model's main category comes first (that is what the parent sees); the others follow by severity.
+  const primary = (raw as { primaryCategory?: string }).primaryCategory;
+  const listed = RISK_CATEGORIES.filter((c) => Array.isArray(raw.categories) && raw.categories.includes(c));
+  const categories = RISK_CATEGORIES.includes(primary as RiskCategory)
+    ? [primary as RiskCategory, ...listed.filter((c) => c !== primary)]
+    : listed;
   const confidence = clamp(raw.confidence, 0, 1, 0.5);
   let riskScore = Math.round(clamp(raw.riskScore, 0, 100, 0));
   // "Risky" here means "worth showing to a parent who asked for it": the parent's sensitivity
