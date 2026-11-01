@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { forgetDevice } from "@/lib/device-status";
 import { deleteSosForChildren } from "@/lib/sos";
+import { forgetSilence } from "@/lib/platform-silence";
 
 /**
  * KVKK right to erasure: deletes the account and, through cascades, every child profile,
@@ -24,6 +25,7 @@ export async function DELETE(req: NextRequest) {
   if (parent) {
     const kids = await db.childProfile.findMany({ where: { parentId: parent.id }, select: { id: true } });
     for (const k of kids) await forgetDevice(k.id).catch(() => undefined);
+    for (const k of kids) await forgetSilence(k.id).catch(() => undefined);
     await deleteSosForChildren(kids.map((k) => k.id)).catch(() => undefined);
     // Non-financial billing state tied to the parent (credits, active plan).
     for (const table of ["parent_credits", "parent_unlimited_plans"]) {

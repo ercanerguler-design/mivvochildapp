@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { isChildDeviceAuthorized } from "@/lib/device-token";
 import { recordHeartbeat, sweepOfflineDevices } from "@/lib/device-status";
+import { sweepSilentPlatforms } from "@/lib/platform-silence";
 
 const schema = z.object({
   childId: z.string().cuid(),
@@ -45,6 +46,8 @@ export async function POST(req: NextRequest) {
 
   // Every heartbeat opportunistically checks for devices that went silent (throttled globally).
   after(() => sweepOfflineDevices().catch((e) => console.error("[sweepOfflineDevices]", e)));
+  // ...and for messaging apps that went quiet (notifications switched off for that app).
+  after(() => sweepSilentPlatforms().catch((e) => console.error("[sweepSilentPlatforms]", e)));
 
   return NextResponse.json({ ok: true, serverTime: new Date().toISOString() });
 }

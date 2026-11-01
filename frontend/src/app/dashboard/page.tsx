@@ -5,6 +5,7 @@ import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { redirect } from "next/navigation";
 import { listSos } from "@/lib/sos";
+import { PLATFORM_FROM, PLATFORM_LABEL, listSilentPlatforms } from "@/lib/platform-silence";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -117,6 +118,8 @@ export default async function DashboardPage() {
   ];
 
   const sosEvents = await listSos(parent.children.map((c) => c.id), 24).catch(() => []);
+  const childName = new Map(parent.children.map((c) => [c.id, c.displayName]));
+  const silent = await listSilentPlatforms(parent.children.map((c) => c.id)).catch(() => []);
 
   return (
     <div className="space-y-6">
@@ -136,6 +139,15 @@ export default async function DashboardPage() {
             )}
             <a href="tel:112" className="rounded-xl bg-red-800 px-4 py-2.5 text-sm font-bold text-white">112</a>
           </div>
+        </div>
+      ))}
+      {silent.map((s) => (
+        <div key={`${s.child_id}-${s.platform}`} className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+          <p className="font-bold">⚠️ {childName.get(s.child_id) ?? "Çocuğunuz"} · {PLATFORM_FROM[s.platform] ?? s.platform} mesaj gelmiyor</p>
+          <p className="mt-1 text-sm">
+            Telefon açık ve Mivvo çalışıyor ama {PLATFORM_FROM[s.platform] ?? s.platform} 24 saattir hiç mesaj gelmedi. {PLATFORM_LABEL[s.platform] ?? s.platform} bildirimleri kapatılmış olabilir:
+            çocuğunuzun telefonunda Ayarlar → Uygulamalar → {PLATFORM_LABEL[s.platform] ?? s.platform} → Bildirimler bölümünü birlikte kontrol edin. Mesajlar yeniden gelmeye başlayınca bu uyarı kendiliğinden kalkar.
+          </p>
         </div>
       ))}
       <div>
