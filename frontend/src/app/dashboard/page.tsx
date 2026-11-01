@@ -6,6 +6,8 @@ import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { redirect } from "next/navigation";
 import { listSos } from "@/lib/sos";
 import { getParentBillingStatus } from "@/lib/subscription";
+import { getDeviceStatuses, type DeviceStatus } from "@/lib/device-status";
+import { TONE_CLASS, deviceState } from "@/lib/device-state";
 import { PLATFORM_FROM, PLATFORM_LABEL, listSilentPlatforms } from "@/lib/platform-silence";
 import {
   ShieldCheck,
@@ -124,6 +126,11 @@ export default async function DashboardPage() {
   // Per-child pricing: after the trial, children without a plan are not analysed. Say so plainly.
   const billing = await getParentBillingStatus(parent.id).catch(() => null);
   const unprotected = billing && !billing.trial.active ? billing.children.filter((c) => !c.active) : [];
+  // Same device rules as the parent app: unpairing, notification access off, long silence.
+  const devices = await getDeviceStatuses(parent.children.map((c) => c.id)).catch(() => new Map<string, DeviceStatus>());
+  const nowMs = new Date().getTime();
+  const childState = new Map(parent.children.map((c) => [c.id, deviceState(devices.get(c.id), c.updatedAt, nowMs)]));
+  const deviceAlarms = parent.children.filter((c) => childState.get(c.id)?.alarm);
 
   return (
     <div className="space-y-6">
@@ -143,6 +150,15 @@ export default async function DashboardPage() {
             )}
             <a href="tel:112" className="rounded-xl bg-red-800 px-4 py-2.5 text-sm font-bold text-white">112</a>
           </div>
+        </div>
+      ))}
+      {deviceAlarms.map((c) => (
+        <div key={`dev-${c.id}`} className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-900 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-bold">⚠️ {c.displayName} · {childState.get(c.id)?.label}</p>
+            <p className="mt-1 text-sm">Bu telefonda koruma şu an çalışmıyor; mesajlar analiz edilmiyor. Çocuğunuzla konuşup Mivvo Çocuk&apos;u yeniden açın veya eşleştirin.</p>
+          </div>
+          <a href="/dashboard/cocuklar" className="shrink-0 rounded-xl bg-rose-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-rose-700">Çocuklara git</a>
         </div>
       ))}
       {unprotected.length > 0 && (
@@ -324,10 +340,8 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{child.displayName}</p>
-                  <p className="text-xs text-gray-400">
-                    {(Date.now() - child.updatedAt.getTime()) / 60000 <= 10
-                      ? text.dashboard.activeProtection
-                      : text.dashboard.passiveProtection}
+                  <p className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${TONE_CLASS[childState.get(child.id)?.tone ?? "amber"]}`}>
+                    {childState.get(child.id)?.label}
                   </p>
                 </div>
                 {childPending > 0 && (

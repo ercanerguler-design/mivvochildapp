@@ -5,15 +5,8 @@ import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { DeleteChildButton } from "@/components/delete-child-button";
 import { redirect } from "next/navigation";
-
-function getConnectivity(childUpdatedAt: Date, hasToken: boolean) {
-  const minutesAgo = Math.floor((Date.now() - childUpdatedAt.getTime()) / (1000 * 60));
-
-  if (minutesAgo <= 10) return { state: "online" as const, minutesAgo };
-  if (minutesAgo <= 180) return { state: "offline" as const, minutesAgo };
-  if (!hasToken && minutesAgo > 180) return { state: "uninstall" as const, minutesAgo };
-  return { state: "offline" as const, minutesAgo };
-}
+import { getDeviceStatuses, type DeviceStatus } from "@/lib/device-status";
+import { TONE_CLASS, deviceState } from "@/lib/device-state";
 
 function getAge(birthDate: Date) {
   const today = new Date();
@@ -63,6 +56,9 @@ export default async function ChildrenPage() {
     ).values()
   );
 
+  const devices = await getDeviceStatuses(uniqueChildren.map((c) => c.id)).catch(() => new Map<string, DeviceStatus>());
+  const now = new Date().getTime();
+
   const pairingCode = createPairingCode(parent.id);
   const pairingTtl = getPairingTtlMinutes();
 
@@ -104,24 +100,13 @@ export default async function ChildrenPage() {
                 </span>
               </div>
               {(() => {
-                const connectivity = getConnectivity(child.updatedAt, Boolean(child.fcmToken));
-                const connectivityText =
-                  connectivity.state === "online"
-                    ? text.childrenPage.online
-                    : connectivity.state === "uninstall"
-                    ? text.childrenPage.uninstallSuspected
-                    : text.childrenPage.offline;
-                const connectivityClass =
-                  connectivity.state === "online"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : connectivity.state === "uninstall"
-                    ? "bg-red-50 text-red-700"
-                    : "bg-yellow-50 text-yellow-700";
-
+                const s = deviceState(devices.get(child.id), child.updatedAt, now);
+                const app = devices.get(child.id)?.app_version;
                 return (
-                  <div className={`rounded-lg px-3 py-2 text-xs ${connectivityClass}`}>
-                    <p className="font-semibold">{text.childrenPage.deviceStatus}: {connectivityText}</p>
-                    <p className="opacity-80 mt-0.5">{text.childrenPage.lastSeen}: {connectivity.minutesAgo} dk</p>
+                  <div className={`rounded-lg px-3 py-2 text-xs ${TONE_CLASS[s.tone]}`}>
+                    <p className="font-semibold">{text.childrenPage.deviceStatus}: {s.label}</p>
+                    {app && <p className="opacity-80 mt-0.5">Mivvo Çocuk {app}</p>}
+                    {s.state === "unpaired" && <p className="mt-1">Koruma çalışmıyor. Telefonda Mivvo Çocuk&apos;u yeniden eşleştirin ya da bu profili silin.</p>}
                   </div>
                 );
               })()}
