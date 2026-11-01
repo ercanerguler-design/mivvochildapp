@@ -60,6 +60,20 @@ async function ensureBillingTables() {
     "CREATE INDEX IF NOT EXISTS idx_parent_subscription_ledger_created_at ON parent_subscription_ledger (created_at DESC)"
   );
 
+  // Pricing is per child: every child has its own 30-day period. (A parent-level plan above still
+  // covers all children; the admin panel uses it for gifts and demo accounts.)
+  await db.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS child_plans (
+      child_id TEXT PRIMARY KEY,
+      parent_id TEXT NOT NULL,
+      starts_at TIMESTAMPTZ NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await db.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS idx_child_plans_parent ON child_plans (parent_id)");
+  await db.$executeRawUnsafe("ALTER TABLE parent_subscription_ledger ADD COLUMN IF NOT EXISTS child_id TEXT");
+
   billingTableReady = true;
 }
 
@@ -162,6 +176,59 @@ export async function activateParentUnlimitedPlan(params: {
   );
 
   return getParentUnlimitedStatus(parentId);
+}
+
+export type ChildPlanStatus = { childId: string; displayName: string; active: boolean; expiresAt: Date | null; daysRemaining: number };
+
+/** Plan status of each active child of a parent (for checkout and the overview). */
+export async function listChildPlans(parentId: string): Promise<ChildPlanStatus[]> {
+  await ensureBillingTables();
+  const [children, plans] = await Promise.all([
+    db.childProfile.findMany({ where: { parentId, isActive: true }, select: { id: true, displayName: true }, orderBy: { createdAt: "asc" } }),
+    db.$queryRawUnsafe<{ child_id: string; expires_at: Date }[]>(`SELECT child_id, expires_at FROM child_plans WHERE parent_id = $1`, parentId),
+  ]);
+  const byChild = new Map(plans.map((p) => [p.child_id, p.expires_at]));
+  const now = Date.now();
+  return children.map((c) => {
+    const expiresAt = byChild.get(c.id) ?? null;
+    const remaining = expiresAt ? expiresAt.getTime() - now : 0;
+    return { childId: c.id, displayName: c.displayName, active: remaining > 0, expiresAt, daysRemaining: remaining > 0 ? Math.ceil(remaining / DAY_MS) : 0 };
+  });
+}
+
+/** Adds a paid period to one child (on top of any time it still has). */
+export async function activateChildPlan(params: { parentId: string; childId: string; days?: number; amountTl?: number; reason?: string; actor?: string }) {
+  const days = Math.max(1, Math.floor(params.days ?? PAID_UNLIMITED_DAYS));
+  const amountTl = Math.max(0, Math.floor(params.amountTl ?? MONTHLY_PLAN_TL));
+  await ensureBillingTables();
+  const current = await db.$queryRawUnsafe<{ expires_at: Date }[]>(`SELECT expires_at FROM child_plans WHERE child_id = $1`, params.childId);
+  const now = new Date();
+  const startAt = current[0]?.expires_at && current[0].expires_at > now ? current[0].expires_at : now;
+  const expiresAt = new Date(startAt.getTime() + days * DAY_MS);
+  await db.$executeRawUnsafe(
+    `INSERT INTO child_plans (child_id, parent_id, starts_at, expires_at, updated_at) VALUES ($1, $2, $3, $4, NOW())
+     ON CONFLICT (child_id) DO UPDATE SET parent_id = EXCLUDED.parent_id, starts_at = EXCLUDED.starts_at, expires_at = EXCLUDED.expires_at, updated_at = NOW()`,
+    params.childId,
+    params.parentId,
+    startAt,
+    expiresAt
+  );
+  await db.$executeRawUnsafe(
+    `INSERT INTO parent_subscription_ledger (id, parent_id, days, amount_tl, reason, actor, child_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    crypto.randomUUID(),
+    params.parentId,
+    days,
+    amountTl,
+    params.reason ?? `${days} günlük çocuk aboneliği`,
+    params.actor ?? "system",
+    params.childId
+  );
+  return { expiresAt };
+}
+
+export async function forgetChildPlan(childId: string) {
+  await ensureBillingTables();
+  await db.$executeRawUnsafe(`DELETE FROM child_plans WHERE child_id = $1`, childId);
 }
 
 async function ensureParentCreditRow(parentId: string) {
@@ -303,17 +370,32 @@ export async function getParentTrialUsage(parentId: string) {
   };
 }
 
-export async function getParentBillingStatus(parentId: string) {
-  const [trial, credits, unlimited] = await Promise.all([
+/**
+ * Billing status of a parent. With childId, "unlimited" answers for that one child: covered by
+ * the parent-level plan (gift/demo) or by the child's own paid period.
+ */
+export async function getParentBillingStatus(parentId: string, childId?: string) {
+  const [trial, credits, parentPlan, children] = await Promise.all([
     getParentTrialUsage(parentId),
     getParentCreditBalance(parentId),
     getParentUnlimitedStatus(parentId),
+    listChildPlans(parentId),
   ]);
+
+  let unlimited: { active: boolean; startAt: Date | null; expiresAt: Date | null; daysRemaining: number } = parentPlan;
+  if (childId && !parentPlan.active) {
+    const own = children.find((c) => c.childId === childId);
+    if (own?.active) unlimited = { active: true, startAt: null, expiresAt: own.expiresAt, daysRemaining: own.daysRemaining };
+  }
+  const coveredChildren = children.filter((c) => parentPlan.active || c.active).length;
 
   return {
     trial,
     credits,
     unlimited,
+    parentPlan,
+    children: children.map((c) => ({ ...c, active: parentPlan.active || c.active })),
+    allChildrenCovered: children.length > 0 && coveredChildren === children.length,
     isUnlimitedActive: unlimited.active,
     childAppFree: true,
   };

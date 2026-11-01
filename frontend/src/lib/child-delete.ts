@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { forgetDevice } from "@/lib/device-status";
 import { deleteSosForChildren } from "@/lib/sos";
 import { forgetSilence } from "@/lib/platform-silence";
+import { forgetChildPlan } from "@/lib/subscription";
 
 /**
  * Permanently deletes a child profile and everything recorded for it. Alerts, messages and
@@ -13,5 +14,6 @@ export async function deleteChildCompletely(childId: string) {
   await forgetDevice(childId).catch(() => undefined);
   await deleteSosForChildren([childId]).catch(() => undefined);
   await forgetSilence(childId).catch(() => undefined);
+  await forgetChildPlan(childId).catch(() => undefined);
   await db.childProfile.delete({ where: { id: childId } });
 }

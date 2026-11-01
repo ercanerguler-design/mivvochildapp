@@ -4,11 +4,16 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, Lock, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 
+export type ChildBilling = { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number };
+
 type Props = {
   priceTl: number;
   days: number;
-  unlimited?: { active: boolean; expiresAt?: string | null; daysRemaining: number };
+  /** Each child is billed separately; the parent picks who to pay for. */
+  childPlans: ChildBilling[];
 };
+
+const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "long" }) : null);
 
 const RESULT = {
   basarili: { tone: "bg-emerald-50 text-emerald-800 ring-emerald-200", icon: CheckCircle2, text: "Ödemeniz alındı, aboneliğiniz aktif. Teşekkür ederiz!" },
@@ -17,21 +22,28 @@ const RESULT = {
   inceleme: { tone: "bg-amber-50 text-amber-800 ring-amber-200", icon: Clock, text: "Ödemeniz banka tarafından inceleniyor. Onaylanınca aboneliğiniz açılır; sorunuz olursa bize yazın." },
 } as const;
 
-export function CheckoutCard({ priceTl, days, unlimited }: Props) {
+export function CheckoutCard({ priceTl, days, childPlans }: Props) {
   const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
+  // Children without an active plan are selected by default.
+  const [selected, setSelected] = useState<string[]>(() => {
+    const unpaid = childPlans.filter((c) => !c.active).map((c) => c.childId);
+    return unpaid.length ? unpaid : childPlans.map((c) => c.childId);
+  });
+  const total = selected.length * priceTl;
+  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const [acceptSale, setAcceptSale] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const r = useSearchParams().get("odeme");
   const result = r === "basarili" || r === "basarisiz" || r === "inceleme" || r === "islemde" ? r : null;
 
-  const valid = form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5 && acceptSale;
+  const valid = selected.length > 0 && form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5 && acceptSale;
 
   async function pay() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, acceptSale }) });
+      const res = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, acceptSale, childIds: selected }) });
       const json = await res.json();
       if (!res.ok || !json.paymentPageUrl) throw new Error(json.error ?? "Ödeme başlatılamadı.");
       window.location.href = json.paymentPageUrl;
@@ -42,7 +54,6 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
   }
 
   const input = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none";
-  const expires = unlimited?.expiresAt ? new Date(unlimited.expiresAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" }) : null;
   const Banner = result ? RESULT[result] : null;
 
   return (
@@ -50,7 +61,7 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Abonelik</h3>
-          <p className="text-sm text-gray-500">{priceTl} TL / {days} gün · Taahhüt yok, otomatik yenileme yok.</p>
+          <p className="text-sm text-gray-500">Çocuk başına {priceTl} TL / {days} gün · Taahhüt yok, otomatik yenileme yok.</p>
         </div>
         <CreditCard className="h-6 w-6 text-violet-600" />
       </div>
@@ -62,12 +73,31 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
         </div>
       )}
 
-      {unlimited?.active ? (
-        <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-          Aboneliğiniz aktif{expires ? ` · ${expires} tarihine kadar (${unlimited.daysRemaining} gün)` : ""}. Şimdi ödeme yaparsanız süre bu tarihin üzerine eklenir.
-        </p>
+      {childPlans.length === 0 ? (
+        <p className="rounded-lg bg-violet-50 p-3 text-sm text-violet-800">Önce çocuğunuzun telefonunu eşleştirin; abonelik her çocuk için ayrı başlatılır.</p>
       ) : (
-        <p className="rounded-lg bg-violet-50 p-3 text-sm text-violet-800">Aktif aboneliğiniz yok. Kesintisiz koruma için aboneliğinizi başlatın.</p>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-700">Ödeme yapılacak çocuklar</p>
+          {childPlans.map((c) => (
+            <label key={c.childId} className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-gray-200 p-3 text-sm hover:bg-gray-50">
+              <span className="flex items-center gap-3">
+                <input type="checkbox" checked={selected.includes(c.childId)} onChange={() => toggle(c.childId)} className="h-4 w-4 accent-violet-600" />
+                <span>
+                  <span className="font-semibold text-gray-900">{c.displayName}</span>
+                  <span className={`ml-2 text-xs ${c.active ? "text-emerald-700" : "text-rose-700"}`}>
+                    {c.active ? `Aktif · ${fmtDate(c.expiresAt) ?? ""} tarihine kadar (${c.daysRemaining} gün)` : "Aboneliği yok"}
+                  </span>
+                </span>
+              </span>
+              <span className="font-semibold text-gray-900">{priceTl} TL</span>
+            </label>
+          ))}
+          <p className="text-xs text-gray-500">Aboneliği devam eden bir çocuk için ödeme yaparsanız 30 gün mevcut sürenin üzerine eklenir.</p>
+          <p className="flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
+            <span>Toplam ({selected.length} çocuk, KDV dahil)</span>
+            <span>{total} TL</span>
+          </p>
+        </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -106,7 +136,7 @@ export function CheckoutCard({ priceTl, days, unlimited }: Props) {
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
       >
         <Lock className="h-4 w-4" />
-        {busy ? "Güvenli ödeme sayfası açılıyor…" : `Kartla Öde · ${priceTl} TL`}
+        {busy ? "Güvenli ödeme sayfası açılıyor…" : `Kartla Öde · ${total} TL`}
       </button>
       <p className="text-center text-xs text-gray-400">Ödemeler PayTR güvencesiyle alınır. Kart bilgileriniz Mivvo&apos;ya iletilmez.</p>
     </div>

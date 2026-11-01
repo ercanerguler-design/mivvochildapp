@@ -28,6 +28,7 @@ type SettingsState = {
       expiresAt?: string;
     };
     credits: number;
+    children?: { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number }[];
     unlimited?: {
       active: boolean;
       startAt?: string | null;
@@ -89,10 +90,15 @@ export default function SettingsPage() {
           <p>{SITE.trialDays} gün deneme: {data.billing?.trial.active ? "Aktif" : "Sona erdi"}</p>
           <p>Kalan deneme günü: {data.billing?.trial.daysRemaining ?? data.billing?.trial.remaining ?? 0}</p>
           <p>Toplam analiz (deneme dahil): {data.billing?.trial.used ?? 0}</p>
-          <p>Aylık sınırsız plan: {data.billing?.unlimited?.active ? "Aktif" : "Pasif"}</p>
-          <p>Kalan sınırsız gün: {data.billing?.unlimited?.daysRemaining ?? 0}</p>
-          <p>Mevcut kredi: {data.billing?.credits ?? 0}</p>
-          <p>Çocuk uygulaması: {data.billing?.childAppFree ? "Ücretsiz" : "Ücretli"}</p>
+          {(data.billing?.children ?? []).length === 0 ? (
+            <p>Abonelik: henüz eşleşmiş çocuk yok</p>
+          ) : (
+            (data.billing?.children ?? []).map((c) => (
+              <p key={c.childId}>
+                {c.displayName}: {c.active ? `abonelik aktif (${c.daysRemaining} gün kaldı)` : data.billing?.trial.active ? "deneme süresinde" : "aboneliği yok, mesajlar analiz edilmiyor"}
+              </p>
+            ))
+          )}
         </div>
 
         <div>
@@ -142,11 +148,11 @@ export default function SettingsPage() {
 
       <div id="abonelik" className="scroll-mt-24" />
       {data.cardPayments ? (
-        <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} unlimited={data.billing?.unlimited} />
+        <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} childPlans={data.billing?.children ?? []} />
       ) : (
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-sm text-violet-900">
-          <p className="font-semibold">Aylık abonelik: {MONTHLY_PRICE_TL} TL (KDV dahil) · 30 gün</p>
-          <p className="mt-1">Ödemeler şu an havale/EFT ile alınmaktadır. Ödemenizi aşağıdaki hesaba yaptıktan sonra WhatsApp veya e-posta ile bize bildirin; aboneliğiniz aynı gün aktif edilir. Kartla ödeme yakında.</p>
+          <p className="font-semibold">Aylık abonelik: çocuk başına {MONTHLY_PRICE_TL} TL (KDV dahil) · 30 gün</p>
+          <p className="mt-1">Her çocuk için ayrı abonelik gerekir (örneğin 2 çocuk için {MONTHLY_PRICE_TL * 2} TL). Ödemeler şu an havale/EFT ile alınmaktadır. Ödemenizi aşağıdaki hesaba yaptıktan sonra hangi çocuk(lar) için ödediğinizi WhatsApp veya e-posta ile bildirin; abonelik aynı gün aktif edilir. Kartla ödeme yakında.</p>
         </div>
       )}
 

@@ -73,9 +73,17 @@ export async function GET(req: NextRequest) {
     billing: {
       trialActive: billing.trial.active,
       trialDaysRemaining: billing.trial.daysRemaining ?? 0,
-      subscriptionActive: billing.unlimited.active,
-      subscriptionExpiresAt: billing.unlimited.expiresAt,
+      // Per-child pricing: "active" only when every child is covered; the earliest end date is shown.
+      subscriptionActive: billing.parentPlan.active || billing.allChildrenCovered,
+      subscriptionExpiresAt:
+        billing.parentPlan.expiresAt ??
+        billing.children
+          .map((c) => c.expiresAt)
+          .filter((d): d is Date => Boolean(d))
+          .sort((a, b) => a.getTime() - b.getTime())[0] ??
+        null,
       monthlyPriceTl: MONTHLY_PLAN_TL,
+      children: billing.children.map((c) => ({ childId: c.childId, active: c.active, expiresAt: c.expiresAt, daysRemaining: c.daysRemaining })),
     },
   });
 }

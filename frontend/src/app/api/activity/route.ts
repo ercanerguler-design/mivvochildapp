@@ -148,7 +148,8 @@ export async function POST(req: NextRequest) {
 
   const sensitivityLevel = child.parent.sensitivityLevel;
   const analyzableCount = activities.filter((item) => Boolean(item.content && item.content.trim().length > 3)).length;
-  const billingBefore = await getParentBillingStatus(child.parentId);
+  // Every child needs its own subscription (or the account's trial / gift plan).
+  const billingBefore = await getParentBillingStatus(child.parentId, childId);
   const potentialBillableUnits = calculateBillableUnits(
     {
       trialActive: billingBefore.trial.active,
@@ -357,7 +358,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const billingAfter = await getParentBillingStatus(child.parentId);
+  const billingAfter = await getParentBillingStatus(child.parentId, childId);
 
   return NextResponse.json({
     processed: processedCount,

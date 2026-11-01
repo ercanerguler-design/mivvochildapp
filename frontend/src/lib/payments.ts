@@ -27,6 +27,8 @@ async function ensurePaymentsTable() {
     )
   `);
   await db.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS idx_parent_payments_parent ON parent_payments (parent_id, created_at DESC)");
+  // Which children this payment is for (comma-separated ids); each gets its own 30 days.
+  await db.$executeRawUnsafe("ALTER TABLE parent_payments ADD COLUMN IF NOT EXISTS child_ids TEXT");
   ready = true;
 }
 
@@ -38,20 +40,22 @@ export type PaymentRow = {
   amount_tl: number;
   days: number;
   status: string;
+  child_ids: string | null;
 };
 
 /** conversationId is the order number sent to the payment provider (PayTR merchant_oid). */
-export async function createPendingPayment(params: { parentId: string; amountTl: number; days: number; conversationId: string; provider?: string }) {
+export async function createPendingPayment(params: { parentId: string; amountTl: number; days: number; conversationId: string; childIds: string[]; provider?: string }) {
   await ensurePaymentsTable();
   const id = crypto.randomUUID();
   await db.$executeRawUnsafe(
-    `INSERT INTO parent_payments (id, parent_id, provider, conversation_id, amount_tl, days) VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO parent_payments (id, parent_id, provider, conversation_id, amount_tl, days, child_ids) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     id,
     params.parentId,
     params.provider ?? "paytr",
     params.conversationId,
     params.amountTl,
-    params.days
+    params.days,
+    params.childIds.join(",")
   );
   return { id, conversationId: params.conversationId };
 }
@@ -64,7 +68,7 @@ export async function attachToken(id: string, token: string) {
 export async function findPaymentByConversationId(conversationId: string) {
   await ensurePaymentsTable();
   const rows = await db.$queryRawUnsafe<PaymentRow[]>(
-    `SELECT id, parent_id, conversation_id, token, amount_tl, days, status FROM parent_payments WHERE conversation_id = $1 LIMIT 1`,
+    `SELECT id, parent_id, conversation_id, token, amount_tl, days, status, child_ids FROM parent_payments WHERE conversation_id = $1 LIMIT 1`,
     conversationId
   );
   return rows[0] ?? null;
@@ -73,7 +77,7 @@ export async function findPaymentByConversationId(conversationId: string) {
 export async function findPaymentByToken(token: string) {
   await ensurePaymentsTable();
   const rows = await db.$queryRawUnsafe<PaymentRow[]>(
-    `SELECT id, parent_id, conversation_id, token, amount_tl, days, status FROM parent_payments WHERE token = $1 LIMIT 1`,
+    `SELECT id, parent_id, conversation_id, token, amount_tl, days, status, child_ids FROM parent_payments WHERE token = $1 LIMIT 1`,
     token
   );
   return rows[0] ?? null;

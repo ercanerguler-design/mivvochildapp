@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const billingBefore = await getParentBillingStatus(child.parentId);
+    const billingBefore = await getParentBillingStatus(child.parentId, child.id);
     const billableUnits = calculateBillableUnits(
       {
         trialActive: billingBefore.trial.active,
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const billingAfter = await getParentBillingStatus(child.parentId);
+    const billingAfter = await getParentBillingStatus(child.parentId, child.id);
 
     return NextResponse.json({
       analyzed: true,

@@ -43,8 +43,8 @@ export type GetTokenResult = { ok: true; token: string } | { ok: false; reason: 
 export async function getIframeToken(params: {
   merchantOid: string;
   email: string;
-  amountTl: number;
-  itemName: string;
+  /** One basket line per item; the payment amount is their total. */
+  items: { name: string; amountTl: number }[];
   userIp: string;
   userName: string;
   userAddress: string;
@@ -53,8 +53,9 @@ export async function getIframeToken(params: {
   failUrl: string;
 }): Promise<GetTokenResult> {
   const { merchantId, merchantKey, merchantSalt, testMode } = config();
-  const paymentAmount = String(Math.round(params.amountTl * 100)); // kuruş
-  const basket = Buffer.from(JSON.stringify([[params.itemName, params.amountTl.toFixed(2), 1]])).toString("base64");
+  const totalTl = params.items.reduce((sum, i) => sum + i.amountTl, 0);
+  const paymentAmount = String(Math.round(totalTl * 100)); // kuruş
+  const basket = Buffer.from(JSON.stringify(params.items.map((i) => [i.name.slice(0, 100), i.amountTl.toFixed(2), 1]))).toString("base64");
   const noInstallment = "1";
   const maxInstallment = "0";
   const currency = "TL";

@@ -208,8 +208,8 @@ export const legalDocs: LegalDoc[] = [
     title: "Kullanım Koşulları ve Üyelik Sözleşmesi",
     short: "Kullanım Koşulları",
     description: "Mivvo web sitesi, Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarının kullanım koşulları.",
-    version: "1.2",
-    updated: "2026-11-01",
+    version: "1.3",
+    updated: "2026-11-02",
     sections: [
       { h: "1. Taraflar ve kapsam", blocks: [{ p: `Bu sözleşme, ${company} ("Mivvo") ile Mivvo web sitesi (mivvo.org), Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarını ("Hizmet") kullanmak üzere üye olan kişi ("Kullanıcı") arasındadır. Üye olarak bu koşulları, Gizlilik Politikası'nı ve KVKK Aydınlatma Metni'ni kabul etmiş sayılırsınız.` }] },
       { h: "2. Hizmetin tanımı", blocks: [{ p: "Mivvo; ebeveynlerin, 18 yaş altındaki çocuklarının telefonuna gelen mesaj bildirimlerinde siber zorbalık, tehdit, cinsel istismar, şiddet, kendine zarar verme ve yabancı kişi risklerini yapay zekâ yardımıyla fark etmelerine yardımcı olan bir ebeveyn kontrol hizmetidir." }] },
@@ -232,7 +232,7 @@ export const legalDocs: LegalDoc[] = [
       },
       {
         h: "6. Ücretler ve abonelik",
-        blocks: [{ p: `Yeni hesaplar için ilk ${trial} gün ücretsizdir; deneme süresi sonunda otomatik ücret alınmaz. Ücretli abonelik ${price} TL (KDV dahil) karşılığında 30 günlük kullanım sağlar ve kendiliğinden yenilenmez. Satın alma koşulları Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Formu'nda, iade koşulları İptal ve İade Politikası'nda yer alır.` }],
+        blocks: [{ p: `Yeni hesaplar için ilk ${trial} gün ücretsizdir; deneme süresi sonunda otomatik ücret alınmaz. Ücretli abonelik çocuk başınadır: eşleştirilen her çocuk için ${price} TL (KDV dahil) karşılığında o çocuk için 30 günlük kullanım sağlar ve kendiliğinden yenilenmez. Aboneliği bulunmayan çocuğun mesajları deneme süresi sonrasında analiz edilmez. Satın alma koşulları Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Formu'nda, iade koşulları İptal ve İade Politikası'nda yer alır.` }],
       },
       {
         h: "7. Sorumluluğun sınırlandırılması",
@@ -251,8 +251,8 @@ export const legalDocs: LegalDoc[] = [
     title: "Ön Bilgilendirme Formu",
     short: "Ön Bilgilendirme",
     description: "Mesafeli Sözleşmeler Yönetmeliği uyarınca Mivvo aboneliği satın alımından önce tüketiciye sunulan ön bilgilendirme formu.",
-    version: "1.2",
-    updated: "2026-11-01",
+    version: "1.3",
+    updated: "2026-11-02",
     sections: [
       {
         h: "1. Satıcı / hizmet sağlayıcı",
@@ -264,7 +264,7 @@ export const legalDocs: LegalDoc[] = [
       },
       {
         h: "3. Fiyat ve ödeme",
-        blocks: [{ ul: [`Toplam bedel: ${price} TL (KDV dahil). Başka bir masraf veya kargo ücreti yoktur.`, paymentMethods, "Abonelik kendiliğinden yenilenmez; süre sonunda yeniden ödeme yapmadığınız sürece ücret alınmaz."] }],
+        blocks: [{ ul: [`Bedel: çocuk başına ${price} TL (KDV dahil), 30 gün. Toplam bedel, ödeme ekranında seçtiğiniz çocuk sayısı ile çarpılarak gösterilir (ör. 2 çocuk için ${price * 2} TL). Başka bir masraf veya kargo ücreti yoktur.`, paymentMethods, "Abonelik kendiliğinden yenilenmez; süre sonunda yeniden ödeme yapmadığınız sürece ücret alınmaz."] }],
       },
       { h: "4. İfa", blocks: [{ p: "Abonelik, ödemenin onaylanmasıyla birlikte derhal etkinleşir ve hesabınızda süre bilgisi görüntülenir." }] },
       {
@@ -281,12 +281,12 @@ export const legalDocs: LegalDoc[] = [
     title: "Mesafeli Satış Sözleşmesi",
     short: "Mesafeli Satış",
     description: "6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca Mivvo abonelik satış sözleşmesi.",
-    version: "1.2",
-    updated: "2026-11-01",
+    version: "1.3",
+    updated: "2026-11-02",
     sections: [
       { h: "Madde 1 – Taraflar", blocks: [{ p: `SATICI: ${company}, ${SITE.address.street}, ${SITE.address.city}, ${SITE.email}, ${SITE.phoneDisplay}${C.mersis ? `, MERSİS: ${C.mersis}` : ""}.` }, { p: "ALICI: Mivvo üyelik kaydında ve ödeme sırasında bilgileri yer alan ebeveyn hesabı sahibi." }] },
       { h: "Madde 2 – Konu", blocks: [{ p: "Bu sözleşmenin konusu, ALICI'nın mivvo.org üzerinden elektronik ortamda satın aldığı Mivvo Aylık Abonelik hizmetinin satışı ve ifasına ilişkin tarafların hak ve yükümlülükleridir. ALICI, satın alma öncesinde Ön Bilgilendirme Formu'nu okuyup onayladığını kabul eder." }] },
-      { h: "Madde 3 – Hizmet ve bedel", blocks: [{ ul: ["Hizmet: Mivvo Aylık Abonelik (30 gün).", `Bedel: ${price} TL (KDV dahil).`, cardPayments ? "Ödeme yöntemi: Kredi/banka kartı (PayTR) veya havale/EFT." : "Ödeme yöntemi: Havale/EFT.", "İfa: Ödemenin onaylanmasıyla derhal, elektronik ortamda."] }] },
+      { h: "Madde 3 – Hizmet ve bedel", blocks: [{ ul: ["Hizmet: Mivvo Aylık Abonelik (30 gün), ALICI'nın ödeme ekranında seçtiği her çocuk için ayrı ayrı.", `Bedel: çocuk başına ${price} TL (KDV dahil); toplam bedel sipariş özetinde gösterilir.`, cardPayments ? "Ödeme yöntemi: Kredi/banka kartı (PayTR) veya havale/EFT." : "Ödeme yöntemi: Havale/EFT.", "İfa: Ödemenin onaylanmasıyla derhal, elektronik ortamda."] }] },
       { h: "Madde 4 – Genel hükümler", blocks: [{ ul: ["SATICI, hizmeti Kullanım Koşulları'nda belirtilen nitelikte ve kesintisiz sunmak için gerekli özeni gösterir.", "Hizmetin; üçüncü taraf altyapı, işletim sistemi veya internet kesintileri nedeniyle geçici olarak sunulamaması halinde SATICI, makul süre içinde hizmeti yeniden sağlar. Uzun süreli kesintilerde kullanılmayan süre ALICI'ya ek süre olarak tanımlanabilir.", "Ödemenin banka veya ödeme kuruluşu tarafından herhangi bir nedenle gerçekleştirilmemesi halinde abonelik etkinleşmez."] }] },
       { h: "Madde 5 – Cayma hakkı", blocks: [{ p: "ALICI, sözleşmenin kurulmasından itibaren 14 gün içinde gerekçe göstermeksizin cayma hakkına sahiptir. Cayma bildirimi sce@scegrup.com adresine yapılır. SATICI, bildirimin kendisine ulaşmasından itibaren 14 gün içinde tahsil edilen bedelin tamamını ALICI'nın ödeme yaptığı yönteme iade eder." }] },
       { h: "Madde 6 – Kişisel veriler", blocks: [{ p: "ALICI'ya ait kişisel veriler, KVKK Aydınlatma Metni ve Gizlilik Politikası'na uygun olarak işlenir. Kart bilgileri yalnızca lisanslı ödeme kuruluşu PayTR tarafından işlenir ve SATICI'ya iletilmez." }] },

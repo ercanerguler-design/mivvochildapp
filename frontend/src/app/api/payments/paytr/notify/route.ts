@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { isPaytrConfigured, verifyNotification } from "@/lib/paytr";
 import { findPaymentByConversationId, settlePayment } from "@/lib/payments";
-import { activateParentUnlimitedPlan } from "@/lib/subscription";
+import { activateChildPlan, activateParentUnlimitedPlan } from "@/lib/subscription";
 import { recordSystemEvent } from "@/lib/system-events";
 
 /**
@@ -44,13 +44,18 @@ export async function POST(req: NextRequest) {
 
   const firstSettle = await settlePayment(payment.id, "paid", { providerPaymentId: n.merchantOid, error: n.testMode ? "test_mode" : undefined });
   if (firstSettle) {
-    await activateParentUnlimitedPlan({
-      parentId: payment.parent_id,
-      days: payment.days,
-      amountTl: n.testMode ? 0 : payment.amount_tl,
-      actor: "paytr",
-      reason: `paytr:${n.merchantOid}${n.testMode ? ":test" : ""}`,
-    });
+    const childIds = (payment.child_ids ?? "").split(",").filter(Boolean);
+    const reason = `paytr:${n.merchantOid}${n.testMode ? ":test" : ""}`;
+    if (childIds.length > 0) {
+      // Price is per child: each paid child gets its own 30 days; revenue is split across them.
+      const share = n.testMode ? 0 : Math.round(payment.amount_tl / childIds.length);
+      for (const childId of childIds) {
+        await activateChildPlan({ parentId: payment.parent_id, childId, days: payment.days, amountTl: share, actor: "paytr", reason });
+      }
+    } else {
+      // Payments started before per-child pricing cover the whole account.
+      await activateParentUnlimitedPlan({ parentId: payment.parent_id, days: payment.days, amountTl: n.testMode ? 0 : payment.amount_tl, actor: "paytr", reason });
+    }
   }
   return ok();
 }

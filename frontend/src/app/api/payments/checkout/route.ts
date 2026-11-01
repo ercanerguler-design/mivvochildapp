@@ -15,6 +15,8 @@ const schema = z.object({
   city: z.string().trim().min(2).max(50),
   address: z.string().trim().min(5).max(200),
   acceptSale: z.literal(true),
+  // Pricing is per child: the parent picks which children to pay for.
+  childIds: z.array(z.string().cuid()).min(1).max(20),
 });
 
 /** "0532 123 45 67" -> "05321234567" (PayTR wants a plain number, max 20 chars). */
@@ -43,22 +45,27 @@ export async function POST(req: NextRequest) {
   });
   if (!user?.parentProfile || !user.email) return NextResponse.json({ error: "Ebeveyn profili bulunamadı." }, { status: 404 });
 
-  const amountTl = MONTHLY_PLAN_TL;
+  const children = await db.childProfile.findMany({
+    where: { id: { in: [...new Set(parsed.data.childIds)] }, parentId: user.parentProfile.id, isActive: true },
+    select: { id: true, displayName: true },
+  });
+  if (children.length === 0) return NextResponse.json({ error: "Ödeme yapılacak çocuğu seçin." }, { status: 400 });
+
   const days = PAID_UNLIMITED_DAYS;
+  const amountTl = MONTHLY_PLAN_TL * children.length;
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
   if (!ip) return NextResponse.json({ error: "Ödeme başlatılamadı. Lütfen tekrar deneyin." }, { status: 400 });
 
   await recordConsents(user.id, CHECKOUT_CONSENTS, { ip, userAgent: req.headers.get("user-agent") ?? undefined });
 
   const merchantOid = newMerchantOid();
-  const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days, conversationId: merchantOid, provider: "paytr" });
+  const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days, conversationId: merchantOid, childIds: children.map((c) => c.id), provider: "paytr" });
   const phone = normalizePhone(parsed.data.phone);
 
   const result = await getIframeToken({
     merchantOid,
     email: user.email,
-    amountTl,
-    itemName: `Mivvo Aylık Abonelik (${days} gün)`,
+    items: children.map((c) => ({ name: `Mivvo Aylık Abonelik (${days} gün) - ${c.displayName}`, amountTl: MONTHLY_PLAN_TL })),
     userIp: ip,
     userName: parsed.data.fullName,
     userAddress: `${parsed.data.address} ${parsed.data.city}`.slice(0, 400),

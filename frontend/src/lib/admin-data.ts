@@ -67,6 +67,7 @@ export type Member = {
   totalPaidTl: number;
   paymentCount: number;
   children: number;
+  childList: { id: string; name: string; planExpiresAt: string | null }[];
   lastDeviceSeenAt: string | null;
   alerts30d: number;
 };
@@ -82,18 +83,29 @@ export async function loadMembers(): Promise<Member[]> {
         id: true,
         createdAt: true,
         user: { select: { name: true, email: true, phone: true } },
-        children: { where: { isActive: true }, select: { id: true, updatedAt: true } },
+        children: { where: { isActive: true }, select: { id: true, displayName: true, updatedAt: true }, orderBy: { createdAt: "asc" } },
       },
       orderBy: { createdAt: "desc" },
     }),
-    db.$queryRawUnsafe<{ parent_id: string; expires_at: Date }[]>(`SELECT parent_id, expires_at FROM parent_unlimited_plans`),
+    // Parent-level plans (gifts/demo) and, since per-child pricing, every child's own plan.
+    db.$queryRawUnsafe<{ parent_id: string; child_id: string | null; expires_at: Date }[]>(
+      `SELECT parent_id, NULL::text AS child_id, expires_at FROM parent_unlimited_plans
+       UNION ALL SELECT parent_id, child_id, expires_at FROM child_plans`
+    ).catch(() => db.$queryRawUnsafe<{ parent_id: string; child_id: string | null; expires_at: Date }[]>(`SELECT parent_id, NULL::text AS child_id, expires_at FROM parent_unlimited_plans`)),
     db.$queryRawUnsafe<{ parent_id: string; total: number; count: number }[]>(
       `SELECT parent_id, COALESCE(SUM(amount_tl),0)::int AS total, COUNT(*)::int AS count FROM parent_subscription_ledger WHERE amount_tl > 0 GROUP BY parent_id`
     ),
     db.alert.groupBy({ by: ["childId"], where: { createdAt: { gte: since30 } }, _count: { _all: true } }),
   ]);
 
-  const planBy = new Map(plans.map((p) => [p.parent_id, p.expires_at]));
+  // Latest expiry per parent (any plan), and per child.
+  const planBy = new Map<string, Date>();
+  const childPlanBy = new Map<string, Date>();
+  for (const p of plans) {
+    const cur = planBy.get(p.parent_id);
+    if (!cur || p.expires_at > cur) planBy.set(p.parent_id, p.expires_at);
+    if (p.child_id) childPlanBy.set(p.child_id, p.expires_at);
+  }
   const payBy = new Map(payments.map((p) => [p.parent_id, p]));
   const alertsByChild = new Map(alertCounts.map((a) => [a.childId, a._count._all]));
 
@@ -120,6 +132,7 @@ export async function loadMembers(): Promise<Member[]> {
       totalPaidTl: payBy.get(p.id)?.total ?? 0,
       paymentCount: payBy.get(p.id)?.count ?? 0,
       children: p.children.length,
+      childList: p.children.map((c) => ({ id: c.id, name: c.displayName, planExpiresAt: childPlanBy.get(c.id)?.toISOString() ?? null })),
       lastDeviceSeenAt: lastSeen?.toISOString() ?? null,
       alerts30d: p.children.reduce((sum, c) => sum + (alertsByChild.get(c.id) ?? 0), 0),
     };

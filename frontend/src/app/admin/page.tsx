@@ -40,6 +40,7 @@ type Member = {
   totalPaidTl: number;
   paymentCount: number;
   children: number;
+  childList: { id: string; name: string; planExpiresAt: string | null }[];
   lastDeviceSeenAt: string | null;
   alerts30d: number;
 };
@@ -533,8 +534,11 @@ function MembersTab({ api, priceTl, notify, onChange }: { api: (p: string, i?: R
   );
 }
 
-function GrantModal({ member, priceTl, onClose, onSubmit }: { member: Member; priceTl: number; onClose: () => void; onSubmit: (b: { days: number; amountTl: number; reason?: string }) => Promise<void> }) {
+function GrantModal({ member, priceTl, onClose, onSubmit }: { member: Member; priceTl: number; onClose: () => void; onSubmit: (b: { days: number; amountTl: number; reason?: string; childId?: string }) => Promise<void> }) {
   const [kind, setKind] = useState<"paid" | "gift">("paid");
+  // Per-child pricing: a transfer pays for one child; "all" covers the whole account (gifts, demo).
+  const kids = member.childList ?? [];
+  const [target, setTarget] = useState<string>(() => kids.find((k) => !k.planExpiresAt || new Date(k.planExpiresAt) < new Date())?.id ?? kids[0]?.id ?? "all");
   const [days, setDays] = useState(30);
   const [amount, setAmount] = useState(priceTl);
   const [reason, setReason] = useState("");
@@ -555,6 +559,16 @@ function GrantModal({ member, priceTl, onClose, onSubmit }: { member: Member; pr
           <button onClick={() => { setKind("paid"); setAmount(priceTl); }} className={`flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold ring-1 ${kind === "paid" ? "bg-emerald-50 text-emerald-700 ring-emerald-300" : "text-gray-600 ring-gray-200"}`}><CreditCard className="h-4 w-4" /> Ödeme alındı</button>
           <button onClick={() => { setKind("gift"); setAmount(0); }} className={`flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold ring-1 ${kind === "gift" ? "bg-violet-50 text-violet-700 ring-violet-300" : "text-gray-600 ring-gray-200"}`}><Gift className="h-4 w-4" /> Hediye</button>
         </div>
+        <label className="mt-4 block text-sm font-medium text-gray-700">Kime
+          <select value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2">
+            {kids.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.name}{k.planExpiresAt && new Date(k.planExpiresAt) > new Date() ? ` (aktif, ${new Date(k.planExpiresAt).toLocaleDateString("tr-TR")} bitiş)` : " (aboneliği yok)"}
+              </option>
+            ))}
+            <option value="all">Hesabın tüm çocukları (hediye / demo)</option>
+          </select>
+        </label>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="text-sm font-medium text-gray-700">Süre (gün)
             <input type="number" min={1} max={365} value={days} onChange={(e) => setDays(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2" />
@@ -574,7 +588,7 @@ function GrantModal({ member, priceTl, onClose, onSubmit }: { member: Member; pr
             setBusy(true);
             setError("");
             try {
-              await onSubmit({ days, amountTl: kind === "gift" ? 0 : Math.max(0, Math.round(amount)), reason: reason || undefined });
+              await onSubmit({ days, amountTl: kind === "gift" ? 0 : Math.max(0, Math.round(amount)), reason: reason || undefined, childId: target === "all" ? undefined : target });
             } catch (e) {
               setError((e as Error).message);
               setBusy(false);
