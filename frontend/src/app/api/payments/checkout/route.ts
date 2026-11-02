@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cardPaymentsAvailable, getIframeToken, newMerchantOid } from "@/lib/paytr";
 import { attachToken, createPendingPayment, settlePayment } from "@/lib/payments";
-import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS, YEARLY_PLAN_DAYS, YEARLY_PLAN_TL, pickChildrenToCover } from "@/lib/subscription";
+import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS, YEARLY_PLAN_DAYS, YEARLY_PLAN_TL } from "@/lib/subscription";
 import { SITE_URL } from "@/lib/site";
 import { CHECKOUT_CONSENTS, recordConsents } from "@/lib/consents";
 
@@ -16,9 +16,10 @@ const schema = z.object({
   address: z.string().trim().min(5).max(200),
   acceptSale: z.literal(true),
   // Pricing is per child: the parent picks which children to pay for.
-  // Number of children to pay for. The server decides which paired children get it (no names are
-  // sent from the browser or to the payment provider); the rest wait for a phone to be paired.
-  count: z.number().int().min(1).max(20),
+  // The parent picks which paired children to pay for, plus children whose phone is not paired yet
+  // (their period starts on pairing). Child names never go to the payment provider.
+  childIds: z.array(z.string().cuid()).max(20).default([]),
+  newChildren: z.number().int().min(0).max(10).default(0),
   plan: z.enum(["monthly", "yearly"]).default("monthly"),
 });
 
@@ -54,9 +55,13 @@ export async function POST(req: NextRequest) {
   });
   if (!user?.parentProfile || !user.email) return NextResponse.json({ error: "Ebeveyn profili bulunamadı." }, { status: 404 });
 
-  const units = parsed.data.count;
-  const children = await pickChildrenToCover(user.parentProfile.id, units);
-  const seats = units - children.length;
+  const children = await db.childProfile.findMany({
+    where: { id: { in: [...new Set(parsed.data.childIds)] }, parentId: user.parentProfile.id, isActive: true },
+    select: { id: true },
+  });
+  const seats = parsed.data.newChildren;
+  const units = children.length + seats;
+  if (units === 0) return NextResponse.json({ error: "Ödeme yapılacak çocuğu seçin." }, { status: 400 });
 
   const terms = PLAN_TERMS[parsed.data.plan];
   const days = terms.days;

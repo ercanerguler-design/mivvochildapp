@@ -7,10 +7,11 @@ import { AlertTriangle, CheckCircle2, Clock, Info, Lock, Minus, Plus, RotateCcw,
 import { PaymentLogos } from "@/components/PaymentLogos";
 import { PLANS, YEARLY_SAVING_TL, countFromParam, formatTl, planFromParam, type PlanId } from "@/lib/plans";
 
+export type PairedChild = { id: string; name: string; active: boolean; expiresAt: string | null };
+
 type Props = {
-  /** Paired children on the account, and how many of them have no active plan. */
-  pairedCount: number;
-  unpaidCount: number;
+  /** Paired children of this parent (names are shown only here, never sent to the payment provider). */
+  paired: PairedChild[];
   /** Paid periods already waiting for a child to be paired. */
   pendingSeats: number;
 };
@@ -18,6 +19,7 @@ type Props = {
 const KDV_RATE = 0.2;
 const MAX_CHILDREN = 10;
 const tl2 = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" }) : "");
 
 const RESULT = {
   basarili: { tone: "bg-emerald-50 text-emerald-800 ring-emerald-200", icon: CheckCircle2, text: "Ödemeniz alındı, aboneliğiniz aktif. Teşekkür ederiz!" },
@@ -27,19 +29,33 @@ const RESULT = {
 } as const;
 
 /**
- * Checkout: plan, number of children, billing details and an always-visible order summary.
- * No child names are shown or sent; the server applies the payment to children without a plan first.
+ * Checkout: plan, which children, billing details and an always-visible order summary.
+ * The parent ticks the paired children to pay for and can add children whose phone is not paired yet.
  */
-export function CheckoutCard({ pairedCount, unpaidCount, pendingSeats }: Props) {
+export function CheckoutCard({ paired, pendingSeats }: Props) {
   const params = useSearchParams();
   const [planId, setPlanId] = useState<PlanId>(() => planFromParam(params.get("plan")));
   const plan = PLANS[planId];
-  const [count, setCount] = useState(() => Math.min(MAX_CHILDREN, countFromParam(params.get("adet"), unpaidCount || pairedCount || 1)));
+  // Preselect from the cart's child count: children without a plan first, then the others; anything
+  // beyond the paired children becomes "not paired yet". Without a count, preselect unpaid children.
+  const [selected, setSelected] = useState<string[]>(() => {
+    const order = [...paired].sort((a, b) => Number(a.active) - Number(b.active));
+    const wanted = countFromParam(params.get("adet"), 0);
+    if (wanted > 0) return order.slice(0, wanted).map((c) => c.id);
+    const unpaid = paired.filter((c) => !c.active).map((c) => c.id);
+    return unpaid.length ? unpaid : paired.slice(0, 1).map((c) => c.id);
+  });
+  const [newChildren, setNewChildren] = useState(() => {
+    const wanted = countFromParam(params.get("adet"), 0);
+    if (wanted > 0) return Math.min(MAX_CHILDREN, Math.max(0, wanted - paired.length));
+    return paired.length === 0 ? 1 : 0;
+  });
+  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const count = selected.length + newChildren;
 
   const total = count * plan.priceTl;
   const net = Math.round((total / (1 + KDV_RATE)) * 100) / 100;
   const kdv = Math.round((total - net) * 100) / 100;
-  const startLater = Math.max(0, count - pairedCount);
 
   const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
   const [acceptSale, setAcceptSale] = useState(false);
@@ -51,7 +67,7 @@ export function CheckoutCard({ pairedCount, unpaidCount, pendingSeats }: Props) 
 
   const formOk = form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5;
   const valid = count > 0 && formOk && acceptSale;
-  const missing = !formOk ? "Fatura bilgilerini eksiksiz doldurun." : !acceptSale ? "Devam etmek için sözleşmeleri onaylayın." : "";
+  const missing = count === 0 ? "Ödeme yapacağınız çocuğu seçin." : !formOk ? "Fatura bilgilerini eksiksiz doldurun." : !acceptSale ? "Devam etmek için sözleşmeleri onaylayın." : "";
 
   async function pay() {
     setBusy(true);
@@ -60,7 +76,7 @@ export function CheckoutCard({ pairedCount, unpaidCount, pendingSeats }: Props) 
       const res = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, acceptSale, count, plan: planId }),
+        body: JSON.stringify({ ...form, acceptSale, childIds: selected, newChildren, plan: planId }),
       });
       const json = await res.json();
       if (!res.ok || !json.paymentPageUrl) throw new Error(json.error ?? "Ödeme başlatılamadı.");
@@ -103,25 +119,47 @@ export function CheckoutCard({ pairedCount, unpaidCount, pendingSeats }: Props) 
           </section>
 
           <section className={section}>
-            <h2 className={stepTitle}><span className={stepNo}>2</span> Çocuk sayısı</h2>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-sm text-gray-600">Abonelik çocuk başınadır. Kaç çocuğunuz için ödeme yapacaksınız?</p>
+            <h2 className={stepTitle}><span className={stepNo}>2</span> Çocuklar</h2>
+            <p className="mt-1 text-sm text-gray-500">Abonelik çocuk başınadır. Ödeme yapacağınız çocukları işaretleyin.</p>
+
+            {paired.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {paired.map((c) => {
+                  const on = selected.includes(c.id);
+                  return (
+                    <label key={c.id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border p-3.5 text-sm transition-colors ${on ? "border-violet-400 bg-violet-50/60" : "border-gray-200 hover:bg-gray-50"}`}>
+                      <span className="flex items-center gap-3">
+                        <input type="checkbox" checked={on} onChange={() => toggle(c.id)} className="h-4 w-4 accent-violet-600" />
+                        <span>
+                          <span className="block font-semibold text-gray-900">{c.name}</span>
+                          <span className={`text-xs ${c.active ? "text-emerald-700" : "text-rose-700"}`}>
+                            {c.active ? `Aktif · ${fmtDate(c.expiresAt)} tarihine kadar · yeni süre bunun üzerine eklenir` : "Aboneliği yok · mesajları analiz edilmiyor"}
+                          </span>
+                        </span>
+                      </span>
+                      <span className={`shrink-0 font-semibold ${on ? "text-gray-900" : "text-gray-400"}`}>{formatTl(plan.priceTl)} TL</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-gray-300 p-3.5">
+              <div className="text-sm">
+                <p className="font-semibold text-gray-900">{paired.length ? "Telefonu henüz eşleştirilmemiş çocuk" : "Çocuk sayısı"}</p>
+                <p className="text-xs text-gray-500">Bu çocukların aboneliği, telefonunu eşleştirdiğiniz gün başlar.</p>
+              </div>
               <div className="flex items-center rounded-xl ring-1 ring-gray-200">
-                <button type="button" aria-label="Azalt" disabled={count <= 1} onClick={() => setCount((n) => Math.max(1, n - 1))} className="p-3 text-gray-700 disabled:opacity-30"><Minus className="h-4 w-4" /></button>
-                <output aria-live="polite" className="w-10 text-center text-lg font-black text-gray-950">{count}</output>
-                <button type="button" aria-label="Artır" disabled={count >= MAX_CHILDREN} onClick={() => setCount((n) => Math.min(MAX_CHILDREN, n + 1))} className="p-3 text-gray-700 disabled:opacity-30"><Plus className="h-4 w-4" /></button>
+                <button type="button" aria-label="Azalt" disabled={newChildren <= 0} onClick={() => setNewChildren((n) => Math.max(0, n - 1))} className="p-2.5 text-gray-700 disabled:opacity-30"><Minus className="h-4 w-4" /></button>
+                <output aria-live="polite" className="w-9 text-center font-black text-gray-950">{newChildren}</output>
+                <button type="button" aria-label="Artır" disabled={newChildren >= MAX_CHILDREN} onClick={() => setNewChildren((n) => Math.min(MAX_CHILDREN, n + 1))} className="p-2.5 text-gray-700 disabled:opacity-30"><Plus className="h-4 w-4" /></button>
               </div>
             </div>
-            <p className="mt-4 flex gap-2 rounded-xl bg-gray-50 p-3 text-xs leading-5 text-gray-600">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-              <span>
-                {pairedCount > 0
-                  ? `Hesabınızda ${pairedCount} eşleştirilmiş çocuk var${unpaidCount ? `, ${unpaidCount} tanesinin aboneliği yok` : ""}. Ödeme önce aboneliği olmayan çocuklara uygulanır; aboneliği devam eden çocukta yeni süre mevcut sürenin üzerine eklenir.`
-                  : "Henüz eşleştirilmiş çocuk yok."}
-                {startLater > 0 && ` ${startLater} çocuğun aboneliği, telefonunu eşleştirdiğiniz gün başlar.`}
-                {pendingSeats > 0 && ` Hesabınızda eşleştirme bekleyen ${pendingSeats} ödenmiş abonelik de var.`}
-              </span>
-            </p>
+            {pendingSeats > 0 && (
+              <p className="mt-3 flex gap-2 rounded-xl bg-violet-50 p-3 text-xs text-violet-800">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" /> Hesabınızda eşleştirme bekleyen {pendingSeats} ödenmiş abonelik var; yeni çocuğunuzun telefonunu eşleştirdiğinizde otomatik başlar.
+              </p>
+            )}
           </section>
 
           <section className={section}>
@@ -149,13 +187,16 @@ export function CheckoutCard({ pairedCount, unpaidCount, pendingSeats }: Props) 
 
         <aside aria-label="Sipariş özeti" className="h-fit rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 lg:sticky lg:top-6">
           <h2 className="text-base font-bold text-gray-900">Sipariş özeti</h2>
-          <div className="mt-4 flex justify-between gap-3 border-b border-gray-100 pb-4 text-sm">
-            <span className="text-gray-700">
-              Mivvo {plan.name}
-              <span className="block text-xs text-gray-500">{plan.days} gün · {count} çocuk × {tl2(plan.priceTl)} TL</span>
-            </span>
-            <span className="font-semibold text-gray-900">{tl2(total)} TL</span>
-          </div>
+          <p className="mt-1 text-sm text-gray-500">Mivvo {plan.name} · {plan.days} gün</p>
+          <ul className="mt-4 space-y-2 border-b border-gray-100 pb-4 text-sm">
+            {paired.filter((c) => selected.includes(c.id)).map((c) => (
+              <li key={c.id} className="flex justify-between gap-3 text-gray-700"><span className="truncate">{c.name}</span><span className="shrink-0">{tl2(plan.priceTl)} TL</span></li>
+            ))}
+            {newChildren > 0 && (
+              <li className="flex justify-between gap-3 text-gray-700"><span>{paired.length ? "Eşleştirilecek çocuk" : "Çocuk"} × {newChildren}</span><span className="shrink-0">{tl2(plan.priceTl * newChildren)} TL</span></li>
+            )}
+            {count === 0 && <li className="text-gray-400">Henüz çocuk seçilmedi</li>}
+          </ul>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between text-gray-600"><dt>Ara toplam (KDV hariç)</dt><dd>{tl2(net)} TL</dd></div>
             <div className="flex justify-between text-gray-600"><dt>KDV (%20)</dt><dd>{tl2(kdv)} TL</dd></div>

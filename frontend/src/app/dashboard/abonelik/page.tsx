@@ -17,8 +17,12 @@ export default async function SubscriptionPage() {
   if (!parent) redirect("/dashboard");
 
   const [billing, seats] = await Promise.all([getParentBillingStatus(parent.id), listUnusedChildSeats(parent.id)]);
-  const pairedCount = billing.children.length;
-  const unpaidCount = billing.children.filter((c) => !c.active).length;
+  const children = billing.children.map((c) => ({
+    id: c.childId,
+    name: c.displayName,
+    active: c.active,
+    expiresAt: c.expiresAt ? new Date(c.expiresAt).toISOString() : null,
+  }));
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -28,7 +32,7 @@ export default async function SubscriptionPage() {
       </div>
 
       <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white" />}>
-        <CheckoutCard pairedCount={pairedCount} unpaidCount={unpaidCount} pendingSeats={seats.length} />
+        <CheckoutCard paired={children} pendingSeats={seats.length} />
       </Suspense>
 
       <details className="rounded-2xl border border-gray-100 bg-white p-5 text-sm text-gray-700">

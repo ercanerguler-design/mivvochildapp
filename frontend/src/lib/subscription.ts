@@ -244,19 +244,6 @@ export async function activateChildPlan(params: { parentId: string; childId: str
   return { expiresAt };
 }
 
-/**
- * Which paired children a payment for `count` children covers: children without a plan first,
- * then those whose plan ends soonest. Whatever is left over waits for a new phone to be paired.
- */
-export async function pickChildrenToCover(parentId: string, count: number) {
-  const children = await listChildPlans(parentId);
-  const order = [...children].sort((a, b) => {
-    if (a.active !== b.active) return a.active ? 1 : -1;
-    return (a.expiresAt?.getTime() ?? 0) - (b.expiresAt?.getTime() ?? 0);
-  });
-  return order.slice(0, Math.max(0, count)).map((c) => ({ id: c.childId }));
-}
-
 /** Stores paid periods for children that are not paired yet (one row per child). */
 export async function addChildSeats(params: { parentId: string; count: number; days: number; amountTl: number; reason: string }) {
   await ensureBillingTables();
