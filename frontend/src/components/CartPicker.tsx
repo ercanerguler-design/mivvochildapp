@@ -14,18 +14,18 @@ type Props = {
   initialPlan: PlanId;
   initialCount: number;
   signedIn: boolean;
-  /** Names of the signed-in parent's paired children (empty for visitors). */
-  kids: string[];
+  /** Number of the signed-in parent's paired children (0 for visitors). */
+  pairedCount: number;
   locale: Locale;
 };
 
 /** Plan and child-count picker of the public cart, with the order summary. */
-export function CartPicker({ initialPlan, initialCount, signedIn, kids, locale }: Props) {
+export function CartPicker({ initialPlan, initialCount, signedIn, pairedCount, locale }: Props) {
   const en = locale === "en";
   const t = (tr: string, eng: string) => (en ? eng : tr);
   const TL = en ? "TRY" : "TL";
   const planName = (id: PlanId) => (en ? PLANS[id].nameEn : PLANS[id].name);
-  const max = Math.max(MAX_CART_CHILDREN, kids.length);
+  const max = Math.max(MAX_CART_CHILDREN, pairedCount);
   const [planId, setPlanId] = useState<PlanId>(initialPlan);
   const [count, setCount] = useState(Math.min(Math.max(1, initialCount), max));
   const plan = PLANS[planId];
@@ -33,7 +33,7 @@ export function CartPicker({ initialPlan, initialCount, signedIn, kids, locale }
   const net = Math.round((total / (1 + KDV_RATE)) * 100) / 100;
   const kdv = Math.round((total - net) * 100) / 100;
 
-  const checkout = `/dashboard/ayarlar?plan=${plan.slug}&adet=${count}#abonelik`;
+  const checkout = `/dashboard/abonelik?plan=${plan.slug}&adet=${count}`;
   const next = signedIn ? checkout : `/giris?next=${encodeURIComponent(checkout)}`;
   const monthlyEquivalent = Math.round(PLANS.yearly.priceTl / 12);
 
@@ -73,10 +73,7 @@ export function CartPicker({ initialPlan, initialCount, signedIn, kids, locale }
           </div>
           <p className="text-sm text-gray-600">{t("Her çocuk için ayrı koruma", "Separate protection for each child")}: {count} × {formatTl(plan.priceTl)} {TL}</p>
         </div>
-        {kids.length > 0 && <p className="mt-2 text-sm text-gray-700">{t("Eşleştirilmiş çocuklarınız", "Your paired children")}: {kids.join(", ")}</p>}
-        {kids.length > 0 && count > kids.length && (
-          <p className="mt-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{t(`Şu an ${kids.length} çocuğunuz eşleştirilmiş. Diğer çocuklarınızın telefonunu eşleştirdikten sonra onlar için de ödeme yapabilirsiniz.`, `You have ${kids.length} paired child(ren). Pair your other children's phones to pay for them too.`)}</p>
-        )}
+        <p className="mt-2 text-xs text-gray-500">{t("Telefonu henüz eşleştirilmemiş çocuğunuzun aboneliği, eşleştirdiğiniz gün başlar.", "For a child whose phone is not paired yet, the subscription starts on the day you pair it.")}</p>
 
         <ul className="mt-6 grid gap-1.5 border-t border-gray-100 pt-5 text-sm text-gray-600 sm:grid-cols-2">
           <li>✓ {t("9 risk kategorisinde sürekli koruma", "Continuous protection in 9 risk categories")}</li>

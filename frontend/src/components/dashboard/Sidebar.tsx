@@ -13,14 +13,16 @@ import {
   LogOut,
   BarChart3,
   Smartphone,
+  CreditCard,
 } from "lucide-react";
 
-const navItems = [
+export const navItems = [
   { href: "/dashboard", key: "overview", icon: LayoutDashboard },
   { href: "/dashboard/uyarilar", key: "alerts", icon: Bell },
   { href: "/dashboard/sosyal-medya", key: "social", icon: Smartphone },
   { href: "/dashboard/cocuklar", key: "children", icon: Users },
   { href: "/dashboard/raporlar", key: "reports", icon: BarChart3 },
+  { href: "/dashboard/abonelik", key: "subscription", icon: CreditCard },
   { href: "/dashboard/ayarlar", key: "settings", icon: Settings },
 ];
 
@@ -29,12 +31,12 @@ export function Sidebar({ locale }: { locale: Locale }) {
   const text = t(locale);
 
   return (
-    <aside className="hidden md:flex flex-col w-60 bg-white border-r border-gray-100 min-h-screen">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-gray-100 bg-white md:flex">
       <div className="flex items-center gap-2 px-6 h-16 border-b border-gray-100">
         <MivvoLogo size={26} textClassName="text-lg" />
       </div>
 
-      <nav className="flex-1 px-3 py-6 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-6">
         {navItems.map((item) => {
           const isActive =
             item.href === "/dashboard"

@@ -76,6 +76,22 @@ async function ensureBillingTables() {
   await db.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS idx_child_plans_parent ON child_plans (parent_id)");
   await db.$executeRawUnsafe("ALTER TABLE parent_subscription_ledger ADD COLUMN IF NOT EXISTS child_id TEXT");
 
+  // Paid periods for children whose phone is not paired yet. The next child the parent pairs takes
+  // the oldest unused one, so a parent can buy for two children before setting up the second phone.
+  await db.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS parent_child_seats (
+      id TEXT PRIMARY KEY,
+      parent_id TEXT NOT NULL,
+      days INTEGER NOT NULL,
+      amount_tl INTEGER NOT NULL,
+      reason TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      used_child_id TEXT,
+      used_at TIMESTAMPTZ
+    )
+  `);
+  await db.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS idx_parent_child_seats_parent ON parent_child_seats (parent_id, used_child_id)");
+
   billingTableReady = true;
 }
 
@@ -226,6 +242,58 @@ export async function activateChildPlan(params: { parentId: string; childId: str
     params.childId
   );
   return { expiresAt };
+}
+
+/**
+ * Which paired children a payment for `count` children covers: children without a plan first,
+ * then those whose plan ends soonest. Whatever is left over waits for a new phone to be paired.
+ */
+export async function pickChildrenToCover(parentId: string, count: number) {
+  const children = await listChildPlans(parentId);
+  const order = [...children].sort((a, b) => {
+    if (a.active !== b.active) return a.active ? 1 : -1;
+    return (a.expiresAt?.getTime() ?? 0) - (b.expiresAt?.getTime() ?? 0);
+  });
+  return order.slice(0, Math.max(0, count)).map((c) => ({ id: c.childId }));
+}
+
+/** Stores paid periods for children that are not paired yet (one row per child). */
+export async function addChildSeats(params: { parentId: string; count: number; days: number; amountTl: number; reason: string }) {
+  await ensureBillingTables();
+  for (let i = 0; i < Math.max(0, Math.floor(params.count)); i++) {
+    await db.$executeRawUnsafe(
+      `INSERT INTO parent_child_seats (id, parent_id, days, amount_tl, reason) VALUES ($1, $2, $3, $4, $5)`,
+      crypto.randomUUID(),
+      params.parentId,
+      params.days,
+      params.amountTl,
+      params.reason
+    );
+  }
+}
+
+/** Paid periods waiting for a child to be paired, as day counts (oldest first). */
+export async function listUnusedChildSeats(parentId: string) {
+  await ensureBillingTables();
+  return db.$queryRawUnsafe<{ days: number }[]>(`SELECT days FROM parent_child_seats WHERE parent_id = $1 AND used_child_id IS NULL ORDER BY created_at`, parentId);
+}
+
+/**
+ * Gives a newly paired child the oldest unused paid period of its parent, if any.
+ * The UPDATE claims one row atomically, so two pairings never take the same period.
+ */
+export async function claimChildSeat(parentId: string, childId: string) {
+  await ensureBillingTables();
+  const rows = await db.$queryRawUnsafe<{ days: number; amount_tl: number; reason: string | null }[]>(
+    `UPDATE parent_child_seats SET used_child_id = $2, used_at = NOW()
+      WHERE id = (SELECT id FROM parent_child_seats WHERE parent_id = $1 AND used_child_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+      RETURNING days, amount_tl, reason`,
+    parentId,
+    childId
+  );
+  const seat = rows[0];
+  if (!seat) return null;
+  return activateChildPlan({ parentId, childId, days: seat.days, amountTl: seat.amount_tl, actor: "seat", reason: seat.reason ?? "paid seat" });
 }
 
 export async function forgetChildPlan(childId: string) {

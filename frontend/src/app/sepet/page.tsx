@@ -25,9 +25,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   const locale = await getLocaleFromServerCookie();
   const en = locale === "en";
   const session = await auth();
-  const kids = session?.user?.id
-    ? await db.childProfile.findMany({ where: { isActive: true, parent: { userId: session.user.id } }, select: { displayName: true }, orderBy: { createdAt: "asc" } })
-    : [];
+  const pairedCount = session?.user?.id ? await db.childProfile.count({ where: { isActive: true, parent: { userId: session.user.id } } }) : 0;
 
   return (
     <>
@@ -41,9 +39,9 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
 
           <CartPicker
             initialPlan={planFromParam(sp.plan)}
-            initialCount={countFromParam(sp.adet, Math.max(1, kids.length))}
+            initialCount={countFromParam(sp.adet, Math.max(1, pairedCount))}
             signedIn={Boolean(session?.user)}
-            kids={kids.map((k) => k.displayName)}
+            pairedCount={pairedCount}
             locale={locale}
           />
 

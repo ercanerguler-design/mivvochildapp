@@ -15,7 +15,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Only same-site paths, e.g. /dashboard/ayarlar after "Ödemeye geç" in the cart.
+  // Only same-site paths, e.g. /dashboard/abonelik after "Ödemeye geç" in the cart.
   const nextParam = searchParams.get("next") ?? "";
   const afterLogin = /^\/(?!\/)[\w\-/?=&#]*$/.test(nextParam) ? nextParam : "/dashboard";
   const oauthError = searchParams.get("error");

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { verifyPairingCode } from "@/lib/pairing";
 import { createDeviceToken } from "@/lib/device-token";
+import { claimChildSeat } from "@/lib/subscription";
 
 const schema = z.object({
   pairCode: z.string().min(8),
@@ -134,6 +135,8 @@ export async function POST(req: NextRequest) {
   });
 
   notifyPaired(parent.fcmToken, parsed.data.displayName);
+  // A subscription bought before this phone was paired starts now.
+  await claimChildSeat(parent.id, child.id).catch((e) => console.error("[pair] claimChildSeat failed", e));
 
   return NextResponse.json(
     {

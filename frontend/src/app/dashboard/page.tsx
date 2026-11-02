@@ -167,7 +167,7 @@ export default async function DashboardPage() {
             <p className="font-bold">🔒 {unprotected.map((c) => c.displayName).join(", ")} için abonelik yok</p>
             <p className="mt-1 text-sm">Abonelik çocuk başınadır. Bu {unprotected.length > 1 ? "çocukların" : "çocuğun"} telefonundan gelen mesajlar şu an analiz edilmiyor ve uyarı gönderilmiyor.</p>
           </div>
-          <a href="/dashboard/ayarlar#abonelik" className="shrink-0 rounded-xl bg-rose-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-rose-700">Abonelik başlat</a>
+          <a href="/dashboard/abonelik" className="shrink-0 rounded-xl bg-rose-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-rose-700">Abonelik başlat</a>
         </div>
       )}
       {silent.map((s) => (

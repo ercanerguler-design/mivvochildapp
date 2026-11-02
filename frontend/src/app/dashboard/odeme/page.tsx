@@ -9,7 +9,7 @@ export const metadata = { title: "Güvenli ödeme", robots: { index: false } };
 /** Hosts PayTR's card form. The token comes from /api/payments/checkout and is single-use. */
 export default async function PaymentPage({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const { t } = await searchParams;
-  if (!t || !/^[A-Za-z0-9]{10,200}$/.test(t)) redirect("/dashboard/ayarlar");
+  if (!t || !/^[A-Za-z0-9]{10,200}$/.test(t)) redirect("/dashboard/abonelik");
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -20,7 +20,7 @@ export default async function PaymentPage({ searchParams }: { searchParams: Prom
             <Lock className="h-4 w-4" /> Kart bilgileriniz PayTR tarafından alınır, Mivvo&apos;ya iletilmez.
           </p>
         </div>
-        <Link href="/dashboard/ayarlar" className="text-sm font-semibold text-gray-500 hover:text-gray-800">
+        <Link href="/dashboard/abonelik" className="text-sm font-semibold text-gray-500 hover:text-gray-800">
           Vazgeç
         </Link>
       </div>

@@ -128,6 +128,7 @@ export const dictionary = {
       social: "Sosyal Medya",
       children: "Çocuklarım",
       reports: "Raporlar",
+      subscription: "Abonelik",
       settings: "Ayarlar",
       signOut: "Çıkış Yap",
     },
@@ -326,6 +327,7 @@ export const dictionary = {
       social: "Social Media",
       children: "Children",
       reports: "Reports",
+      subscription: "Subscription",
       settings: "Settings",
       signOut: "Sign Out",
     },
@@ -422,4 +424,9 @@ export function replaceTemplate(template: string, values: Record<string, string 
   return Object.entries(values).reduce((output, [key, value]) => {
     return output.replace(`{{${key}}}`, String(value));
   }, template);
+}
+
+/** Remembers the chosen language for a year (read by the server on every page). */
+export function setLocaleCookie(next: Locale) {
+  document.cookie = `mivvo_locale=${next}; Path=/; Max-Age=31536000; SameSite=Lax`;
 }

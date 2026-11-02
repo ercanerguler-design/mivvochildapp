@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { isPaytrConfigured, verifyNotification } from "@/lib/paytr";
 import { findPaymentByConversationId, settlePayment } from "@/lib/payments";
-import { activateChildPlan, activateParentUnlimitedPlan } from "@/lib/subscription";
+import { activateChildPlan, activateParentUnlimitedPlan, addChildSeats } from "@/lib/subscription";
 import { recordSystemEvent } from "@/lib/system-events";
 
 /**
@@ -46,12 +46,15 @@ export async function POST(req: NextRequest) {
   if (firstSettle) {
     const childIds = (payment.child_ids ?? "").split(",").filter(Boolean);
     const reason = `paytr:${n.merchantOid}${n.testMode ? ":test" : ""}`;
-    if (childIds.length > 0) {
-      // Price is per child: each paid child gets its own 30 days; revenue is split across them.
-      const share = n.testMode ? 0 : Math.round(payment.amount_tl / childIds.length);
+    const seats = payment.extra_seats ?? 0;
+    if (childIds.length > 0 || seats > 0) {
+      // Price is per child: each paid child gets its own period; revenue is split across them.
+      // Children not paired yet get a stored period that starts when their phone is paired.
+      const share = n.testMode ? 0 : Math.round(payment.amount_tl / (childIds.length + seats));
       for (const childId of childIds) {
         await activateChildPlan({ parentId: payment.parent_id, childId, days: payment.days, amountTl: share, actor: "paytr", reason });
       }
+      if (seats > 0) await addChildSeats({ parentId: payment.parent_id, count: seats, days: payment.days, amountTl: share, reason });
     } else {
       // Payments started before per-child pricing cover the whole account.
       await activateParentUnlimitedPlan({ parentId: payment.parent_id, days: payment.days, amountTl: n.testMode ? 0 : payment.amount_tl, actor: "paytr", reason });

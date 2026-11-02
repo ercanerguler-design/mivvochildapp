@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cardPaymentsAvailable, getIframeToken, newMerchantOid } from "@/lib/paytr";
 import { attachToken, createPendingPayment, settlePayment } from "@/lib/payments";
-import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS, YEARLY_PLAN_DAYS, YEARLY_PLAN_TL } from "@/lib/subscription";
+import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS, YEARLY_PLAN_DAYS, YEARLY_PLAN_TL, pickChildrenToCover } from "@/lib/subscription";
 import { SITE_URL } from "@/lib/site";
 import { CHECKOUT_CONSENTS, recordConsents } from "@/lib/consents";
 
@@ -16,7 +16,9 @@ const schema = z.object({
   address: z.string().trim().min(5).max(200),
   acceptSale: z.literal(true),
   // Pricing is per child: the parent picks which children to pay for.
-  childIds: z.array(z.string().cuid()).min(1).max(20),
+  // Number of children to pay for. The server decides which paired children get it (no names are
+  // sent from the browser or to the payment provider); the rest wait for a phone to be paired.
+  count: z.number().int().min(1).max(20),
   plan: z.enum(["monthly", "yearly"]).default("monthly"),
 });
 
@@ -52,28 +54,27 @@ export async function POST(req: NextRequest) {
   });
   if (!user?.parentProfile || !user.email) return NextResponse.json({ error: "Ebeveyn profili bulunamadı." }, { status: 404 });
 
-  const children = await db.childProfile.findMany({
-    where: { id: { in: [...new Set(parsed.data.childIds)] }, parentId: user.parentProfile.id, isActive: true },
-    select: { id: true, displayName: true },
-  });
-  if (children.length === 0) return NextResponse.json({ error: "Ödeme yapılacak çocuğu seçin." }, { status: 400 });
+  const units = parsed.data.count;
+  const children = await pickChildrenToCover(user.parentProfile.id, units);
+  const seats = units - children.length;
 
   const terms = PLAN_TERMS[parsed.data.plan];
   const days = terms.days;
-  const amountTl = terms.priceTl * children.length;
+  const amountTl = terms.priceTl * units;
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
   if (!ip) return NextResponse.json({ error: "Ödeme başlatılamadı. Lütfen tekrar deneyin." }, { status: 400 });
 
   await recordConsents(user.id, CHECKOUT_CONSENTS, { ip, userAgent: req.headers.get("user-agent") ?? undefined });
 
   const merchantOid = newMerchantOid();
-  const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days, conversationId: merchantOid, childIds: children.map((c) => c.id), provider: "paytr" });
+  const payment = await createPendingPayment({ parentId: user.parentProfile.id, amountTl, days, conversationId: merchantOid, childIds: children.map((c) => c.id), extraSeats: seats, provider: "paytr" });
   const phone = normalizePhone(parsed.data.phone);
 
   const result = await getIframeToken({
     merchantOid,
     email: user.email,
-    items: children.map((c) => ({ name: `Mivvo ${terms.name} (${days} gün) - ${c.displayName}`, amountTl: terms.priceTl })),
+    // Basket lines carry no child names: "Mivvo Yıllık Abonelik (365 gün) - Çocuk 1".
+    items: Array.from({ length: units }, (_, i) => ({ name: `Mivvo ${terms.name} (${days} gün) - Çocuk ${i + 1}`, amountTl: terms.priceTl })),
     userIp: ip,
     userName: parsed.data.fullName,
     userAddress: `${parsed.data.address} ${parsed.data.city}`.slice(0, 400),

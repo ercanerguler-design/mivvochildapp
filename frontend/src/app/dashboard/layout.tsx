@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { TopBar } from "@/components/dashboard/TopBar";
 import { auth } from "@/lib/auth";
 import { hasCurrentConsents } from "@/lib/consents";
 import { t } from "@/lib/i18n";
@@ -26,18 +27,14 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar locale={locale} />
-      <div className="flex-1 flex flex-col">
-        {/* Top bar */}
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6">
-          <h1 className="text-base font-semibold text-gray-800">{text.dashboard.panelTitle}</h1>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">{session.user.email}</span>
-            <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-sm">
-              {session.user.name?.charAt(0).toUpperCase() ?? text.dashboard.parentDefaultName.charAt(0)}
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 p-6">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar
+          locale={locale}
+          title={text.dashboard.panelTitle}
+          email={session.user.email ?? ""}
+          initial={session.user.name?.charAt(0).toUpperCase() ?? text.dashboard.parentDefaultName.charAt(0)}
+        />
+        <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

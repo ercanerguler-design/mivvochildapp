@@ -312,37 +312,6 @@ export async function LandingPage({ locale }: { locale: Locale }) {
           </div>
         </section>
 
-        {/* DOWNLOAD */}
-        <section id="indir" className="scroll-mt-20 py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <SectionTitle title={c.download.title} />
-            <div className="grid gap-6 lg:grid-cols-[1fr_1fr_auto]">
-              <div className="flex flex-col rounded-3xl bg-gradient-to-br from-brand-600 to-fuchsia-600 p-8 text-white">
-                <Smartphone className="h-8 w-8 text-white/80" />
-                <h3 className="mt-4 font-display text-2xl font-black">{c.download.parentTitle}</h3>
-                <p className="mt-2 flex-1 text-white/85">{c.download.parentDesc}</p>
-                <a href={SITE.parentPlayUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex w-fit items-center gap-3 rounded-xl bg-black px-5 py-3 transition-transform hover:-translate-y-0.5">
-                  <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true"><path fill="#34A853" d="M3.6 1.8 13.8 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" /><path fill="#FBBC04" d="m17.2 15.4-3.4-3.4 3.4-3.4 4 2.3c1.1.6 1.1 1.6 0 2.2l-4 2.3Z" /><path fill="#EA4335" d="M17.2 15.4 13.8 12 3.6 22.2c.4.2.9.2 1.4-.1l12.2-6.7Z" /><path fill="#4285F4" d="M17.2 8.6 5 1.9c-.5-.3-1-.3-1.4-.1L13.8 12l3.4-3.4Z" /></svg>
-                  <span className="text-left leading-tight"><span className="block text-[10px] font-medium text-white/70">{c.download.getItOn}</span><span className="text-lg font-bold">Google Play</span></span>
-                </a>
-              </div>
-              <div className="flex flex-col rounded-3xl bg-gradient-to-br from-coral-400 to-rose-500 p-8 text-white">
-                <Smartphone className="h-8 w-8 text-white/80" />
-                <h3 className="mt-4 font-display text-2xl font-black">{c.download.childTitle}</h3>
-                <p className="mt-2 flex-1 text-white/90">{c.download.childDesc}</p>
-                <Link href="/indir/cocuk" className="mt-6 inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-rose-600 transition-transform hover:-translate-y-0.5">
-                  <Download className="h-5 w-5" /> {c.download.childCta}
-                </Link>
-                <p className="mt-3 text-xs text-white/80">{c.download.childNote}</p>
-              </div>
-              <div className="hidden flex-col items-center justify-center rounded-3xl p-6 ring-1 ring-gray-200 lg:flex">
-                <div className="h-40 w-40 overflow-hidden rounded-2xl [&>svg]:h-full [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: qrSvg }} role="img" aria-label="QR: mivvo.org/indir" />
-                <p className="mt-3 max-w-40 text-center text-xs font-medium text-gray-500">{c.download.qr}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* FAQ */}
         <section id="sss" className="scroll-mt-20 bg-gray-50 py-20 sm:py-28">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -371,6 +340,40 @@ export async function LandingPage({ locale }: { locale: Locale }) {
             <Link href="/kayit" className="relative mt-9 inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-base font-bold text-brand-700 shadow-xl transition-transform hover:-translate-y-0.5">
               {c.cta.button} <ArrowRight className="h-5 w-5" />
             </Link>
+          </div>
+        </section>
+        {/* DOWNLOAD: compact band just above the footer */}
+        <section id="indir" className="scroll-mt-20 border-t border-gray-100 bg-gray-50 py-14">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <h2 className="text-center font-display text-2xl font-black tracking-tight text-gray-950">{c.download.title}</h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+              <div className="flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-gray-200">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600"><Smartphone className="h-5 w-5" /></span>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900">{c.download.parentTitle}</h3>
+                  <p className="mt-1 text-sm text-gray-600">{c.download.parentDesc}</p>
+                  <a href={SITE.parentPlayUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2.5 rounded-lg bg-gray-950 px-3.5 py-2 text-white transition-colors hover:bg-gray-800">
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true"><path fill="#34A853" d="M3.6 1.8 13.8 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" /><path fill="#FBBC04" d="m17.2 15.4-3.4-3.4 3.4-3.4 4 2.3c1.1.6 1.1 1.6 0 2.2l-4 2.3Z" /><path fill="#EA4335" d="M17.2 15.4 13.8 12 3.6 22.2c.4.2.9.2 1.4-.1l12.2-6.7Z" /><path fill="#4285F4" d="M17.2 8.6 5 1.9c-.5-.3-1-.3-1.4-.1L13.8 12l3.4-3.4Z" /></svg>
+                    <span className="text-left leading-tight"><span className="block text-[9px] font-medium text-white/70">{c.download.getItOn}</span><span className="text-sm font-bold">Google Play</span></span>
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-gray-200">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-500"><Smartphone className="h-5 w-5" /></span>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900">{c.download.childTitle}</h3>
+                  <p className="mt-1 text-sm text-gray-600">{c.download.childDesc}</p>
+                  <Link href="/indir/cocuk" className="mt-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-bold text-gray-900 transition-colors hover:bg-gray-50">
+                    <Download className="h-4 w-4" /> {c.download.childCta}
+                  </Link>
+                  <p className="mt-2 text-xs text-gray-500">{c.download.childNote}</p>
+                </div>
+              </div>
+              <div className="hidden flex-col items-center justify-center rounded-2xl bg-white p-4 ring-1 ring-gray-200 md:flex">
+                <div className="h-24 w-24 overflow-hidden rounded-lg [&>svg]:h-full [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: qrSvg }} role="img" aria-label="QR: mivvo.org/indir" />
+                <p className="mt-2 max-w-28 text-center text-[11px] font-medium text-gray-500">{c.download.qr}</p>
+              </div>
+            </div>
           </div>
         </section>
       </main>
