@@ -37,7 +37,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <div className="mt-5 space-y-2 text-sm">
               <a href={SITE.phoneHref} className={`flex items-center gap-2 ${link}`}><Phone className="h-4 w-4" />{SITE.phoneDisplay}</a>
               <a href={`mailto:${SITE.email}`} className={`flex items-center gap-2 ${link}`}><Mail className="h-4 w-4" />{SITE.email}</a>
-              <a href={whatsappUrl(locale)} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 ${link}`}><WhatsAppIcon className="h-4 w-4" />{en ? "WhatsApp Support" : "WhatsApp Destek"}: {SITE.whatsappDisplay}</a>
+              <a href={whatsappUrl(locale)} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 ${link}`}><WhatsAppIcon className="h-4 w-4 shrink-0" /><span>{en ? "WhatsApp Support" : "WhatsApp Destek"}: <span className="whitespace-nowrap">{SITE.whatsappDisplay}</span></span></a>
               <p className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" />{fullAddress}</p>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         </div>
         <PaymentLogos className="mt-10" />
         <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Mivvo · {SITE.legal.name}. {f.rights}</p>
+          <p>© {new Date().getFullYear()} Mivvo · {SITE.legal.name.replace(/\.$/, "")}. {f.rights}</p>
           <p className="text-gray-500">{f.help}</p>
         </div>
       </div>
