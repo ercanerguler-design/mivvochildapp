@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Mail, MapPin, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { PaymentLogos } from "@/components/PaymentLogos";
 import { MivvoLogo } from "@/components/common/MivvoLogo";
 import type { Locale } from "@/lib/i18n";
-import { SITE } from "@/lib/site";
+import { SITE, fullAddress, legalIdentity } from "@/lib/site";
 import { landingContent } from "./content";
 
 export function SiteFooter({ locale }: { locale: Locale }) {
@@ -20,9 +21,10 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <MivvoLogo size={30} textClassName="text-2xl text-white" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed">{f.tagline}</p>
             <div className="mt-5 space-y-2 text-sm">
+              <a href={SITE.phoneHref} className={`flex items-center gap-2 ${link}`}><Phone className="h-4 w-4" />{SITE.phoneDisplay}</a>
               <a href={`mailto:${SITE.email}`} className={`flex items-center gap-2 ${link}`}><Mail className="h-4 w-4" />{SITE.email}</a>
               <a href={`https://wa.me/${SITE.whatsapp}`} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 ${link}`}><MessageCircle className="h-4 w-4" />WhatsApp</a>
-              <p className="flex items-center gap-2"><MapPin className="h-4 w-4" />{SITE.address.city}, Türkiye</p>
+              <p className="flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0" />{fullAddress}</p>
             </div>
           </div>
           <div>
@@ -65,6 +67,10 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <Link key={href} href={href} className={link}>{label}</Link>
           ))}
         </nav>
+        <PaymentLogos className="mt-8" />
+        <p className="mt-4 text-xs leading-5 text-gray-500">
+          {[SITE.legal.name, fullAddress, ...legalIdentity()].join(" · ")}
+        </p>
         <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Mivvo · {SITE.legal.name}. {f.rights}</p>
           <p className="text-gray-500">{f.help}</p>

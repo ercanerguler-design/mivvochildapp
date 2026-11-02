@@ -5,7 +5,6 @@ import { CheckoutCard } from "@/components/dashboard/CheckoutCard";
 import { SITE } from "@/lib/site";
 import { DeleteAccountCard } from "@/components/dashboard/DeleteAccountCard";
 
-const MONTHLY_PRICE_TL = SITE.monthlyPriceTl;
 
 type SettingsState = {
   id: string;
@@ -147,14 +146,8 @@ export default function SettingsPage() {
       </div>
 
       <div id="abonelik" className="scroll-mt-24" />
-      {data.cardPayments ? (
-        <CheckoutCard priceTl={MONTHLY_PRICE_TL} days={30} childPlans={data.billing?.children ?? []} />
-      ) : (
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-sm text-violet-900">
-          <p className="font-semibold">Aylık abonelik: çocuk başına {MONTHLY_PRICE_TL} TL (KDV dahil) · 30 gün</p>
-          <p className="mt-1">Her çocuk için ayrı abonelik gerekir (örneğin 2 çocuk için {MONTHLY_PRICE_TL * 2} TL). Ödemeler şu an havale/EFT ile alınmaktadır. Ödemenizi aşağıdaki hesaba yaptıktan sonra hangi çocuk(lar) için ödediğinizi WhatsApp veya e-posta ile bildirin; abonelik aynı gün aktif edilir. Kartla ödeme yakında.</p>
-        </div>
-      )}
+      {/* Card checkout is always shown; until PayTR is live the API answers with a bank-transfer hint. */}
+      <CheckoutCard childPlans={data.billing?.children ?? []} />
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 text-sm text-gray-700">
         <h3 className="text-lg font-semibold text-gray-900">Havale / EFT ile ödeme</h3>

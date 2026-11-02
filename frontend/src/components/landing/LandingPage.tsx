@@ -104,6 +104,13 @@ export async function LandingPage({ locale }: { locale: Locale }) {
         priceCurrency: "TRY",
         priceSpecification: { "@type": "UnitPriceSpecification", price: SITE.monthlyPriceTl, priceCurrency: "TRY", billingDuration: "P1M" },
       },
+      {
+        "@type": "Offer",
+        name: c.pricing.yearly.name,
+        price: String(SITE.yearlyPriceTl),
+        priceCurrency: "TRY",
+        priceSpecification: { "@type": "UnitPriceSpecification", price: SITE.yearlyPriceTl, priceCurrency: "TRY", billingDuration: "P1Y" },
+      },
     ],
   };
 
@@ -275,10 +282,10 @@ export async function LandingPage({ locale }: { locale: Locale }) {
 
         {/* PRICING */}
         <section id="fiyat" className="scroll-mt-20 bg-gray-50 py-20 sm:py-28">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionTitle title={c.pricing.title} sub={c.pricing.sub} />
-            <div className="grid gap-6 md:grid-cols-2">
-              {[c.pricing.trial, c.pricing.monthly].map((plan, i) => {
+            <div className="grid gap-6 md:grid-cols-3">
+              {[c.pricing.trial, c.pricing.monthly, c.pricing.yearly].map((plan, i) => {
                 const featured = i === 1;
                 return (
                   <div key={plan.name} className={`relative flex flex-col rounded-3xl p-8 ${featured ? "bg-gray-950 text-white shadow-2xl shadow-brand-700/20" : "bg-white ring-1 ring-gray-200"}`}>

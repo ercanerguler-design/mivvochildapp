@@ -5,6 +5,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const FREE_TRIAL_DAYS = Number(process.env.FREE_TRIAL_DAYS ?? process.env.NEXT_PUBLIC_FREE_TRIAL_DAYS ?? "3");
 export const PAID_UNLIMITED_DAYS = Number(process.env.PAID_UNLIMITED_DAYS ?? "30");
 export const MONTHLY_PLAN_TL = Number(process.env.MONTHLY_PLAN_TL ?? process.env.NEXT_PUBLIC_MONTHLY_PLAN_TL ?? "399");
+export const YEARLY_PLAN_TL = Number(process.env.YEARLY_PLAN_TL ?? process.env.NEXT_PUBLIC_YEARLY_PLAN_TL ?? "3990");
+export const YEARLY_PLAN_DAYS = 365;
 
 let billingTableReady = false;
 

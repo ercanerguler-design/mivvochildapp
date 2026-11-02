@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, Lock, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
+import { PaymentLogos } from "@/components/PaymentLogos";
+import { PLANS, YEARLY_SAVING_TL, countFromParam, formatTl, planFromParam, type PlanId } from "@/lib/plans";
 
 export type ChildBilling = { childId: string; displayName: string; active: boolean; expiresAt?: string | null; daysRemaining: number; coveredBy?: "account" | "child" | null };
 
 type Props = {
-  priceTl: number;
-  days: number;
   /** Each child is billed separately; the parent picks who to pay for. */
   childPlans: ChildBilling[];
 };
@@ -22,7 +22,12 @@ const RESULT = {
   inceleme: { tone: "bg-amber-50 text-amber-800 ring-amber-200", icon: Clock, text: "Ödemeniz banka tarafından inceleniyor. Onaylanınca aboneliğiniz açılır; sorunuz olursa bize yazın." },
 } as const;
 
-export function CheckoutCard({ priceTl, days, childPlans }: Props) {
+export function CheckoutCard({ childPlans }: Props) {
+  const params = useSearchParams();
+  // The cart passes ?plan=yillik&adet=2.
+  const [planId, setPlanId] = useState<PlanId>(() => planFromParam(params.get("plan")));
+  const wanted = countFromParam(params.get("adet"), 0);
+  const { priceTl, days } = PLANS[planId];
   const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
   // Children without an active plan are selected by default.
   const [selected, setSelected] = useState<string[]>(() => {
@@ -34,7 +39,7 @@ export function CheckoutCard({ priceTl, days, childPlans }: Props) {
   const [acceptSale, setAcceptSale] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const r = useSearchParams().get("odeme");
+  const r = params.get("odeme");
   const result = r === "basarili" || r === "basarisiz" || r === "inceleme" || r === "islemde" ? r : null;
 
   const valid = selected.length > 0 && form.fullName.trim().split(/\s+/).length >= 2 && form.phone.replace(/\D/g, "").length >= 10 && form.city.trim().length >= 2 && form.address.trim().length >= 5 && acceptSale;
@@ -43,7 +48,7 @@ export function CheckoutCard({ priceTl, days, childPlans }: Props) {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, acceptSale, childIds: selected }) });
+      const res = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, acceptSale, childIds: selected, plan: planId }) });
       const json = await res.json();
       if (!res.ok || !json.paymentPageUrl) throw new Error(json.error ?? "Ödeme başlatılamadı.");
       window.location.href = json.paymentPageUrl;
@@ -61,9 +66,20 @@ export function CheckoutCard({ priceTl, days, childPlans }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Abonelik</h3>
-          <p className="text-sm text-gray-500">Çocuk başına {priceTl} TL / {days} gün · Taahhüt yok, otomatik yenileme yok.</p>
+          <p className="text-sm text-gray-500">Çocuk başına · Taahhüt yok, otomatik yenileme yok.</p>
         </div>
         <CreditCard className="h-6 w-6 text-violet-600" />
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Abonelik planı">
+        {(["monthly", "yearly"] as const).map((id) => (
+          <label key={id} className={`relative cursor-pointer rounded-xl border-2 p-3 text-sm ${planId === id ? "border-violet-600 bg-violet-50" : "border-gray-200 hover:border-gray-300"}`}>
+            <input type="radio" name="plan" className="sr-only" checked={planId === id} onChange={() => setPlanId(id)} />
+            {id === "yearly" && YEARLY_SAVING_TL > 0 && <span className="absolute -top-2.5 right-3 rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white">{formatTl(YEARLY_SAVING_TL)} TL kazanç</span>}
+            <span className="block font-semibold text-gray-900">{PLANS[id].name}</span>
+            <span className="text-gray-600">{formatTl(PLANS[id].priceTl)} TL · {PLANS[id].days} gün</span>
+          </label>
+        ))}
       </div>
 
       {Banner && (
@@ -89,13 +105,16 @@ export function CheckoutCard({ priceTl, days, childPlans }: Props) {
                   </span>
                 </span>
               </span>
-              <span className="font-semibold text-gray-900">{priceTl} TL</span>
+              <span className="font-semibold text-gray-900">{formatTl(priceTl)} TL</span>
             </label>
           ))}
-          <p className="text-xs text-gray-500">Aboneliği devam eden bir çocuk için ödeme yaparsanız 30 gün mevcut sürenin üzerine eklenir.</p>
+          {wanted > childPlans.length && (
+            <p className="rounded-lg bg-amber-50 p-2.5 text-xs text-amber-800">Sepette {wanted} çocuk seçtiniz; şu an {childPlans.length} çocuğunuz eşleştirilmiş. Diğer çocuklarınızın telefonunu eşleştirdikten sonra onlar için de ödeme yapabilirsiniz.</p>
+          )}
+          <p className="text-xs text-gray-500">Aboneliği devam eden bir çocuk için ödeme yaparsanız {days} gün mevcut sürenin üzerine eklenir.</p>
           <p className="flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
             <span>Toplam ({selected.length} çocuk, KDV dahil)</span>
-            <span>{total} TL</span>
+            <span>{formatTl(total)} TL</span>
           </p>
         </div>
       )}
@@ -136,8 +155,9 @@ export function CheckoutCard({ priceTl, days, childPlans }: Props) {
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
       >
         <Lock className="h-4 w-4" />
-        {busy ? "Güvenli ödeme sayfası açılıyor…" : `Kartla Öde · ${total} TL`}
+        {busy ? "Güvenli ödeme sayfası açılıyor…" : `Kartla Öde · ${formatTl(total)} TL`}
       </button>
+      <PaymentLogos className="justify-center" />
       <p className="text-center text-xs text-gray-400">Ödemeler PayTR güvencesiyle alınır. Kart bilgileriniz Mivvo&apos;ya iletilmez.</p>
     </div>
   );

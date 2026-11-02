@@ -11,6 +11,9 @@ export type DemoSample = {
 };
 
 const price = SITE.monthlyPriceTl;
+const yearly = SITE.yearlyPriceTl.toLocaleString("tr-TR");
+const yearlyMonth = Math.round(SITE.yearlyPriceTl / 12);
+const saving = (SITE.monthlyPriceTl * 12 - SITE.yearlyPriceTl).toLocaleString("tr-TR");
 const trial = SITE.trialDays;
 
 export const landingContent = {
@@ -124,7 +127,8 @@ export const landingContent = {
       title: "Basit ve şeffaf fiyat",
       sub: "Taahhüt yok, istediğiniz zaman iptal edin.",
       trial: { name: "Ücretsiz Deneme", price: "0 TL", period: `${trial} gün`, cta: "Hemen Başla", href: "/kayit", features: ["Tüm özellikler açık", "Anında bildirimler", "Yapay zeka koçu", "Kredi kartı gerekmez"] },
-      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay · çocuk başına", cta: "Sepete Ekle", href: "/sepet", features: ["9 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
+      monthly: { badge: "En popüler", name: "Aylık Abonelik", price: `${price} TL`, period: "/ ay · çocuk başına", cta: "Sepete Ekle", href: "/sepet?plan=aylik", features: ["9 risk kategorisinde sürekli koruma", "Sınırsız uyarı ve bildirim", "Haftalık ve aylık raporlar", "Öncelikli WhatsApp desteği"] },
+      yearly: { badge: `${saving} TL kazanç`, name: "Yıllık Abonelik", price: `${yearly} TL`, period: "/ yıl · çocuk başına", cta: "Sepete Ekle", href: "/sepet?plan=yillik", features: [`Aylık yaklaşık ${yearlyMonth} TL`, "2 ay bedava", "Aylık planın tüm özellikleri", "Otomatik yenileme yok"] },
     },
     download: {
       title: "Uygulamaları indirin",
@@ -277,7 +281,8 @@ export const landingContent = {
       title: "Simple, transparent pricing",
       sub: "No commitment, cancel any time.",
       trial: { name: "Free Trial", price: "0 TRY", period: `${trial} days`, cta: "Start Now", href: "/kayit", features: ["All features unlocked", "Instant alerts", "AI coach", "No credit card"] },
-      monthly: { badge: "Most popular", name: "Monthly", price: `${price} TRY`, period: "/ month · per child", cta: "Add to Cart", href: "/sepet", features: ["Continuous protection in 9 categories", "Unlimited alerts", "Weekly and monthly reports", "Priority WhatsApp support"] },
+      monthly: { badge: "Most popular", name: "Monthly", price: `${price} TRY`, period: "/ month · per child", cta: "Add to Cart", href: "/sepet?plan=aylik", features: ["Continuous protection in 9 categories", "Unlimited alerts", "Weekly and monthly reports", "Priority WhatsApp support"] },
+      yearly: { badge: `Save ${saving} TRY`, name: "Yearly", price: `${yearly} TRY`, period: "/ year · per child", cta: "Add to Cart", href: "/sepet?plan=yillik", features: [`About ${yearlyMonth} TRY a month`, "2 months free", "Everything in Monthly", "No auto-renewal"] },
     },
     download: {
       title: "Get the apps",

@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cardPaymentsAvailable, getIframeToken, newMerchantOid } from "@/lib/paytr";
 import { attachToken, createPendingPayment, settlePayment } from "@/lib/payments";
-import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS } from "@/lib/subscription";
+import { MONTHLY_PLAN_TL, PAID_UNLIMITED_DAYS, YEARLY_PLAN_DAYS, YEARLY_PLAN_TL } from "@/lib/subscription";
 import { SITE_URL } from "@/lib/site";
 import { CHECKOUT_CONSENTS, recordConsents } from "@/lib/consents";
 
@@ -17,7 +17,14 @@ const schema = z.object({
   acceptSale: z.literal(true),
   // Pricing is per child: the parent picks which children to pay for.
   childIds: z.array(z.string().cuid()).min(1).max(20),
+  plan: z.enum(["monthly", "yearly"]).default("monthly"),
 });
+
+// Prices come from the server, never from the browser.
+const PLAN_TERMS = {
+  monthly: { name: "Aylık Abonelik", days: PAID_UNLIMITED_DAYS, priceTl: MONTHLY_PLAN_TL },
+  yearly: { name: "Yıllık Abonelik", days: YEARLY_PLAN_DAYS, priceTl: YEARLY_PLAN_TL },
+} as const;
 
 /** "0532 123 45 67" -> "05321234567" (PayTR wants a plain number, max 20 chars). */
 function normalizePhone(raw: string) {
@@ -31,7 +38,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Oturum açmanız gerekiyor." }, { status: 401 });
   if (!(await rateLimit(`checkout:${session.user.id}`, 10, 3600)).ok) return NextResponse.json(TOO_MANY, { status: 429 });
-  if (!cardPaymentsAvailable()) return NextResponse.json({ error: "Kartla ödeme şu an kullanılamıyor." }, { status: 503 });
+  if (!cardPaymentsAvailable()) return NextResponse.json({ error: "Kartla ödeme kısa süre içinde açılacak. Şimdilik aşağıdaki havale/EFT bilgileriyle ödeme yapabilirsiniz." }, { status: 503 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -51,8 +58,9 @@ export async function POST(req: NextRequest) {
   });
   if (children.length === 0) return NextResponse.json({ error: "Ödeme yapılacak çocuğu seçin." }, { status: 400 });
 
-  const days = PAID_UNLIMITED_DAYS;
-  const amountTl = MONTHLY_PLAN_TL * children.length;
+  const terms = PLAN_TERMS[parsed.data.plan];
+  const days = terms.days;
+  const amountTl = terms.priceTl * children.length;
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
   if (!ip) return NextResponse.json({ error: "Ödeme başlatılamadı. Lütfen tekrar deneyin." }, { status: 400 });
 
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
   const result = await getIframeToken({
     merchantOid,
     email: user.email,
-    items: children.map((c) => ({ name: `Mivvo Aylık Abonelik (${days} gün) - ${c.displayName}`, amountTl: MONTHLY_PLAN_TL })),
+    items: children.map((c) => ({ name: `Mivvo ${terms.name} (${days} gün) - ${c.displayName}`, amountTl: terms.priceTl })),
     userIp: ip,
     userName: parsed.data.fullName,
     userAddress: `${parsed.data.address} ${parsed.data.city}`.slice(0, 400),

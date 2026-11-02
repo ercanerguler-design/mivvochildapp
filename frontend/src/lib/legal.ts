@@ -1,5 +1,4 @@
-import { SITE } from "@/lib/site";
-import { cardPaymentsAvailable } from "@/lib/paytr";
+import { SITE, fullAddress, legalIdentity } from "@/lib/site";
 
 /**
  * Mivvo legal documents (Turkish). Facts here must match the code:
@@ -13,13 +12,13 @@ export type LegalDoc = { slug: string; title: string; short: string; description
 
 const C = SITE.legal;
 const company = C.name;
-const contactLine = `${company}, ${SITE.address.street}, ${SITE.address.city} · E-posta: ${SITE.email} · Telefon/WhatsApp: ${SITE.phoneDisplay}`;
+const contactLine = [`${company}, ${fullAddress}`, ...legalIdentity(), `E-posta: ${SITE.email}`, `Telefon: ${SITE.phoneDisplay}`, `WhatsApp: ${SITE.whatsappDisplay}`].join(" · ");
 const price = SITE.monthlyPriceTl;
+const yearly = SITE.yearlyPriceTl;
 const trial = SITE.trialDays;
-const cardPayments = cardPaymentsAvailable();
-const paymentMethods = cardPayments
-  ? "Ödeme, PayTR güvencesiyle kredi/banka kartıyla tek seferde (taksitsiz) veya havale/EFT ile alınır."
-  : "Ödeme havale/EFT ile alınır. Kartla ödeme seçeneği devreye alındığında bu formda ayrıca belirtilecektir.";
+const paymentMethods = "Ödeme, PayTR güvencesiyle kredi/banka kartıyla (Visa, Mastercard, Troy) tek seferde (taksitsiz) veya havale/EFT ile alınır.";
+// One sentence describing both plans, reused by the sales documents.
+const plansLine = `Aylık Abonelik: çocuk başına ${price} TL (KDV dahil), 30 gün. Yıllık Abonelik: çocuk başına ${yearly} TL (KDV dahil), 365 gün.`;
 
 const PROCESSORS = {
   head: ["Alıcı", "Amaç", "Konum"],
@@ -62,7 +61,7 @@ export const legalDocs: LegalDoc[] = [
         h: "1. Veri sorumlusu",
         blocks: [
           { p: `6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca kişisel verileriniz, veri sorumlusu sıfatıyla ${company} ("Mivvo", "biz") tarafından aşağıda açıklanan kapsamda işlenmektedir.` },
-          { p: `İletişim: ${contactLine}${C.mersis ? ` · MERSİS: ${C.mersis}` : ""}` },
+          { p: `İletişim: ${contactLine}` },
         ],
       },
       {
@@ -208,7 +207,7 @@ export const legalDocs: LegalDoc[] = [
     title: "Kullanım Koşulları ve Üyelik Sözleşmesi",
     short: "Kullanım Koşulları",
     description: "Mivvo web sitesi, Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarının kullanım koşulları.",
-    version: "1.3",
+    version: "1.4",
     updated: "2026-11-02",
     sections: [
       { h: "1. Taraflar ve kapsam", blocks: [{ p: `Bu sözleşme, ${company} ("Mivvo") ile Mivvo web sitesi (mivvo.org), Mivvo Ebeveyn ve Mivvo Çocuk uygulamalarını ("Hizmet") kullanmak üzere üye olan kişi ("Kullanıcı") arasındadır. Üye olarak bu koşulları, Gizlilik Politikası'nı ve KVKK Aydınlatma Metni'ni kabul etmiş sayılırsınız.` }] },
@@ -232,7 +231,7 @@ export const legalDocs: LegalDoc[] = [
       },
       {
         h: "6. Ücretler ve abonelik",
-        blocks: [{ p: `Yeni hesaplar için ilk ${trial} gün ücretsizdir; deneme süresi sonunda otomatik ücret alınmaz. Ücretli abonelik çocuk başınadır: eşleştirilen her çocuk için ${price} TL (KDV dahil) karşılığında o çocuk için 30 günlük kullanım sağlar ve kendiliğinden yenilenmez. Aboneliği bulunmayan çocuğun mesajları deneme süresi sonrasında analiz edilmez. Satın alma koşulları Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Formu'nda, iade koşulları İptal ve İade Politikası'nda yer alır.` }],
+        blocks: [{ p: `Yeni hesaplar için ilk ${trial} gün ücretsizdir; deneme süresi sonunda otomatik ücret alınmaz. Ücretli abonelik çocuk başınadır: eşleştirilen her çocuk için aylık plan ${price} TL (KDV dahil) karşılığında 30 günlük, yıllık plan ${yearly} TL (KDV dahil) karşılığında 365 günlük kullanım sağlar ve kendiliğinden yenilenmez. Aboneliği bulunmayan çocuğun mesajları deneme süresi sonrasında analiz edilmez. Satın alma koşulları Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Formu'nda, iade koşulları İptal ve İade Politikası'nda yer alır.` }],
       },
       {
         h: "7. Sorumluluğun sınırlandırılması",
@@ -251,20 +250,20 @@ export const legalDocs: LegalDoc[] = [
     title: "Ön Bilgilendirme Formu",
     short: "Ön Bilgilendirme",
     description: "Mesafeli Sözleşmeler Yönetmeliği uyarınca Mivvo aboneliği satın alımından önce tüketiciye sunulan ön bilgilendirme formu.",
-    version: "1.3",
+    version: "1.4",
     updated: "2026-11-02",
     sections: [
       {
         h: "1. Satıcı / hizmet sağlayıcı",
-        blocks: [{ ul: [`Unvan: ${company}`, `Adres: ${SITE.address.street}, ${SITE.address.city}`, `E-posta: ${SITE.email}`, `Telefon/WhatsApp: ${SITE.phoneDisplay}`, ...(C.mersis ? [`MERSİS No: ${C.mersis}`] : []), ...(C.taxOffice ? [`Vergi Dairesi / No: ${C.taxOffice}`] : [])] }],
+        blocks: [{ ul: [`Unvan: ${company}`, `Adres: ${fullAddress}`, ...legalIdentity(), `E-posta: ${SITE.email}`, `Telefon: ${SITE.phoneDisplay}`, `WhatsApp: ${SITE.whatsappDisplay}`] }],
       },
       {
         h: "2. Hizmetin temel nitelikleri",
-        blocks: [{ p: `Mivvo Aylık Abonelik: Ödeme tarihinden itibaren 30 gün boyunca Mivvo ebeveyn kontrol hizmetinden (mesaj risk analizi, anlık uyarılar, raporlar, ebeveyn paneli ve uygulamalar) sınırsız yararlanma hakkı. Hizmet elektronik ortamda sunulur; fiziksel teslimat yoktur.` }],
+        blocks: [{ p: `Mivvo Aylık veya Yıllık Abonelik: Ödeme tarihinden itibaren seçilen plana göre 30 veya 365 gün boyunca Mivvo ebeveyn kontrol hizmetinden (mesaj risk analizi, anlık uyarılar, raporlar, ebeveyn paneli ve uygulamalar) sınırsız yararlanma hakkı. Hizmet elektronik ortamda sunulur; fiziksel teslimat yoktur.` }],
       },
       {
         h: "3. Fiyat ve ödeme",
-        blocks: [{ ul: [`Bedel: çocuk başına ${price} TL (KDV dahil), 30 gün. Toplam bedel, ödeme ekranında seçtiğiniz çocuk sayısı ile çarpılarak gösterilir (ör. 2 çocuk için ${price * 2} TL). Başka bir masraf veya kargo ücreti yoktur.`, paymentMethods, "Abonelik kendiliğinden yenilenmez; süre sonunda yeniden ödeme yapmadığınız sürece ücret alınmaz."] }],
+        blocks: [{ ul: [`Bedel: ${plansLine} Toplam bedel, seçtiğiniz plan fiyatının çocuk sayısı ile çarpılmasıyla bulunur ve ödeme ekranında gösterilir (ör. 2 çocuk için aylık ${price * 2} TL, yıllık ${yearly * 2} TL). Başka bir masraf veya kargo ücreti yoktur.`, paymentMethods, "Abonelik kendiliğinden yenilenmez; süre sonunda yeniden ödeme yapmadığınız sürece ücret alınmaz."] }],
       },
       { h: "4. İfa", blocks: [{ p: "Abonelik, ödemenin onaylanmasıyla birlikte derhal etkinleşir ve hesabınızda süre bilgisi görüntülenir." }] },
       {
@@ -281,12 +280,12 @@ export const legalDocs: LegalDoc[] = [
     title: "Mesafeli Satış Sözleşmesi",
     short: "Mesafeli Satış",
     description: "6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca Mivvo abonelik satış sözleşmesi.",
-    version: "1.3",
+    version: "1.4",
     updated: "2026-11-02",
     sections: [
-      { h: "Madde 1 – Taraflar", blocks: [{ p: `SATICI: ${company}, ${SITE.address.street}, ${SITE.address.city}, ${SITE.email}, ${SITE.phoneDisplay}${C.mersis ? `, MERSİS: ${C.mersis}` : ""}.` }, { p: "ALICI: Mivvo üyelik kaydında ve ödeme sırasında bilgileri yer alan ebeveyn hesabı sahibi." }] },
-      { h: "Madde 2 – Konu", blocks: [{ p: "Bu sözleşmenin konusu, ALICI'nın mivvo.org üzerinden elektronik ortamda satın aldığı Mivvo Aylık Abonelik hizmetinin satışı ve ifasına ilişkin tarafların hak ve yükümlülükleridir. ALICI, satın alma öncesinde Ön Bilgilendirme Formu'nu okuyup onayladığını kabul eder." }] },
-      { h: "Madde 3 – Hizmet ve bedel", blocks: [{ ul: ["Hizmet: Mivvo Aylık Abonelik (30 gün), ALICI'nın ödeme ekranında seçtiği her çocuk için ayrı ayrı.", `Bedel: çocuk başına ${price} TL (KDV dahil); toplam bedel sipariş özetinde gösterilir.`, cardPayments ? "Ödeme yöntemi: Kredi/banka kartı (PayTR) veya havale/EFT." : "Ödeme yöntemi: Havale/EFT.", "İfa: Ödemenin onaylanmasıyla derhal, elektronik ortamda."] }] },
+      { h: "Madde 1 – Taraflar", blocks: [{ p: `SATICI: ${[company, fullAddress, ...legalIdentity(), `E-posta: ${SITE.email}`, `Telefon: ${SITE.phoneDisplay}`].join(", ")}.` }, { p: "ALICI: Mivvo üyelik kaydında ve ödeme sırasında bilgileri yer alan ebeveyn hesabı sahibi." }] },
+      { h: "Madde 2 – Konu", blocks: [{ p: "Bu sözleşmenin konusu, ALICI'nın mivvo.org üzerinden elektronik ortamda satın aldığı Mivvo Aylık veya Yıllık Abonelik hizmetinin satışı ve ifasına ilişkin tarafların hak ve yükümlülükleridir. ALICI, satın alma öncesinde Ön Bilgilendirme Formu'nu okuyup onayladığını kabul eder." }] },
+      { h: "Madde 3 – Hizmet ve bedel", blocks: [{ ul: ["Hizmet: Mivvo Aylık Abonelik (30 gün) veya Yıllık Abonelik (365 gün), ALICI'nın ödeme ekranında seçtiği her çocuk için ayrı ayrı.", `Bedel: ${plansLine} Toplam bedel sipariş özetinde gösterilir.`, "Ödeme yöntemi: Kredi/banka kartı (PayTR) veya havale/EFT.", "İfa: Ödemenin onaylanmasıyla derhal, elektronik ortamda."] }] },
       { h: "Madde 4 – Genel hükümler", blocks: [{ ul: ["SATICI, hizmeti Kullanım Koşulları'nda belirtilen nitelikte ve kesintisiz sunmak için gerekli özeni gösterir.", "Hizmetin; üçüncü taraf altyapı, işletim sistemi veya internet kesintileri nedeniyle geçici olarak sunulamaması halinde SATICI, makul süre içinde hizmeti yeniden sağlar. Uzun süreli kesintilerde kullanılmayan süre ALICI'ya ek süre olarak tanımlanabilir.", "Ödemenin banka veya ödeme kuruluşu tarafından herhangi bir nedenle gerçekleştirilmemesi halinde abonelik etkinleşmez."] }] },
       { h: "Madde 5 – Cayma hakkı", blocks: [{ p: "ALICI, sözleşmenin kurulmasından itibaren 14 gün içinde gerekçe göstermeksizin cayma hakkına sahiptir. Cayma bildirimi sce@scegrup.com adresine yapılır. SATICI, bildirimin kendisine ulaşmasından itibaren 14 gün içinde tahsil edilen bedelin tamamını ALICI'nın ödeme yaptığı yönteme iade eder." }] },
       { h: "Madde 6 – Kişisel veriler", blocks: [{ p: "ALICI'ya ait kişisel veriler, KVKK Aydınlatma Metni ve Gizlilik Politikası'na uygun olarak işlenir. Kart bilgileri yalnızca lisanslı ödeme kuruluşu PayTR tarafından işlenir ve SATICI'ya iletilmez." }] },
@@ -301,11 +300,11 @@ export const legalDocs: LegalDoc[] = [
     title: "İptal ve İade Politikası",
     short: "İptal ve İade",
     description: "Mivvo abonelik iptali, cayma hakkı ve iade koşulları.",
-    version: "1.1",
-    updated: "2026-11-01",
+    version: "1.2",
+    updated: "2026-11-02",
     sections: [
       { h: "Ücretsiz deneme", blocks: [{ p: `İlk ${trial} gün ücretsizdir ve kart bilgisi istenmez. Deneme süresinin sonunda herhangi bir ücret alınmaz.` }] },
-      { h: "Otomatik yenileme yok", blocks: [{ p: "Aylık abonelik 30 gün sonunda kendiliğinden sona erer ve yenilenmez. Bu nedenle iptal etmeniz gereken bir otomatik ödeme talimatı yoktur." }] },
+      { h: "Otomatik yenileme yok", blocks: [{ p: "Aylık abonelik 30 gün, yıllık abonelik 365 gün sonunda kendiliğinden sona erer ve yenilenmez. Bu nedenle iptal etmeniz gereken bir otomatik ödeme talimatı yoktur." }] },
       {
         h: "14 gün içinde koşulsuz iade",
         blocks: [

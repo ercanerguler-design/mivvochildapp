@@ -1,78 +1,80 @@
 import type { Metadata } from "next";
-import { SITE } from "@/lib/site";
 import Link from "next/link";
-import { getLocaleFromServerCookie } from "@/lib/i18n.server";
+import { Building2, Clock, Landmark, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { SiteHeader } from "@/components/landing/SiteHeader";
+import { SiteFooter } from "@/components/landing/SiteFooter";
+import { landingContent } from "@/components/landing/content";
+import { PaymentLogos } from "@/components/PaymentLogos";
+import { SITE, fullAddress, legalIdentity } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "İletişim | Mivvo",
-  description: "Mivvo iletişim bilgileri.",
+  title: "İletişim",
+  description: `Mivvo iletişim bilgileri: ${SITE.phoneDisplay}, ${SITE.email}, ${fullAddress}.`,
+  alternates: { canonical: "/iletisim" },
 };
 
-export default async function ContactPage() {
-  const locale = await getLocaleFromServerCookie();
-  const isEn = locale === "en";
+export default function ContactPage() {
+  const card = "rounded-3xl bg-white p-6 ring-1 ring-gray-200";
+  const title = "flex items-center gap-2 text-base font-bold text-gray-900";
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-      <div className="mx-auto w-full max-w-4xl rounded-2xl border border-gray-100 bg-white p-6 sm:p-10 shadow-sm">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">{isEn ? "Contact" : "İletişim"}</h1>
+    <>
+      <SiteHeader locale="tr" nav={landingContent.tr.nav} />
+      <main className="bg-gray-50 py-12 sm:py-16">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <h1 className="font-display text-3xl font-black text-gray-950">İletişim</h1>
+          <p className="mt-2 text-gray-600">Sorularınız, iade talepleriniz ve iş birliği önerileriniz için bize ulaşın.</p>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <section className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-            <h2 className="mb-2 text-base font-semibold text-gray-900">📍 {isEn ? "Head Office" : "Merkez Adres"}</h2>
-            <p className="text-sm text-gray-700 leading-6">
-              Çetin Emeç Bulvarı No:25/3
-              <br />
-              ANKARA
-            </p>
-          </section>
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            <section className={card}>
+              <h2 className={title}><Phone className="h-5 w-5 text-brand-600" /> Telefon</h2>
+              <a href={SITE.phoneHref} className="mt-3 block text-lg font-bold text-gray-950 hover:text-brand-700">{SITE.phoneDisplay}</a>
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500"><Clock className="h-4 w-4" /> Pazartesi–Cuma, 09:00–18:00</p>
+            </section>
+            <section className={card}>
+              <h2 className={title}><Mail className="h-5 w-5 text-brand-600" /> E-posta</h2>
+              <a href={`mailto:${SITE.email}`} className="mt-3 block text-lg font-bold text-gray-950 hover:text-brand-700">{SITE.email}</a>
+              <p className="mt-1 text-sm text-gray-500">En geç 1 iş günü içinde yanıt veririz.</p>
+            </section>
+            <section className={card}>
+              <h2 className={title}><MessageCircle className="h-5 w-5 text-brand-600" /> WhatsApp</h2>
+              <a href={`https://wa.me/${SITE.whatsapp}`} target="_blank" rel="noopener noreferrer" className="mt-3 block text-lg font-bold text-gray-950 hover:text-brand-700">Mesaj gönderin</a>
+              <p className="mt-1 text-sm text-gray-500">Yazılı destek hattı</p>
+            </section>
+          </div>
 
-          <section className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-            <h2 className="mb-2 text-base font-semibold text-gray-900">📞 {isEn ? "Phone Center" : "Telefon Merkezi"}</h2>
-            <p className="text-sm text-gray-700 leading-6">
-              0850 888 1 889
-              <br />
-              {isEn ? "Monday-Friday: 09:00-18:00" : "Pazartesi-Cuma: 09:00-18:00"}
-            </p>
-          </section>
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <section className={card}>
+              <h2 className={title}><Building2 className="h-5 w-5 text-brand-600" /> Şirket bilgileri</h2>
+              <dl className="mt-3 space-y-1.5 text-sm text-gray-700">
+                <div><dt className="inline font-semibold">Unvan: </dt><dd className="inline">{SITE.legal.name}</dd></div>
+                <div className="flex gap-1.5"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" /><dd>{fullAddress}</dd></div>
+                {legalIdentity().map((line) => <div key={line}><dd>{line}</dd></div>)}
+              </dl>
+            </section>
+            <section className={card}>
+              <h2 className={title}><Landmark className="h-5 w-5 text-brand-600" /> Ödeme</h2>
+              <p className="mt-3 text-sm text-gray-700">
+                Aylık ({SITE.monthlyPriceTl} TL) ve yıllık ({SITE.yearlyPriceTl} TL) abonelik, çocuk başına, KDV dahil. Kredi/banka kartıyla PayTR güvencesiyle veya havale/EFT ile ödeyebilirsiniz.
+              </p>
+              <PaymentLogos className="mt-4" />
+              <Link href="/sepet" className="mt-5 inline-flex rounded-2xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Satın Al</Link>
+            </section>
+          </div>
 
-          <section className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-            <h2 className="mb-2 text-base font-semibold text-gray-900">💬 {isEn ? "Contact Channels" : "İletişim Kanalları"}</h2>
-            <div className="space-y-1 text-sm text-gray-700">
-              <p>WhatsApp: +90 543 392 92 30</p>
-              <p>Email: sce@scegrup.com</p>
+          <section className={`${card} mt-5 text-sm text-gray-700`}>
+            <h2 className={title}><Landmark className="h-5 w-5 text-brand-600" /> Havale / EFT bilgileri</h2>
+            <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
+              <p><span className="font-semibold">Hesap sahibi:</span> {SITE.legal.name}</p>
+              <p><span className="font-semibold">Banka:</span> Türkiye Garanti Bankası, Etlik Şubesi</p>
+              <p><span className="font-semibold">IBAN:</span> TR48 0006 2000 7740 0006 2930 33</p>
+              <p><span className="font-semibold">Hesap No:</span> 774-6293033</p>
             </div>
+            <p className="mt-3 text-brand-700">Havale açıklamasına ebeveyn hesabınızın e-posta adresini ve adınızı yazın; aboneliğiniz aynı gün etkinleştirilir.</p>
           </section>
         </div>
-
-        <div className="mt-8 rounded-xl border border-gray-100 bg-gray-50 p-5 space-y-2 text-sm text-gray-700">
-          <h2 className="text-base font-semibold text-gray-900">🏦 {isEn ? "Bank / Wire Transfer Details" : "Banka / Havale Bilgileri"}</h2>
-          <p><span className="font-medium">{isEn ? "Company" : "Şirket Adı"}:</span> SCE Innovation Ltd.Şti</p>
-          <p><span className="font-medium">{isEn ? "Bank" : "Banka"}:</span> Türkiye Garanti Bankası</p>
-          <p><span className="font-medium">IBAN:</span> TR48 0006 2000 7740 0006 2930 33</p>
-          <p><span className="font-medium">{isEn ? "Account No" : "Hesap No"}:</span> 774-6293033</p>
-          <p><span className="font-medium">{isEn ? "Branch" : "Şube"}:</span> Etlik Şubesi</p>
-          <p className="font-medium text-violet-700">
-            {isEn
-              ? "Please add your Parent ID and your name in transfer description."
-              : "Açıklama kısmına ebeveyn ID'sini ve adınızı yazmanızı rica ederiz."}
-          </p>
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
-            {isEn ? "Card payment (Iyzico / VISA): Coming soon" : "Kart ödeme (Iyzico / VISA): Yakında"}
-          </div>
-          <div className="mt-3 rounded-lg border border-violet-200 bg-violet-50 p-3 text-violet-800">
-            {isEn
-              ? `Monthly subscription fee: ${SITE.monthlyPriceTl} TRY (VAT incl.). To activate after trial, contact us via WhatsApp or email, then include Parent ID in bank transfer note.`
-              : `Aylık abonelik bedeli: ${SITE.monthlyPriceTl} TL (KDV dahil). Deneme bitince WhatsApp veya e-posta ile başvurun, havale açıklamasına Parent ID yazın.`}
-          </div>
-        </div>
-
-        <div className="mt-10">
-          <Link href="/" className="text-sm font-semibold text-violet-700 hover:text-violet-800">
-            {isEn ? "Back to Home" : "Ana Sayfaya Dön"}
-          </Link>
-        </div>
-      </div>
-    </main>
+      </main>
+      <SiteFooter locale="tr" />
+    </>
   );
 }
