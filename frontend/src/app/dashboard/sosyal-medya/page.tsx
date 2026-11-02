@@ -4,6 +4,7 @@ import { replaceTemplate, t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { redirect } from "next/navigation";
 import { categoryBadge, categoryLabel } from "@/lib/alert-categories";
+import { messageBody } from "@/lib/nlp";
 import {
   ShieldAlert,
   Moon,
@@ -103,7 +104,7 @@ export default async function SosyalMedyaPage() {
     db.socialActivity.findMany({
       where: { childId: { in: childIds }, createdAt: { gte: since7d } },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 80,
       include: {
         child: { select: { displayName: true } },
         alert: { select: { category: true, status: true, riskScore: true } },
@@ -119,6 +120,40 @@ export default async function SosyalMedyaPage() {
       include: { child: { select: { displayName: true } } },
     }),
   ]);
+
+  // Older records may hold the same message twice (a notification posted twice): one copy linked to
+  // the alert, one not. Merge copies and give an unlinked copy the category of its message's alert,
+  // so every row shows its risk group exactly like the parent app.
+  const weekAlerts = await db.alert.findMany({
+    where: { childId: { in: childIds }, createdAt: { gte: since7d } },
+    select: { childId: true, category: true, status: true, riskScore: true, originalText: true, createdAt: true },
+  });
+  const fold = (t: string) => messageBody(t).toLocaleLowerCase("tr-TR").replace(/\s+/g, " ").trim();
+  const WINDOW = 15 * 60 * 1000;
+  type Row = (typeof recentActivities)[number];
+  const timeline: Row[] = [];
+  const lastByKey = new Map<string, Row>();
+  for (const act of [...recentActivities].reverse()) {
+    let alert = act.alert;
+    if (!alert && act.messageContent) {
+      const text = fold(act.messageContent);
+      const match = weekAlerts.find((a) => a.childId === act.childId && Math.abs(a.createdAt.getTime() - act.createdAt.getTime()) <= WINDOW && fold(a.originalText ?? "") === text);
+      if (match) alert = { category: match.category, status: match.status, riskScore: match.riskScore };
+    }
+    const row = { ...act, alert };
+    // Same child, app and text (or, without stored text, same sender within 30 s) = same message.
+    const key = act.messageContent ? `${act.childId}|${act.platform}|${fold(act.messageContent)}` : `${act.childId}|${act.platform}|${act.contactUsername ?? ""}|safe`;
+    const window = act.messageContent ? WINDOW : 30 * 1000;
+    const prev = lastByKey.get(key);
+    if (prev && act.createdAt.getTime() - prev.createdAt.getTime() <= window) {
+      if (!prev.alert && row.alert) Object.assign(prev, { alert: row.alert });
+      continue;
+    }
+    lastByKey.set(key, row);
+    timeline.push(row);
+  }
+  timeline.reverse();
+  const activities = timeline.slice(0, 30);
 
   // Bilinmeyen oran hesapla
   const totalContacts = allContacts.length;
@@ -258,7 +293,7 @@ export default async function SosyalMedyaPage() {
             <p className="text-xs text-gray-400 mt-0.5">{text.social.last7d}</p>
           </div>
 
-          {recentActivities.length === 0 ? (
+          {activities.length === 0 ? (
             <div className="py-16 text-center">
               <ShieldAlert className="w-12 h-12 text-gray-200 mx-auto mb-3" />
               <p className="text-gray-400 text-sm">{text.social.noActivity}</p>
@@ -266,7 +301,7 @@ export default async function SosyalMedyaPage() {
             </div>
           ) : (
             <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto">
-              {recentActivities.map((act) => {
+              {activities.map((act) => {
                 const platformMeta = PLATFORMS.find((p) => p.key === act.platform);
                 const nightIcon = act.isNightTime ? "🌙 " : "";
                 const newIcon = act.isNewContact ? "🆕 " : "";
@@ -292,6 +327,13 @@ export default async function SosyalMedyaPage() {
                           }`}>
                             {categoryLabel(act.alert.category, locale)}
                           </span>
+                        )}
+                        {/* Text is stored only for risky messages; without text the message was safe. */}
+                        {!act.alert && act.messageContent && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">⚠️ {locale === "en" ? "Risky (repeat)" : "Riskli (tekrar)"}</span>
+                        )}
+                        {!act.alert && !act.messageContent && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">✓ {locale === "en" ? "Safe" : "Güvenli"}</span>
                         )}
                       </div>
 
