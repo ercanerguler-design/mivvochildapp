@@ -86,6 +86,12 @@ export function LoginForm({ locale }: { locale: Locale }) {
         </div>
       )}
 
+      {oauthError === "OAuthAccountNotLinked" && (
+        <div className="bg-amber-50 text-amber-800 text-sm px-4 py-3 rounded-xl border border-amber-200">
+          Bu e-posta adresiyle daha önce şifreli bir hesap oluşturulmuş. Lütfen e-posta ve şifrenizle giriş yapın.
+        </div>
+      )}
+
       {oauthBlocked && (
         <div className="bg-amber-50 text-amber-800 text-sm px-4 py-3 rounded-xl border border-amber-200 space-y-1">
           <p className="font-medium">{text.auth.oauthBlockedTitle}</p>

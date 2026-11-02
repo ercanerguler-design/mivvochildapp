@@ -54,8 +54,8 @@ export const legalDocs: LegalDoc[] = [
     title: "KVKK Aydınlatma Metni",
     short: "KVKK Aydınlatma",
     description: "6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında Mivvo kullanıcılarına yönelik aydınlatma metni.",
-    version: "2.2",
-    updated: "2026-11-01",
+    version: "2.3",
+    updated: "2026-11-02",
     sections: [
       {
         h: "1. Veri sorumlusu",
@@ -68,7 +68,7 @@ export const legalDocs: LegalDoc[] = [
         h: "2. Hangi kişisel verileri işliyoruz?",
         blocks: [
           { p: "Ebeveyn (hesap sahibi) için:" },
-          { ul: ["Kimlik ve iletişim: ad soyad, e-posta adresi, cep telefonu (ödeme sırasında verilirse)", "Hesap güvenliği: şifrenin geri döndürülemez özeti (hash), oturum ve cihaz bildirim anahtarı", "Fatura ve ödeme: fatura adresi, şehir, ödeme tutarı ve ödeme kuruluşu (PayTR) sipariş numarası (kart bilgileri bize ulaşmaz)", "Kullanım: uyarı tercihleri, hassasiyet seviyesi, onay kayıtları, IP adresi ve işlem zamanları"] },
+          { ul: ["Kimlik ve iletişim: ad soyad, e-posta adresi, cep telefonu (hesap oluşturulurken alınır; hesabınızla ilgili önemli bilgilendirmeler ve acil durumlarda size ulaşmak için)", "Hesap güvenliği: şifrenin geri döndürülemez özeti (hash), oturum ve cihaz bildirim anahtarı", "Fatura ve ödeme: fatura adresi, şehir, ödeme tutarı ve ödeme kuruluşu (PayTR) sipariş numarası (kart bilgileri bize ulaşmaz)", "Kullanım: uyarı tercihleri, hassasiyet seviyesi, onay kayıtları, IP adresi ve işlem zamanları"] },
           { p: "Çocuk (18 yaş altı, ebeveyn tarafından eklenen) için:" },
           { ul: ["Kimlik: ad (veya takma ad) ve doğum tarihi (yalnızca 18 yaş kontrolü için)", "Cihaz: uygulamaya özel rastgele cihaz kimliği, uygulama sürümü, uygulamanın en son ne zaman bağlandığı ve korumanın (bildirim erişiminin) açık olup olmadığı", "İletişim içeriği: WhatsApp, Instagram, TikTok, Snapchat, Telegram ve SMS uygulamalarından gelen bildirimlerdeki gönderen görünen adı ve mesaj metni", "Risk sonuçları: risk kategorisi, puanı, açıklama ve yalnızca risk tespit edilen mesajın ilgili parçası", "Acil durum konumu: yalnızca çocuk uygulamadaki Yardım butonuna bastığında, o anki konum bir kez alınır ve ebeveyne iletilir"] },
           { p: "Mivvo; fotoğraf, video, sesli mesaj, rehber, arama kayıtları, kamera veya mikrofon verilerine erişmez ve bunları işlemez. Konum sürekli veya arka planda izlenmez; yalnızca çocuk Yardım butonuna bastığı anda alınır. Mesaj içerikleri, niteliği gereği sağlık veya cinsel hayata ilişkin bilgiler içerebilir; bu tür veriler yalnızca risk tespiti amacıyla ve aşağıdaki güvencelerle işlenir." },

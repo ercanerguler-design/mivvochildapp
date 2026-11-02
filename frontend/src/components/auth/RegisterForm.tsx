@@ -6,11 +6,12 @@ import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { t, type Locale } from "@/lib/i18n";
+import { normalizeTrMobile } from "@/lib/phone";
 
 export function RegisterForm({ locale }: { locale: Locale }) {
   const router = useRouter();
   const text = t(locale);
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -24,6 +25,10 @@ export function RegisterForm({ locale }: { locale: Locale }) {
     e.preventDefault();
     setError("");
 
+    if (!normalizeTrMobile(form.phone)) {
+      setError("Geçerli bir cep telefonu numarası yazın (05xx xxx xx xx).");
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError(text.auth.passwordMismatch);
       return;
@@ -42,7 +47,7 @@ export function RegisterForm({ locale }: { locale: Locale }) {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, email: form.email, password: form.password, acceptTerms, acceptConsent }),
+      body: JSON.stringify({ name: form.name, email: form.email, phone: form.phone, password: form.password, acceptTerms, acceptConsent }),
     });
 
     if (!res.ok) {
@@ -94,6 +99,24 @@ export function RegisterForm({ locale }: { locale: Locale }) {
           onChange={handleChange}
           className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
           placeholder="ornek@email.com"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">
+          Cep telefonu
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          required
+          value={form.phone}
+          onChange={handleChange}
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+          placeholder="05xx xxx xx xx"
         />
       </div>
 

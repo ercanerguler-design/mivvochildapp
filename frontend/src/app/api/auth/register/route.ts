@@ -4,10 +4,12 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { REQUIRED_CONSENTS, recordConsents } from "@/lib/consents";
 import { TOO_MANY, clientIp, rateLimit } from "@/lib/rate-limit";
+import { normalizeTrMobile } from "@/lib/phone";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().toLowerCase().email(),
+  phone: z.string().trim().max(30),
   password: z.string().min(8).max(128),
   acceptTerms: z.literal(true),
   acceptConsent: z.literal(true),
@@ -28,6 +30,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, email, password } = parsed.data;
+    const phone = normalizeTrMobile(parsed.data.phone);
+    if (!phone) return NextResponse.json({ error: "Geçerli bir cep telefonu numarası yazın (05xx xxx xx xx)." }, { status: 400 });
 
     const existing = await db.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
     if (existing) {
@@ -36,8 +40,9 @@ export async function POST(req: NextRequest) {
 
     const user = await db.user.create({
       data: {
-        name,
+        name: name.replace(/\s+/g, " "),
         email,
+        phone,
         password: await bcrypt.hash(password, 12),
         role: "PARENT",
         parentProfile: { create: { notifyEmail: true, notifyPush: true, sensitivityLevel: 70 } },
