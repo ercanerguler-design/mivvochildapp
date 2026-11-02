@@ -103,7 +103,7 @@ export default async function GuidePage({ params }: Props) {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <JsonLd data={ld} />
-      <SiteHeader locale="tr" nav={landingContent.tr.nav} />
+      <SiteHeader locale="tr" nav={landingContent.tr.nav} translated={false} />
       <main className="flex-1">
         <article className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-sm text-gray-500">

@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { MivvoLogo } from "@/components/common/MivvoLogo";
 import type { Locale } from "@/lib/i18n";
 
 type NavLabels = { features: string; how: string; pricing: string; faq: string; guide: string; signIn: string; start: string; menu: string };
 
-export function SiteHeader({ locale, nav }: { locale: Locale; nav: NavLabels }) {
+/**
+ * translated: the page renders in the cookie language, so the switch re-renders it in place.
+ * Turkish-only pages (the guide) pass false and the switch goes to the home page of that language.
+ */
+export function SiteHeader({ locale, nav, translated = true }: { locale: Locale; nav: NavLabels; translated?: boolean }) {
   const [open, setOpen] = useState(false);
   const home = locale === "en" ? "/en" : "/";
   const links = [
@@ -19,9 +24,19 @@ export function SiteHeader({ locale, nav }: { locale: Locale; nav: NavLabels }) 
     ...(locale === "tr" ? [{ href: "/rehber", label: nav.guide }] : []),
   ];
 
-  // Sets the cookie too, so the app area (login, dashboard) follows the chosen language.
-  const switchTo = (next: Locale) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  // The home page has a URL per language (/ and /en). Every other page keeps its URL and reads the
+  // language from the cookie, so switching re-renders the same page in the chosen language.
+  const isHome = pathname === "/" || pathname === "/en" || !translated;
+  const switchHref = (next: Locale) => (isHome ? (next === "en" ? "/en" : "/") : pathname);
+  const switchTo = (next: Locale) => (e: React.MouseEvent) => {
     document.cookie = `mivvo_locale=${next}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    if (!isHome) {
+      e.preventDefault();
+      setOpen(false);
+      router.refresh();
+    }
   };
 
   return (
@@ -41,8 +56,8 @@ export function SiteHeader({ locale, nav }: { locale: Locale; nav: NavLabels }) 
 
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden items-center rounded-lg border border-gray-200 p-0.5 text-xs font-semibold sm:flex">
-            <Link href="/" onClick={() => switchTo("tr")} hrefLang="tr" className={`rounded-md px-2 py-1 ${locale === "tr" ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100"}`}>TR</Link>
-            <Link href="/en" onClick={() => switchTo("en")} hrefLang="en" className={`rounded-md px-2 py-1 ${locale === "en" ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100"}`}>EN</Link>
+            <Link href={switchHref("tr")} onClick={switchTo("tr")} hrefLang="tr" className={`rounded-md px-2 py-1 ${locale === "tr" ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100"}`}>TR</Link>
+            <Link href={switchHref("en")} onClick={switchTo("en")} hrefLang="en" className={`rounded-md px-2 py-1 ${locale === "en" ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100"}`}>EN</Link>
           </div>
           <Link href="/giris" className="hidden text-sm font-semibold text-gray-700 hover:text-brand-600 sm:inline">
             {nav.signIn}
@@ -74,9 +89,9 @@ export function SiteHeader({ locale, nav }: { locale: Locale; nav: NavLabels }) 
             <Link href="/giris" className="rounded-lg px-2 py-3 font-medium text-gray-700 hover:bg-gray-50">{nav.signIn}</Link>
           </nav>
           <div className="flex gap-2 px-2 text-sm font-semibold">
-            <Link href="/" onClick={() => switchTo("tr")} className={locale === "tr" ? "text-brand-700" : "text-gray-500"}>Türkçe</Link>
+            <Link href={switchHref("tr")} onClick={switchTo("tr")} className={locale === "tr" ? "text-brand-700" : "text-gray-500"}>Türkçe</Link>
             <span className="text-gray-300">·</span>
-            <Link href="/en" onClick={() => switchTo("en")} className={locale === "en" ? "text-brand-700" : "text-gray-500"}>English</Link>
+            <Link href={switchHref("en")} onClick={switchTo("en")} className={locale === "en" ? "text-brand-700" : "text-gray-500"}>English</Link>
           </div>
         </div>
       )}

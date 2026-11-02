@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function GuideIndexPage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <SiteHeader locale="tr" nav={landingContent.tr.nav} />
+      <SiteHeader locale="tr" nav={landingContent.tr.nav} translated={false} />
       <main className="flex-1">
         <section className="bg-gradient-to-b from-brand-50 to-white py-16 sm:py-20">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">

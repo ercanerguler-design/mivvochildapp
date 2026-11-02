@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/landing/SiteHeader";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { landingContent } from "@/components/landing/content";
 import { getLegalDoc, legalDocs, type LegalBlock } from "@/lib/legal";
+import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 
 export function legalMetadata(slug: string): Metadata {
   const doc = getLegalDoc(slug);
@@ -44,19 +45,25 @@ function Block({ b }: { b: LegalBlock }) {
   );
 }
 
-export function LegalPage({ slug }: { slug: string }) {
+export async function LegalPage({ slug }: { slug: string }) {
   const doc = getLegalDoc(slug);
   if (!doc) notFound();
+  const locale = await getLocaleFromServerCookie();
   const updated = new Date(doc.updated).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <SiteHeader locale="tr" nav={landingContent.tr.nav} />
+      <SiteHeader locale={locale} nav={landingContent[locale].nav} />
       <main className="flex-1">
         <div className="border-b border-gray-100 bg-gradient-to-b from-brand-50 to-white">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
             <p className="flex items-center gap-2 text-sm font-bold text-brand-600"><FileText className="h-4 w-4" /> Yasal belgeler</p>
             <h1 className="mt-3 font-display text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">{doc.title}</h1>
+            {locale === "en" && (
+              <p lang="en" className="mt-4 max-w-3xl rounded-xl bg-white/80 p-3 text-sm text-gray-600 ring-1 ring-brand-100">
+                This legal document is published in Turkish, the legally binding language under Turkish consumer and data-protection law. For an English explanation, contact us at {"sce@scegrup.com"}.
+              </p>
+            )}
             <p className="mt-3 text-sm text-gray-500">Sürüm {doc.version} · Son güncelleme: <time dateTime={doc.updated}>{updated}</time></p>
           </div>
         </div>
@@ -101,7 +108,7 @@ export function LegalPage({ slug }: { slug: string }) {
           </article>
         </div>
       </main>
-      <SiteFooter locale="tr" />
+      <SiteFooter locale={locale} />
     </div>
   );
 }

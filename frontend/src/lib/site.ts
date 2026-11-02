@@ -38,4 +38,12 @@ export const legalIdentity = () =>
     SITE.legal.mersis ? `MERSİS No: ${SITE.legal.mersis}` : "",
   ].filter(Boolean);
 
+/** WhatsApp support link that opens a chat with a ready, polite first message. */
+export const whatsappUrl = (locale: "tr" | "en" = "tr") =>
+  `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(
+    locale === "en"
+      ? "Hello, I would like to get information about the Mivvo parental protection app."
+      : "Merhaba, Mivvo ebeveyn koruma uygulaması hakkında bilgi almak istiyorum."
+  )}`;
+
 export const absoluteUrl = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;

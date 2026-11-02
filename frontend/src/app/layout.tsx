@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`${inter.variable} ${nunito.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <LanguageSwitcher />
-        <WhatsAppBubble />
+        <WhatsAppBubble locale={locale} />
         {children}
       </body>
     </html>
