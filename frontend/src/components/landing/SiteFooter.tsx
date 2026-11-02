@@ -76,7 +76,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           </div>
         </div>
         <PaymentLogos className="mt-10" />
-        <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pb-12 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between sm:pb-0 sm:pr-16">
           <p>© {new Date().getFullYear()} Mivvo · {SITE.legal.name.replace(/\.$/, "")}. {f.rights}</p>
           <p className="text-gray-500">{f.help}</p>
         </div>

@@ -12,10 +12,11 @@ export function WhatsAppBubble({ locale = "tr" }: { locale?: Locale }) {
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="group fixed bottom-5 right-5 z-50 inline-flex h-14 items-center gap-2 rounded-full bg-[#25D366] px-4 text-white shadow-lg shadow-emerald-300/60 transition-transform hover:scale-105"
+      className="group fixed bottom-4 right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md shadow-emerald-900/20 transition-transform hover:scale-105"
     >
-      <WhatsAppIcon className="h-7 w-7" />
-      <span className="hidden text-sm font-bold sm:inline">{label}</span>
+      <WhatsAppIcon className="h-6 w-6" />
+      {/* Label appears on hover (desktop) so the button stays small. */}
+      <span className="pointer-events-none absolute right-14 hidden whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 sm:block">{label}</span>
     </a>
   );
 }
