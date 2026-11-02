@@ -5,6 +5,8 @@ import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { createPairingCode, getPairingTtlMinutes } from "@/lib/pairing";
 import { redirect } from "next/navigation";
 import { listSos } from "@/lib/sos";
+import { categoryBadge, categoryLabel } from "@/lib/alert-categories";
+import { SosAckButton } from "@/components/dashboard/SosAckButton";
 import { getParentBillingStatus } from "@/lib/subscription";
 import { getDeviceStatuses, type DeviceStatus } from "@/lib/device-status";
 import { TONE_CLASS, deviceState } from "@/lib/device-state";
@@ -18,39 +20,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const categoryLabels: Record<"tr" | "en", Record<string, string>> = {
-  tr: {
-    BULLYING: "Zorbalık",
-    VIOLENCE: "Şiddet",
-    SEXUAL_RISK: "Cinsel Risk",
-    THREAT: "Tehdit",
-    PROFANITY: "Küfür",
-    EXTREME_ANGER: "Kendine Zarar / Öfke",
-    STRANGER_CONTACT: "Yabancı Kişi",
-    SUBSTANCE: "Alkol / Madde",
-    DANGEROUS_BEHAVIOR: "Tehlikeli Davranış",
-  },
-  en: {
-    BULLYING: "Bullying",
-    VIOLENCE: "Violence",
-    SEXUAL_RISK: "Sexual Risk",
-    THREAT: "Threat",
-    PROFANITY: "Profanity",
-    EXTREME_ANGER: "Self-harm / Anger",
-    STRANGER_CONTACT: "Stranger",
-    SUBSTANCE: "Alcohol / Drugs",
-    DANGEROUS_BEHAVIOR: "Dangerous Behaviour",
-  },
-};
-
-const categoryColors: Record<string, string> = {
-  BULLYING: "bg-rose-100 text-rose-700",
-  VIOLENCE: "bg-red-100 text-red-700",
-  SEXUAL_RISK: "bg-purple-100 text-purple-700",
-  THREAT: "bg-orange-100 text-orange-700",
-  PROFANITY: "bg-yellow-100 text-yellow-700",
-  EXTREME_ANGER: "bg-pink-100 text-pink-700",
-};
 
 export default async function DashboardPage() {
   const locale = await getLocaleFromServerCookie();
@@ -120,7 +89,7 @@ export default async function DashboardPage() {
     },
   ];
 
-  const sosEvents = await listSos(parent.children.map((c) => c.id), 24).catch(() => []);
+  const sosEvents = (await listSos(parent.children.map((c) => c.id), 24).catch(() => [])).filter((e) => !e.acknowledgedAt);
   const childName = new Map(parent.children.map((c) => [c.id, c.displayName]));
   const silent = await listSilentPlatforms(parent.children.map((c) => c.id)).catch(() => []);
   // Per-child pricing: after the trial, children without a plan are not analysed. Say so plainly.
@@ -149,6 +118,7 @@ export default async function DashboardPage() {
               <a href={e.mapUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-red-700">Haritada aç</a>
             )}
             <a href="tel:112" className="rounded-xl bg-red-800 px-4 py-2.5 text-sm font-bold text-white">112</a>
+            <SosAckButton id={e.id} />
           </div>
         </div>
       ))}
@@ -283,10 +253,10 @@ export default async function DashboardPage() {
                 <div key={alert.id} className="px-6 py-4 flex items-start gap-4">
                   <div
                     className={`mt-0.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                      categoryColors[alert.category] ?? "bg-gray-100 text-gray-600"
+                      categoryBadge(alert.category)
                     }`}
                   >
-                    {categoryLabels[locale][alert.category] ?? alert.category}
+                    {categoryLabel(alert.category, locale)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-700 truncate">{alert.originalText}</p>

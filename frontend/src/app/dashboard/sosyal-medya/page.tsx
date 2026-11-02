@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { replaceTemplate, t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import { redirect } from "next/navigation";
+import { categoryBadge, categoryLabel } from "@/lib/alert-categories";
 import {
   ShieldAlert,
   Moon,
@@ -22,29 +23,6 @@ const PLATFORMS = [
   { key: "SMS",        label: "SMS",        color: "from-violet-500 to-purple-500", bg: "bg-violet-50", text: "text-violet-700", border: "border-violet-100", emoji: "📱" },
 ] as const;
 
-const CATEGORY_LABELS: Record<string, string> = {
-  BULLYING: "Zorbalık",
-  VIOLENCE: "Şiddet",
-  SEXUAL_RISK: "Cinsel Risk",
-  THREAT: "Tehdit",
-  PROFANITY: "Küfür",
-  EXTREME_ANGER: "Kendine Zarar",
-  STRANGER_CONTACT: "Yabancı Kişi",
-  SUBSTANCE: "Alkol / Madde",
-  DANGEROUS_BEHAVIOR: "Tehlikeli Davranış",
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  BULLYING: "bg-rose-100 text-rose-700",
-  VIOLENCE: "bg-red-100 text-red-700",
-  SEXUAL_RISK: "bg-purple-100 text-purple-700",
-  THREAT: "bg-orange-100 text-orange-700",
-  PROFANITY: "bg-yellow-100 text-yellow-700",
-  EXTREME_ANGER: "bg-pink-100 text-pink-700",
-  STRANGER_CONTACT: "bg-indigo-100 text-indigo-700",
-  SUBSTANCE: "bg-teal-100 text-teal-700",
-  DANGEROUS_BEHAVIOR: "bg-yellow-100 text-yellow-800",
-};
 
 export default async function SosyalMedyaPage() {
   const locale = await getLocaleFromServerCookie();
@@ -310,9 +288,9 @@ export default async function SosyalMedyaPage() {
                         )}
                         {act.alert && (
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            CATEGORY_COLORS[act.alert.category] ?? "bg-gray-100 text-gray-600"
+                            categoryBadge(act.alert.category)
                           }`}>
-                            {CATEGORY_LABELS[act.alert.category] ?? act.alert.category}
+                            {categoryLabel(act.alert.category, locale)}
                           </span>
                         )}
                       </div>

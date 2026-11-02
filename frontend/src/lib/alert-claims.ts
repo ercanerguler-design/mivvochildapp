@@ -24,7 +24,7 @@ async function ensureTable() {
 }
 
 /** True only for the first caller for this child + message within the window. */
-export async function claimAlert(childId: string, normalizedMessage: string) {
+export async function claimAlert(childId: string, normalizedMessage: string, windowMinutes = WINDOW_MINUTES) {
   await ensureTable();
   const hash = crypto.createHash("sha256").update(normalizedMessage).digest("hex");
   const rows = await db.$queryRawUnsafe<{ ok: number }[]>(
@@ -34,7 +34,7 @@ export async function claimAlert(childId: string, normalizedMessage: string) {
      RETURNING 1 AS ok`,
     childId,
     hash,
-    String(WINDOW_MINUTES)
+    String(windowMinutes)
   );
   return rows.length > 0;
 }

@@ -4,6 +4,7 @@ import { t } from "@/lib/i18n";
 import { getLocaleFromServerCookie } from "@/lib/i18n.server";
 import AlertStatusActions from "@/components/alert-status-actions";
 import { redirect } from "next/navigation";
+import { PLATFORM_NAMES, categoryBadge, categoryLabel } from "@/lib/alert-categories";
 
 type AlertStatus = "PENDING" | "SEEN" | "RESOLVED" | "DISMISSED";
 
@@ -94,13 +95,17 @@ export default async function AlertsPage({
             {alerts.map((alert) => (
               <div key={alert.id} className="px-6 py-4 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{alert.child.displayName}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${categoryBadge(alert.category)}`}>{categoryLabel(alert.category, locale)}</span>
+                    <span className="text-sm font-medium text-gray-900">{alert.child.displayName}</span>
+                    {alert.platform && <span className="text-xs text-gray-400">· {PLATFORM_NAMES[alert.platform] ?? alert.platform}</span>}
+                  </div>
                   <p className="text-sm text-gray-600 mt-1">{alert.originalText}</p>
                   {(() => {
                     const resolutionNote = extractLatestResolutionNote(alert.context);
                     if (!resolutionNote) return null;
 
-                    return <p className="text-xs text-emerald-700 mt-1">Cozum notu: {resolutionNote}</p>;
+                    return <p className="text-xs text-emerald-700 mt-1">Çözüm notu: {resolutionNote}</p>;
                   })()}
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(alert.createdAt).toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", {

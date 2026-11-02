@@ -181,6 +181,18 @@ export async function POST(req: NextRequest) {
   for (const act of activities) {
     if (act.content) act.content = act.content.replace(APP_TITLE_PREFIX, "");
     try {
+      // Android often posts the same message twice (single + summary notification). The first copy
+      // wins; repeats from the same sender within 2 minutes are dropped before any analysis, so the
+      // web panel and the parent app show each message once.
+      if (act.content && act.content.trim().length > 3) {
+        const sender = (act.contactUsername ?? act.contactDisplayName ?? "").trim().toLowerCase();
+        const first = await claimAlert(childId, `msg|${act.platform}|${sender}|${fold(act.content)}`, 2);
+        if (!first) {
+          processedCount++;
+          continue;
+        }
+      }
+
       const timestamp = act.timestamp ? new Date(act.timestamp) : new Date();
       const nightTime = isNightTime(timestamp);
       const platformKey = act.platform as Platform;
@@ -262,6 +274,17 @@ export async function POST(req: NextRequest) {
         pushRecentlySent = Boolean(sameCategory);
       }
 
+      // Parallel requests for the same message: only the first one to claim it creates the alert.
+      if (alertCategory && riskScore >= sensitivityLevel && !duplicateOfRecentAlert && !(await claimAlert(childId, fold(act.content ?? detectedText)))) {
+        duplicateOfRecentAlert = true;
+      }
+      // A repeat of a message that already has an alert is the same message: store nothing new, so
+      // the activity list never shows it twice (once with a category, once without).
+      if (alertCategory && duplicateOfRecentAlert) {
+        processedCount++;
+        continue;
+      }
+
       // ── SocialActivity kaydı ─────────────────────────────
       const savedActivity = await db.socialActivity.create({
         data: {
@@ -280,10 +303,6 @@ export async function POST(req: NextRequest) {
       });
 
       // ── Alert oluştur ────────────────────────────────────
-      // Parallel requests for the same message: only the first one to claim it creates the alert.
-      if (alertCategory && riskScore >= sensitivityLevel && !duplicateOfRecentAlert && !(await claimAlert(childId, fold(act.content ?? detectedText)))) {
-        duplicateOfRecentAlert = true;
-      }
       if (alertCategory && riskScore >= sensitivityLevel && !duplicateOfRecentAlert) {
         const alert = await db.alert.create({
           data: {
